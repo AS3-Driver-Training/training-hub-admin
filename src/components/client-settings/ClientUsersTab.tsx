@@ -61,29 +61,35 @@ export function ClientUsersTab({ clientId }: ClientUsersTabProps) {
 
   const handleAddUser = async () => {
     try {
-      // First, get the user's auth ID using their email
-      const { data: userData, error: userError } = await supabase.auth.admin.users({
-        page: 1,
-        perPage: 1,
-        search: email
-      });
+      // First, get the user's auth ID using the edge function
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-user-by-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
 
-      if (userError || !userData?.users?.length) {
-        throw new Error('User not found');
+      const { user, error } = await response.json();
+
+      if (error || !user) {
+        throw new Error(error || 'User not found');
       }
 
-      const userId = userData.users[0].id;
-
       // Then create the client_user association
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from('client_users')
         .insert({
           client_id: clientId,
-          user_id: userId,
+          user_id: user.id,
           role: role,
         });
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
       toast.success("User added successfully");
       setIsDialogOpen(false);
