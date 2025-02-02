@@ -14,19 +14,13 @@ import { Card } from "@/components/ui/card";
 import { Mail, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-interface CreateClientResponse {
-  client_id: string;
-  invitation_id: string;
-  token: string;
-}
-
 interface ClientInvitationsTabProps {
   clientId: string;
   clientName: string;
 }
 
 export function ClientInvitationsTab({ clientId, clientName }: ClientInvitationsTabProps) {
-  const { data: invitations, isLoading } = useQuery({
+  const { data: invitations, isLoading, refetch } = useQuery({
     queryKey: ['invitations', clientId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -42,26 +36,37 @@ export function ClientInvitationsTab({ clientId, clientName }: ClientInvitations
 
   const handleResendInvitation = async (invitationId: string, email: string) => {
     try {
-      const { data, error } = await supabase.rpc('create_client_with_invitation', {
-        client_name: clientName,
-        contact_email: email,
-      });
+      // Generate a new token
+      const { data: tokenData, error: tokenError } = await supabase
+        .rpc('generate_invitation_token');
 
-      if (error) throw error;
+      if (tokenError) throw tokenError;
 
-      const response = data as unknown as CreateClientResponse;
+      // Create new invitation for existing client
+      const { error: inviteError } = await supabase
+        .from('invitations')
+        .insert({
+          client_id: clientId,
+          email: email,
+          token: tokenData,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        });
 
+      if (inviteError) throw inviteError;
+
+      // Send invitation email
       const emailResponse = await supabase.functions.invoke('send-invitation', {
         body: {
           clientName: clientName,
           email: email,
-          token: response.token,
+          token: tokenData,
         },
       });
 
       if (emailResponse.error) throw emailResponse.error;
 
       toast.success("Invitation resent successfully");
+      refetch();
     } catch (error: any) {
       console.error("Error resending invitation:", error);
       toast.error(error.message || "Failed to resend invitation");
@@ -78,6 +83,7 @@ export function ClientInvitationsTab({ clientId, clientName }: ClientInvitations
       if (error) throw error;
 
       toast.success("Invitation revoked successfully");
+      refetch();
     } catch (error: any) {
       console.error("Error revoking invitation:", error);
       toast.error(error.message || "Failed to revoke invitation");
