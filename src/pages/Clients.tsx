@@ -12,8 +12,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { InviteClientDialog } from "@/components/InviteClientDialog";
+import { useNavigate } from "react-router-dom";
 
 export default function Clients() {
+  const navigate = useNavigate();
+  
   const { data: clients, isLoading } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
@@ -56,7 +59,11 @@ export default function Clients() {
             </TableHeader>
             <TableBody>
               {clients?.map((client) => (
-                <TableRow key={client.id}>
+                <TableRow 
+                  key={client.id}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`/clients/${client.id}`)}
+                >
                   <TableCell className="font-medium">{client.name}</TableCell>
                   <TableCell>
                     <Badge variant={client.status === 'pending' ? 'secondary' : 'default'}>
@@ -67,7 +74,14 @@ export default function Clients() {
                     {new Date(client.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/clients/${client.id}`);
+                      }}
+                    >
                       View Details
                     </Button>
                   </TableCell>

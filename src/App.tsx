@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Clients from "./pages/Clients";
+import ClientSettings from "./pages/ClientSettings";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,14 @@ const App = () => (
             element={
               <PrivateRoute>
                 <Clients />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/clients/:clientId"
+            element={
+              <PrivateRoute>
+                <ClientSettings />
               </PrivateRoute>
             }
           />
