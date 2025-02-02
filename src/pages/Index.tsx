@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Users, Calendar, CheckCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const stats = [
   {
@@ -24,11 +26,31 @@ const stats = [
 ];
 
 const Index = () => {
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
+    const getProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile) {
+          setUserName(`${profile.first_name} ${profile.last_name}`);
+        }
+      }
+    };
+    getProfile();
+  }, []);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Welcome, Admin</h1>
+          <h1 className="text-3xl font-bold">Welcome, {userName}</h1>
           <p className="text-muted-foreground">
             Manage your training programs and users from one place
           </p>

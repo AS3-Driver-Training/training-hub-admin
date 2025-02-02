@@ -4,9 +4,6 @@ import {
   Calendar,
   Settings,
   ChevronLeft,
-  Menu,
-  LogOut,
-  User,
 } from "lucide-react";
 import {
   Sidebar,
@@ -20,18 +17,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Link } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 
 const menuItems = [
   {
@@ -57,25 +42,9 @@ const menuItems = [
 ];
 
 export function DashboardSidebar() {
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error("Error signing out");
-    } else {
-      navigate("/auth");
-    }
-  };
-
   return (
     <Sidebar>
-      <div className="flex items-center justify-between p-4">
-        <img
-          src="http://as3driving.com/wp-content/uploads/2020/07/AS3-Driver-Training-Logo-HiRes.png"
-          alt="AS3 Driver Training"
-          className="h-8"
-        />
+      <div className="flex items-center justify-end p-4">
         <SidebarTrigger>
           <ChevronLeft className="h-4 w-4 text-primary" />
         </SidebarTrigger>
