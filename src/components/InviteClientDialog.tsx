@@ -42,7 +42,8 @@ export function InviteClientDialog() {
 
       if (error) throw error;
 
-      const response = data as CreateClientResponse;
+      // Type assertion with unknown first to satisfy TypeScript
+      const response = data as unknown as CreateClientResponse;
 
       // Send invitation email
       const emailResponse = await supabase.functions.invoke('send-invitation', {
