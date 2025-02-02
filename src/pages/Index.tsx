@@ -1,8 +1,19 @@
 import { Card } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Users, Calendar, CheckCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { InviteClientDialog } from "@/components/InviteClientDialog";
+import { useProfile } from "@/hooks/useProfile";
 
 const stats = [
   {
@@ -26,33 +37,30 @@ const stats = [
 ];
 
 const Index = () => {
-  const [userName, setUserName] = useState("");
+  const { userRole } = useProfile();
+  const isSuperAdmin = userRole === 'superadmin';
 
-  useEffect(() => {
-    const getProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('first_name, last_name')
-          .eq('id', user.id)
-          .single();
-        
-        if (profile) {
-          setUserName(`${profile.first_name} ${profile.last_name}`);
-        }
-      }
-    };
-    getProfile();
-  }, []);
+  const { data: clients, isLoading } = useQuery({
+    queryKey: ['clients'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: isSuperAdmin, // Only fetch if user is superadmin
+  });
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Welcome, {userName}</h1>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">
-            Manage your training programs and users from one place
+            Manage your training programs and clients from one place
           </p>
         </div>
 
@@ -74,17 +82,71 @@ const Index = () => {
           ))}
         </div>
 
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              No recent activity to display
-            </p>
-          </div>
-        </Card>
+        {isSuperAdmin && (
+          <Card className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-lg font-semibold">Client Organizations</h3>
+                <p className="text-sm text-muted-foreground">
+                  Manage your client organizations and invitations
+                </p>
+              </div>
+              <InviteClientDialog />
+            </div>
+
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Client Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created At</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center">
+                        Loading...
+                      </TableCell>
+                    </TableRow>
+                  ) : clients?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center">
+                        No clients found. Invite your first client to get started.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    clients?.map((client) => (
+                      <TableRow key={client.id}>
+                        <TableCell className="font-medium">
+                          {client.name}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              client.status === "pending"
+                                ? "secondary"
+                                : "default"
+                            }
+                          >
+                            {client.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(client.created_at).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );
-}
+};
 
 export default Index;
