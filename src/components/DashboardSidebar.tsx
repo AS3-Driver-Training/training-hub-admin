@@ -18,16 +18,24 @@ import {
 } from "@/components/ui/sidebar";
 import { Link } from "react-router-dom";
 
-const menuItems = [
+interface MenuItem {
+  title: string;
+  icon: any;
+  path: string;
+  roles?: string[];
+}
+
+const menuItems: MenuItem[] = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
     path: "/",
   },
   {
-    title: "Users",
+    title: "Clients",
     icon: Users,
-    path: "/users",
+    path: "/clients",
+    roles: ["superadmin"],
   },
   {
     title: "Training Events",
@@ -41,7 +49,11 @@ const menuItems = [
   },
 ];
 
-export function DashboardSidebar() {
+export function DashboardSidebar({ userRole }: { userRole: string }) {
+  const filteredMenuItems = menuItems.filter(
+    item => !item.roles || item.roles.includes(userRole)
+  );
+
   return (
     <Sidebar>
       <div className="flex items-center justify-end p-4">
@@ -54,7 +66,7 @@ export function DashboardSidebar() {
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {filteredMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <Link to={item.path}>

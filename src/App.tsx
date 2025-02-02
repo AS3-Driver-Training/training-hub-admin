@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Clients from "./pages/Clients";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,14 @@ const App = () => (
             element={
               <PrivateRoute>
                 <Index />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/clients"
+            element={
+              <PrivateRoute>
+                <Clients />
               </PrivateRoute>
             }
           />
