@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { InviteClientDialog } from "@/components/InviteClientDialog";
 
 export default function Clients() {

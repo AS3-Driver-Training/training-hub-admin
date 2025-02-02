@@ -15,6 +15,12 @@ import { UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface CreateClientResponse {
+  client_id: string;
+  invitation_id: string;
+  token: string;
+}
+
 export function InviteClientDialog() {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,12 +42,14 @@ export function InviteClientDialog() {
 
       if (error) throw error;
 
+      const response = data as CreateClientResponse;
+
       // Send invitation email
       const emailResponse = await supabase.functions.invoke('send-invitation', {
         body: {
           clientName: formData.clientName,
           email: formData.email,
-          token: data.token,
+          token: response.token,
         },
       });
 
