@@ -28,7 +28,7 @@ const Index = () => {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Welcome to AS3 Driver Training</h1>
+          <h1 className="text-3xl font-bold">Welcome, Admin</h1>
           <p className="text-muted-foreground">
             Manage your training programs and users from one place
           </p>
