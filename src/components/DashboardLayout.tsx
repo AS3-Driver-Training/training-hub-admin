@@ -25,18 +25,22 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
+          // Force a fresh fetch from the database
           const { data: profile, error } = await supabase
             .from('profiles')
             .select('first_name, last_name, role')
             .eq('id', user.id)
             .single();
           
-          if (error) throw error;
+          if (error) {
+            console.error('Error fetching profile:', error);
+            throw error;
+          }
           
           if (profile) {
             setUserName(`${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User');
-            // Capitalize the first letter of the role
-            setUserRole(profile.role.charAt(0).toUpperCase() + profile.role.slice(1));
+            // Make sure to use the exact role from the database
+            setUserRole(profile.role);
           }
         }
       } catch (error) {
