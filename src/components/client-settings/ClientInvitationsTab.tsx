@@ -42,17 +42,17 @@ export function ClientInvitationsTab({ clientId, clientName }: ClientInvitations
 
       if (tokenError) throw tokenError;
 
-      // Create new invitation for existing client
-      const { error: inviteError } = await supabase
+      // Update existing invitation with new token
+      const { error: updateError } = await supabase
         .from('invitations')
-        .insert({
-          client_id: clientId,
-          email: email,
+        .update({
           token: tokenData,
+          status: 'pending',
           expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        });
+        })
+        .eq('id', invitationId);
 
-      if (inviteError) throw inviteError;
+      if (updateError) throw updateError;
 
       // Send invitation email
       const emailResponse = await supabase.functions.invoke('send-invitation', {
