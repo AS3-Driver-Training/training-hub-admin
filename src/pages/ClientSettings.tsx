@@ -50,7 +50,7 @@ export default function ClientSettings() {
         .from('client_users')
         .select(`
           *,
-          profiles!client_users_user_id_fkey(
+          profiles (
             id,
             first_name,
             last_name
