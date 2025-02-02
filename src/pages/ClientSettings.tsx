@@ -18,6 +18,12 @@ import { ArrowLeft, UserPlus, Mail, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 
+interface CreateClientResponse {
+  client_id: string;
+  invitation_id: string;
+  token: string;
+}
+
 export default function ClientSettings() {
   const { clientId } = useParams();
   const navigate = useNavigate();
@@ -88,12 +94,15 @@ export default function ClientSettings() {
 
       if (error) throw error;
 
+      // Type assertion to match the CreateClientResponse interface
+      const response = data as unknown as CreateClientResponse;
+
       // Send invitation email
       const emailResponse = await supabase.functions.invoke('send-invitation', {
         body: {
           clientName: client.name,
           email: email,
-          token: data.token,
+          token: response.token,
         },
       });
 
