@@ -18,14 +18,13 @@ import { useEffect, useState } from "react";
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("User");
-  const [userRole, setUserRole] = useState("User");
+  const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
     const getProfile = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          // Force a fresh fetch from the database
           const { data: profile, error } = await supabase
             .from('profiles')
             .select('first_name, last_name, role')
@@ -39,8 +38,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           
           if (profile) {
             setUserName(`${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User');
-            // Make sure to use the exact role from the database
-            setUserRole(profile.role);
+            setUserRole(profile.role || '');
+            console.log('Profile loaded:', profile); // Debug log
           }
         }
       } catch (error) {
@@ -51,7 +50,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
     getProfile();
 
-    // Subscribe to auth changes to refresh the profile
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       getProfile();
     });
