@@ -62,7 +62,7 @@ export default function Clients() {
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">{client.name}</TableCell>
                   <TableCell>
-                    <Badge variant={client.status === 'pending' ? 'secondary' : 'success'}>
+                    <Badge variant={client.status === 'pending' ? 'secondary' : 'default'}>
                       {client.status}
                     </Badge>
                   </TableCell>
