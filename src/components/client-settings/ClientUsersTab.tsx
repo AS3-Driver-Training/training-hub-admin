@@ -61,23 +61,26 @@ export function ClientUsersTab({ clientId }: ClientUsersTabProps) {
 
   const handleAddUser = async () => {
     try {
-      // First, get the user's profile ID using their email
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', email)
-        .single();
+      // First, get the user's auth ID using their email
+      const { data: userData, error: userError } = await supabase.auth.admin
+        .listUsers({
+          filters: {
+            email: email
+          }
+        });
 
-      if (profileError) {
+      if (userError || !userData?.users?.length) {
         throw new Error('User not found');
       }
+
+      const userId = userData.users[0].id;
 
       // Then create the client_user association
       const { error } = await supabase
         .from('client_users')
         .insert({
           client_id: clientId,
-          user_id: profileData.id,
+          user_id: userId,
           role: role,
         });
 
