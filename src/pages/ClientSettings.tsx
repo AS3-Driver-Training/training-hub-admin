@@ -50,9 +50,10 @@ export default function ClientSettings() {
         .from('client_users')
         .select(`
           *,
-          user:user_id(
-            email,
-            id
+          profile:user_id(
+            id,
+            first_name,
+            last_name
           )
         `)
         .eq('client_id', clientId);
@@ -193,7 +194,7 @@ export default function ClientSettings() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Email</TableHead>
+                      <TableHead>Name</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -201,7 +202,9 @@ export default function ClientSettings() {
                   <TableBody>
                     {users?.map((user: any) => (
                       <TableRow key={user.id}>
-                        <TableCell>{user.user.email}</TableCell>
+                        <TableCell>
+                          {user.profile.first_name} {user.profile.last_name}
+                        </TableCell>
                         <TableCell>
                           <Badge>{user.role}</Badge>
                         </TableCell>
@@ -209,7 +212,7 @@ export default function ClientSettings() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleRemoveUser(user.user.id)}
+                            onClick={() => handleRemoveUser(user.user_id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
