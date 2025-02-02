@@ -77,16 +77,16 @@ export function ClientInvitationsTab({ clientId, clientName }: ClientInvitations
     try {
       const { error } = await supabase
         .from('invitations')
-        .update({ status: 'revoked' })
+        .delete()
         .eq('id', invitationId);
 
       if (error) throw error;
 
-      toast.success("Invitation revoked successfully");
+      toast.success("Invitation deleted successfully");
       refetch();
     } catch (error: any) {
-      console.error("Error revoking invitation:", error);
-      toast.error(error.message || "Failed to revoke invitation");
+      console.error("Error deleting invitation:", error);
+      toast.error(error.message || "Failed to delete invitation");
     }
   };
 
