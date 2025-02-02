@@ -50,7 +50,7 @@ export default function ClientSettings() {
         .from('client_users')
         .select(`
           *,
-          profile:user_id(
+          profiles!client_users_user_id_fkey(
             id,
             first_name,
             last_name
@@ -203,7 +203,7 @@ export default function ClientSettings() {
                     {users?.map((user: any) => (
                       <TableRow key={user.id}>
                         <TableCell>
-                          {user.profile.first_name} {user.profile.last_name}
+                          {user.profiles.first_name} {user.profiles.last_name}
                         </TableCell>
                         <TableCell>
                           <Badge>{user.role}</Badge>
