@@ -61,31 +61,22 @@ export function ClientUsersTab({ clientId }: ClientUsersTabProps) {
 
   const handleAddUser = async () => {
     try {
-      // First, get the user's auth ID using the edge function
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-user-by-email`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ email }),
-        }
-      );
+      // Get the user's auth ID using the edge function
+      const { data, error } = await supabase.functions.invoke('get-user-by-email', {
+        body: { email },
+      });
 
-      const { user, error } = await response.json();
-
-      if (error || !user) {
-        throw new Error(error || 'User not found');
+      if (error) throw error;
+      if (!data?.user) {
+        throw new Error('User not found');
       }
 
-      // Then create the client_user association
+      // Create the client_user association
       const { error: insertError } = await supabase
         .from('client_users')
         .insert({
           client_id: clientId,
-          user_id: user.id,
+          user_id: data.user.id,
           role: role,
         });
 
