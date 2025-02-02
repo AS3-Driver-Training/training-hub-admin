@@ -62,12 +62,11 @@ export function ClientUsersTab({ clientId }: ClientUsersTabProps) {
   const handleAddUser = async () => {
     try {
       // First, get the user's auth ID using their email
-      const { data: userData, error: userError } = await supabase.auth.admin
-        .listUsers({
-          filters: {
-            email: email
-          }
-        });
+      const { data: userData, error: userError } = await supabase.auth.admin.users({
+        page: 1,
+        perPage: 1,
+        search: email
+      });
 
       if (userError || !userData?.users?.length) {
         throw new Error('User not found');
