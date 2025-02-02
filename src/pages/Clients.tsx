@@ -1,8 +1,6 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { UserPlus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { InviteClientDialog } from "@/components/InviteClientDialog";
 
 export default function Clients() {
   const { data: clients, isLoading } = useQuery({
@@ -41,10 +40,7 @@ export default function Clients() {
               Manage your client organizations
             </p>
           </div>
-          <Button>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Invite New Client
-          </Button>
+          <InviteClientDialog />
         </div>
 
         <div className="rounded-md border">
