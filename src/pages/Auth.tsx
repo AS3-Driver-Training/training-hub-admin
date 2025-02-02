@@ -23,7 +23,8 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        // First, sign up the user
+        const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -33,7 +34,25 @@ const Auth = () => {
             },
           },
         });
-        if (error) throw error;
+
+        if (signUpError) throw signUpError;
+
+        // Then explicitly create the profile
+        if (authData.user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: authData.user.id,
+                first_name: firstName,
+                last_name: lastName,
+                role: 'employee'  // Using the default role
+              }
+            ]);
+
+          if (profileError) throw profileError;
+        }
+
         toast({
           title: "Success!",
           description: "Please check your email to verify your account.",
