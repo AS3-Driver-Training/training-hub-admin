@@ -25,18 +25,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { data: profile } = await supabase
+          const { data: profile, error } = await supabase
             .from('profiles')
             .select('first_name, last_name, role')
             .eq('id', user.id)
-            .maybeSingle();
+            .single();
+          
+          if (error) throw error;
           
           if (profile) {
             setUserName(`${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User');
-            setUserRole(profile.role ? (profile.role.charAt(0).toUpperCase() + profile.role.slice(1)) : 'User');
-          } else {
-            console.warn('No profile found for user:', user.id);
-            toast.error('Unable to load user profile');
+            // Capitalize the first letter of the role
+            setUserRole(profile.role.charAt(0).toUpperCase() + profile.role.slice(1));
           }
         }
       } catch (error) {
@@ -44,7 +44,17 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         toast.error('Error loading user profile');
       }
     };
+
     getProfile();
+
+    // Subscribe to auth changes to refresh the profile
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      getProfile();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogout = async () => {
