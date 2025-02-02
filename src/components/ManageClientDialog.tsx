@@ -28,6 +28,12 @@ interface ManageClientDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface CreateClientResponse {
+  client_id: string;
+  invitation_id: string;
+  token: string;
+}
+
 export function ManageClientDialog({ client, open, onOpenChange }: ManageClientDialogProps) {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
@@ -80,12 +86,15 @@ export function ManageClientDialog({ client, open, onOpenChange }: ManageClientD
 
         if (error) throw error;
 
+        // Type assertion for the response
+        const response = data as unknown as CreateClientResponse;
+
         // Send invitation email
         const emailResponse = await supabase.functions.invoke('send-invitation', {
           body: {
             clientName: formData.clientName,
             email: formData.email,
-            token: data.token,
+            token: response.token,
           },
         });
 
