@@ -13,7 +13,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { InviteClientDialog } from "@/components/InviteClientDialog";
+import { ManageClientDialog } from "@/components/ManageClientDialog";
 import { useProfile } from "@/hooks/useProfile";
+import { useState } from "react";
 
 const stats = [
   {
@@ -39,6 +41,7 @@ const stats = [
 const Index = () => {
   const { userRole } = useProfile();
   const isSuperAdmin = userRole === 'superadmin';
+  const [selectedClient, setSelectedClient] = useState<any>(null);
 
   const { data: clients, isLoading } = useQuery({
     queryKey: ['clients'],
@@ -51,7 +54,7 @@ const Index = () => {
       if (error) throw error;
       return data;
     },
-    enabled: isSuperAdmin, // Only fetch if user is superadmin
+    enabled: isSuperAdmin,
   });
 
   return (
@@ -118,7 +121,11 @@ const Index = () => {
                     </TableRow>
                   ) : (
                     clients?.map((client) => (
-                      <TableRow key={client.id}>
+                      <TableRow 
+                        key={client.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => setSelectedClient(client)}
+                      >
                         <TableCell className="font-medium">
                           {client.name}
                         </TableCell>
@@ -145,6 +152,14 @@ const Index = () => {
           </Card>
         )}
       </div>
+
+      {selectedClient && (
+        <ManageClientDialog
+          client={selectedClient}
+          open={!!selectedClient}
+          onOpenChange={(open) => !open && setSelectedClient(null)}
+        />
+      )}
     </DashboardLayout>
   );
 };
