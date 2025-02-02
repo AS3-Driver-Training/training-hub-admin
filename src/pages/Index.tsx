@@ -13,9 +13,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { InviteClientDialog } from "@/components/InviteClientDialog";
-import { ManageClientDialog } from "@/components/ManageClientDialog";
 import { useProfile } from "@/hooks/useProfile";
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const stats = [
   {
@@ -40,8 +39,8 @@ const stats = [
 
 const Index = () => {
   const { userRole } = useProfile();
+  const navigate = useNavigate();
   const isSuperAdmin = userRole === 'superadmin';
-  const [selectedClient, setSelectedClient] = useState<any>(null);
 
   const { data: clients, isLoading } = useQuery({
     queryKey: ['clients'],
@@ -124,7 +123,7 @@ const Index = () => {
                       <TableRow 
                         key={client.id}
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => setSelectedClient(client)}
+                        onClick={() => navigate(`/clients/${client.id}`)}
                       >
                         <TableCell className="font-medium">
                           {client.name}
@@ -152,14 +151,6 @@ const Index = () => {
           </Card>
         )}
       </div>
-
-      {selectedClient && (
-        <ManageClientDialog
-          client={selectedClient}
-          open={!!selectedClient}
-          onOpenChange={(open) => !open && setSelectedClient(null)}
-        />
-      )}
     </DashboardLayout>
   );
 };
