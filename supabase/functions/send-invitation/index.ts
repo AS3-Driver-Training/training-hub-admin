@@ -22,7 +22,11 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log("Starting invitation email process");
     const { clientName, email, token }: InvitationEmailRequest = await req.json();
+    
+    console.log("Request data:", { clientName, email, tokenLength: token?.length });
+    console.log("RESEND_API_KEY configured:", !!Deno.env.get("RESEND_API_KEY"));
 
     const emailResponse = await resend.emails.send({
       from: "Lovable <onboarding@resend.dev>",
@@ -37,7 +41,7 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Invitation email sent successfully:", emailResponse);
+    console.log("Email sent successfully:", emailResponse);
 
     return new Response(JSON.stringify(emailResponse), {
       status: 200,
@@ -47,9 +51,21 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error("Error in send-invitation function:", error);
+    console.error("Detailed error in send-invitation function:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      cause: error.cause,
+    });
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: {
+          name: error.name,
+          cause: error.cause
+        }
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
