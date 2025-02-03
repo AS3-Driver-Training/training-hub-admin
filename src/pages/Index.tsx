@@ -41,20 +41,32 @@ const Index = () => {
   const { userRole } = useProfile();
   const navigate = useNavigate();
   const isSuperAdmin = userRole === 'superadmin';
+  
+  console.log('Current user role:', userRole); // Debug log
 
-  const { data: clients, isLoading } = useQuery({
+  const { data: clients, isLoading, error } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
+      console.log('Fetching clients...'); // Debug log
       const { data, error } = await supabase
         .from('clients')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching clients:', error); // Debug log
+        throw error;
+      }
+      
+      console.log('Fetched clients:', data); // Debug log
       return data;
     },
     enabled: isSuperAdmin,
   });
+
+  if (error) {
+    console.error('Query error:', error); // Debug log
+  }
 
   return (
     <DashboardLayout>
