@@ -10,23 +10,6 @@ interface ClientUsersTabProps {
   clientName: string;
 }
 
-interface UserData {
-  id: string;
-  role: string;
-  status: string;
-  user_id: string;
-  client_id: string;
-  created_at: string;
-  updated_at: string;
-  email: string;
-  profiles: {
-    first_name: string;
-    last_name: string;
-  };
-  groups: { name: string }[];
-  teams: { name: string }[];
-}
-
 export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
   const { data: users, isLoading } = useQuery({
     queryKey: ['client_users', clientId],
@@ -92,7 +75,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         <div>
           <h3 className="text-lg font-semibold">Users</h3>
           <p className="text-sm text-muted-foreground">
-            Manage users, their roles, and assignments
+            Manage client users and their permissions
           </p>
         </div>
         <AddUserDialog clientId={clientId} />
