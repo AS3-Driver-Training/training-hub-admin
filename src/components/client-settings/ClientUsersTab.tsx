@@ -37,6 +37,19 @@ interface ClientUsersTabProps {
   clientName: string;
 }
 
+interface UserData {
+  id: string;
+  role: string;
+  status: string;
+  user_id: string;
+  profiles: {
+    first_name: string;
+    last_name: string;
+  };
+  groups?: { name: string }[];
+  teams?: { name: string }[];
+}
+
 export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -46,7 +59,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
   const { data: users, isLoading } = useQuery({
     queryKey: ['client_users', clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, get the client users with their profiles
+      const { data: clientUsers, error: clientUsersError } = await supabase
         .from('client_users')
         .select(`
           *,
@@ -54,22 +68,44 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
             id,
             first_name,
             last_name
-          ),
-          user_groups:user_groups (
-            groups:group_id (
-              name
-            )
-          ),
-          user_teams:user_teams (
-            teams:team_id (
-              name
-            )
           )
         `)
         .eq('client_id', clientId);
 
-      if (error) throw error;
-      return data;
+      if (clientUsersError) throw clientUsersError;
+
+      // For each user, fetch their groups and teams
+      const usersWithDetails = await Promise.all(
+        clientUsers.map(async (user) => {
+          // Fetch user's groups
+          const { data: userGroups } = await supabase
+            .from('user_groups')
+            .select(`
+              groups (
+                name
+              )
+            `)
+            .eq('user_id', user.user_id);
+
+          // Fetch user's teams
+          const { data: userTeams } = await supabase
+            .from('user_teams')
+            .select(`
+              teams (
+                name
+              )
+            `)
+            .eq('user_id', user.user_id);
+
+          return {
+            ...user,
+            groups: userGroups?.map(g => g.groups) || [],
+            teams: userTeams?.map(t => t.teams) || []
+          };
+        })
+      );
+
+      return usersWithDetails;
     },
   });
 
@@ -179,7 +215,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users?.map((user) => (
+            {users?.map((user: UserData) => (
               <TableRow key={user.id}>
                 <TableCell>
                   {user.profiles.first_name} {user.profiles.last_name}
@@ -195,16 +231,16 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {user.user_groups?.map((ug: any) => (
-                    <Badge key={ug.groups.id} variant="outline" className="mr-1">
-                      {ug.groups.name}
+                  {user.groups?.map((group, index) => (
+                    <Badge key={index} variant="outline" className="mr-1">
+                      {group.name}
                     </Badge>
                   ))}
                 </TableCell>
                 <TableCell>
-                  {user.user_teams?.map((ut: any) => (
-                    <Badge key={ut.teams.id} variant="outline" className="mr-1">
-                      {ut.teams.name}
+                  {user.teams?.map((team, index) => (
+                    <Badge key={index} variant="outline" className="mr-1">
+                      {team.name}
                     </Badge>
                   ))}
                 </TableCell>
