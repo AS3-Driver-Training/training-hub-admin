@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { UserPlus } from "lucide-react";
@@ -31,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { ClientUserRow } from "./ClientUserRow";
 
 interface ClientUsersTabProps {
   clientId: string;
@@ -42,6 +42,7 @@ interface UserData {
   role: string;
   status: string;
   user_id: string;
+  email: string;
   profiles: {
     first_name: string;
     last_name: string;
@@ -59,7 +60,6 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
   const { data: users, isLoading } = useQuery({
     queryKey: ['client_users', clientId],
     queryFn: async () => {
-      // Get client users with their profiles
       const { data: clientUsers, error: clientUsersError } = await supabase
         .from('client_users')
         .select(`
@@ -73,10 +73,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
       if (clientUsersError) throw clientUsersError;
 
-      // For each user, fetch their groups and teams separately
       const usersWithDetails = await Promise.all(
         clientUsers.map(async (user) => {
-          // First get the user's groups
           const { data: groups, error: groupsError } = await supabase
             .from('user_groups')
             .select(`
@@ -88,7 +86,6 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
           if (groupsError) console.error('Error fetching groups:', groupsError);
 
-          // Then get the user's teams
           const { data: teams, error: teamsError } = await supabase
             .from('user_teams')
             .select(`
@@ -114,7 +111,6 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
   const addUserMutation = useMutation({
     mutationFn: async ({ email, role }: { email: string; role: string }) => {
-      // Get user ID from email using edge function
       const { data: userData, error: userError } = await supabase.functions.invoke(
         'get-user-by-email',
         { body: { email } }
@@ -219,35 +215,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           </TableHeader>
           <TableBody>
             {users?.map((user: UserData) => (
-              <TableRow key={user.id}>
-                <TableCell>
-                  {user.profiles.first_name} {user.profiles.last_name}
-                </TableCell>
-                <TableCell>
-                  <Badge>{user.role}</Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={user.status === "pending" ? "secondary" : "default"}
-                  >
-                    {user.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {user.groups?.map((group, index) => (
-                    <Badge key={index} variant="outline" className="mr-1">
-                      {group.name}
-                    </Badge>
-                  ))}
-                </TableCell>
-                <TableCell>
-                  {user.teams?.map((team, index) => (
-                    <Badge key={index} variant="outline" className="mr-1">
-                      {team.name}
-                    </Badge>
-                  ))}
-                </TableCell>
-              </TableRow>
+              <ClientUserRow key={user.id} user={user} clientId={clientId} />
             ))}
           </TableBody>
         </Table>

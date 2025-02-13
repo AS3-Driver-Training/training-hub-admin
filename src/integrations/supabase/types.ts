@@ -113,6 +113,47 @@ export type Database = {
           },
         ]
       }
+      invitations: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          status: string | null
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          status?: string | null
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          status?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
