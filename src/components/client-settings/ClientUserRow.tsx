@@ -20,6 +20,10 @@ interface UserData {
   role: string;
   status: string;
   user_id: string;
+  client_id: string;
+  created_at: string;
+  updated_at: string;
+  email: string;
   profiles: {
     first_name: string;
     last_name: string;
@@ -94,14 +98,11 @@ export function ClientUserRow({ user, clientId }: ClientUserRowProps) {
   };
 
   return (
-    <>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <TableRow className="cursor-pointer hover:bg-muted/50">
         <TableCell>
           <div className="flex items-center space-x-2">
-            <CollapsibleTrigger
-              onClick={() => setIsOpen(!isOpen)}
-              className="p-1 hover:bg-muted rounded"
-            >
+            <CollapsibleTrigger className="p-1 hover:bg-muted rounded">
               {isOpen ? (
                 <ChevronDown className="h-4 w-4" />
               ) : (
@@ -169,6 +170,6 @@ export function ClientUserRow({ user, clientId }: ClientUserRowProps) {
           </CollapsibleContent>
         </TableCell>
       </TableRow>
-    </>
+    </Collapsible>
   );
 }
