@@ -46,8 +46,8 @@ interface UserData {
     first_name: string;
     last_name: string;
   };
-  groups?: { name: string }[];
-  teams?: { name: string }[];
+  groups: { name: string }[];
+  teams: { name: string }[];
 }
 
 export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
@@ -59,13 +59,12 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
   const { data: users, isLoading } = useQuery({
     queryKey: ['client_users', clientId],
     queryFn: async () => {
-      // First, get the client users with their profiles
+      // Get client users with their profiles
       const { data: clientUsers, error: clientUsersError } = await supabase
         .from('client_users')
         .select(`
           *,
           profiles:user_id (
-            id,
             first_name,
             last_name
           )
@@ -74,33 +73,37 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
       if (clientUsersError) throw clientUsersError;
 
-      // For each user, fetch their groups and teams
+      // For each user, fetch their groups and teams separately
       const usersWithDetails = await Promise.all(
         clientUsers.map(async (user) => {
-          // Fetch user's groups
-          const { data: userGroups } = await supabase
+          // First get the user's groups
+          const { data: groups, error: groupsError } = await supabase
             .from('user_groups')
             .select(`
-              groups (
+              groups!inner (
                 name
               )
             `)
             .eq('user_id', user.user_id);
 
-          // Fetch user's teams
-          const { data: userTeams } = await supabase
+          if (groupsError) console.error('Error fetching groups:', groupsError);
+
+          // Then get the user's teams
+          const { data: teams, error: teamsError } = await supabase
             .from('user_teams')
             .select(`
-              teams (
+              teams!inner (
                 name
               )
             `)
             .eq('user_id', user.user_id);
+
+          if (teamsError) console.error('Error fetching teams:', teamsError);
 
           return {
             ...user,
-            groups: userGroups?.map(g => g.groups) || [],
-            teams: userTeams?.map(t => t.teams) || []
+            groups: groups?.map(g => g.groups) || [],
+            teams: teams?.map(t => t.teams) || []
           };
         })
       );
