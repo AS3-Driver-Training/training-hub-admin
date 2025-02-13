@@ -4,7 +4,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, Mail, Trash2, PenSquare } from "lucide-react";
+import { ChevronDown, ChevronRight, Mail, Trash2, MoreVertical } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,13 +43,11 @@ export function ClientUserRow({ user, clientId }: ClientUserRowProps) {
 
   const handleResendInvitation = async () => {
     try {
-      // Generate new token
       const { data: tokenData, error: tokenError } = await supabase
         .rpc('generate_invitation_token');
 
       if (tokenError) throw tokenError;
 
-      // Create new invitation
       const { error: inviteError } = await supabase
         .from('invitations')
         .insert({
@@ -61,7 +59,6 @@ export function ClientUserRow({ user, clientId }: ClientUserRowProps) {
 
       if (inviteError) throw inviteError;
 
-      // Send invitation email
       const emailResponse = await supabase.functions.invoke('send-invitation', {
         body: {
           email: user.email,
@@ -99,9 +96,9 @@ export function ClientUserRow({ user, clientId }: ClientUserRowProps) {
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <TableRow className="cursor-pointer hover:bg-muted/50">
+      <TableRow className="hover:bg-muted/50">
         <TableCell>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
             <CollapsibleTrigger className="p-1 hover:bg-muted rounded">
               {isOpen ? (
                 <ChevronDown className="h-4 w-4" />
@@ -109,61 +106,78 @@ export function ClientUserRow({ user, clientId }: ClientUserRowProps) {
                 <ChevronRight className="h-4 w-4" />
               )}
             </CollapsibleTrigger>
-            <span>{user.profiles.first_name} {user.profiles.last_name}</span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <PenSquare className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {user.status === "pending" && (
-                  <DropdownMenuItem onClick={handleResendInvitation}>
-                    <Mail className="mr-2 h-4 w-4" />
-                    Resend Invitation
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={handleDeleteUser} className="text-destructive">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Remove User
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div>
+              <div className="font-medium">
+                {user.profiles.first_name} {user.profiles.last_name}
+              </div>
+            </div>
           </div>
         </TableCell>
+        <TableCell className="text-sm text-muted-foreground">
+          {user.email}
+        </TableCell>
         <TableCell>
-          <Badge>{user.role}</Badge>
+          <Badge variant="outline">{user.role}</Badge>
         </TableCell>
         <TableCell>
           <Badge variant={user.status === "pending" ? "secondary" : "default"}>
             {user.status}
           </Badge>
         </TableCell>
-        <TableCell>{user.groups.length}</TableCell>
-        <TableCell>{user.teams.length}</TableCell>
+        <TableCell className="text-center">{user.groups.length}</TableCell>
+        <TableCell className="text-center">{user.teams.length}</TableCell>
+        <TableCell className="text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {user.status === "pending" && (
+                <DropdownMenuItem onClick={handleResendInvitation}>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Resend Invitation
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={handleDeleteUser} className="text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Remove User
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell colSpan={5} className="p-0">
+        <TableCell colSpan={7} className="p-0">
           <CollapsibleContent>
             <div className="p-4 bg-muted/50 space-y-4">
               <div>
                 <h4 className="text-sm font-semibold mb-2">Groups</h4>
                 <div className="flex flex-wrap gap-2">
-                  {user.groups.map((group, index) => (
-                    <Badge key={index} variant="outline">
-                      {group.name}
-                    </Badge>
-                  ))}
+                  {user.groups.length > 0 ? (
+                    user.groups.map((group, index) => (
+                      <Badge key={index} variant="outline">
+                        {group.name}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-sm text-muted-foreground">No groups assigned</span>
+                  )}
                 </div>
               </div>
               <div>
                 <h4 className="text-sm font-semibold mb-2">Teams</h4>
                 <div className="flex flex-wrap gap-2">
-                  {user.teams.map((team, index) => (
-                    <Badge key={index} variant="outline">
-                      {team.name}
-                    </Badge>
-                  ))}
+                  {user.teams.length > 0 ? (
+                    user.teams.map((team, index) => (
+                      <Badge key={index} variant="outline">
+                        {team.name}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-sm text-muted-foreground">No teams assigned</span>
+                  )}
                 </div>
               </div>
             </div>

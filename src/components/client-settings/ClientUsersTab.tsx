@@ -173,7 +173,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
               Add User
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Add User</DialogTitle>
             </DialogHeader>
@@ -209,23 +209,34 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         </Dialog>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[300px]">Name</TableHead>
-              <TableHead className="w-[120px]">Role</TableHead>
-              <TableHead className="w-[120px]">Status</TableHead>
-              <TableHead className="w-[100px] text-center">Groups</TableHead>
-              <TableHead className="w-[100px] text-center">Teams</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users?.map((user: UserData) => (
-              <ClientUserRow key={user.id} user={user} clientId={clientId} />
-            ))}
-          </TableBody>
-        </Table>
+      <div className="border rounded-md">
+        <div className="w-full overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="w-[250px]">User</TableHead>
+                <TableHead className="w-[150px]">Email</TableHead>
+                <TableHead className="w-[100px]">Role</TableHead>
+                <TableHead className="w-[100px]">Status</TableHead>
+                <TableHead className="w-[100px] text-center">Groups</TableHead>
+                <TableHead className="w-[100px] text-center">Teams</TableHead>
+                <TableHead className="w-[100px] text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users?.map((user: UserData) => (
+                <ClientUserRow key={user.id} user={user} clientId={clientId} />
+              ))}
+              {!users?.length && (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-24 text-center">
+                    No users found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </Card>
   );
