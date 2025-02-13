@@ -63,7 +63,6 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
   const { data: users, isLoading } = useQuery({
     queryKey: ['client_users', clientId],
     queryFn: async () => {
-      // First, get the client users with their profiles
       const { data: clientUsers, error: clientUsersError } = await supabase
         .from('client_users')
         .select(`
@@ -77,10 +76,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
       if (clientUsersError) throw clientUsersError;
 
-      // Then, get their groups and teams separately
       const usersWithDetails = await Promise.all(
         clientUsers.map(async (user) => {
-          // Get user's groups
           const { data: userGroups, error: groupsError } = await supabase
             .from('user_groups')
             .select('groups (name)')
@@ -88,7 +85,6 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
           if (groupsError) console.error('Error fetching groups:', groupsError);
 
-          // Get user's teams
           const { data: userTeams, error: teamsError } = await supabase
             .from('user_teams')
             .select('teams (name)')
@@ -96,7 +92,6 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
           if (teamsError) console.error('Error fetching teams:', teamsError);
 
-          // Get user's email from auth.users using an Edge Function
           const { data: userData, error: userError } = await supabase.functions.invoke(
             'get-user-by-id',
             { 
@@ -218,11 +213,11 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Groups</TableHead>
-              <TableHead>Teams</TableHead>
+              <TableHead className="w-[300px]">Name</TableHead>
+              <TableHead className="w-[120px]">Role</TableHead>
+              <TableHead className="w-[120px]">Status</TableHead>
+              <TableHead className="w-[100px] text-center">Groups</TableHead>
+              <TableHead className="w-[100px] text-center">Teams</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
