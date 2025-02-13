@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -41,6 +42,9 @@ interface UserData {
   role: string;
   status: string;
   user_id: string;
+  client_id: string;
+  created_at: string;
+  updated_at: string;
   email: string;
   profiles: {
     first_name: string;
@@ -59,21 +63,25 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
   const { data: users, isLoading } = useQuery({
     queryKey: ['client_users', clientId],
     queryFn: async () => {
+      // First, get the client users with their profiles
       const { data: clientUsers, error: clientUsersError } = await supabase
         .from('client_users')
         .select(`
           *,
           profiles:user_id (
             first_name,
-            last_name
+            last_name,
+            email
           )
         `)
         .eq('client_id', clientId);
 
       if (clientUsersError) throw clientUsersError;
 
+      // Then, get their groups and teams separately
       const usersWithDetails = await Promise.all(
         clientUsers.map(async (user) => {
+          // Get user's groups
           const { data: userGroups, error: groupsError } = await supabase
             .from('user_groups')
             .select('groups (name)')
@@ -81,6 +89,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
           if (groupsError) console.error('Error fetching groups:', groupsError);
 
+          // Get user's teams
           const { data: userTeams, error: teamsError } = await supabase
             .from('user_teams')
             .select('teams (name)')
@@ -90,6 +99,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
           return {
             ...user,
+            email: user.profiles.email,
             groups: userGroups?.map(g => g.groups) || [],
             teams: userTeams?.map(t => t.teams) || []
           };
