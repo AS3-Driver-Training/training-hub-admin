@@ -14,7 +14,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
   const { data: users, isLoading } = useQuery({
     queryKey: ['client_users', clientId],
     queryFn: async () => {
-      // First get all client users with their profile information
+      // Get all client users with their profile information
       const { data: clientUsers, error: clientUsersError } = await supabase
         .from('client_users')
         .select(`
@@ -25,7 +25,10 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           client_id,
           created_at,
           updated_at,
-          profiles:user_id (
+          user:user_id (
+            email
+          ),
+          profile:user_id (
             first_name,
             last_name
           )
@@ -37,7 +40,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         throw clientUsersError;
       }
 
-      // Then fetch email addresses for each user
+      // Then fetch email addresses for each user since we can't get them directly
       const usersWithDetails = await Promise.all(
         clientUsers.map(async (user) => {
           // Get user email from auth
@@ -76,7 +79,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
           return {
             ...user,
-            email: userData?.user?.email || 'No email found',
+            profiles: user.profile || { first_name: 'Unknown', last_name: 'User' },
+            email: userData?.user?.email || user.user?.email || 'No email found',
             groups: Array(groupCount || 0),
             teams: Array(teamCount || 0)
           };
