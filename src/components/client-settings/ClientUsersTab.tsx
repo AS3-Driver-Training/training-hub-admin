@@ -14,78 +14,87 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
   const { data: users, isLoading } = useQuery({
     queryKey: ['client_users', clientId],
     queryFn: async () => {
-      // Get all client users with their profile information
-      const { data: clientUsers, error: clientUsersError } = await supabase
-        .from('client_users')
-        .select(`
-          id,
-          role,
-          status,
-          user_id,
-          client_id,
-          created_at,
-          updated_at,
-          profiles:user_id (
-            first_name,
-            last_name
-          )
-        `)
-        .eq('client_id', clientId);
+      try {
+        // Get all client users with their profile information
+        const { data: clientUsers, error: clientUsersError } = await supabase
+          .from('client_users')
+          .select(`
+            id,
+            role,
+            status,
+            user_id,
+            client_id,
+            created_at,
+            updated_at,
+            profiles:user_id (
+              first_name,
+              last_name
+            )
+          `)
+          .eq('client_id', clientId);
 
-      if (clientUsersError) {
-        console.error('Error fetching client users:', clientUsersError);
-        throw clientUsersError;
-      }
+        if (clientUsersError) {
+          console.error('Error fetching client users:', clientUsersError);
+          throw clientUsersError;
+        }
 
-      // Then fetch email addresses for each user since we can't get them directly
-      const usersWithDetails = await Promise.all(
-        clientUsers.map(async (user) => {
-          // Get user email from auth
-          const { data: userData, error: userError } = await supabase.functions.invoke(
-            'get-user-by-id',
-            { 
-              body: { 
-                userId: user.user_id 
-              } 
+        // Then fetch email addresses and additional details for each user
+        const usersWithDetails = await Promise.all(
+          (clientUsers || []).map(async (user) => {
+            try {
+              // Get user email from auth
+              const { data: userData, error: userError } = await supabase.functions.invoke(
+                'get-user-by-id',
+                { 
+                  body: { 
+                    userId: user.user_id 
+                  } 
+                }
+              );
+
+              if (userError) {
+                console.error('Error fetching user:', userError);
+                throw userError;
+              }
+
+              // Get group count
+              const { count: groupCount } = await supabase
+                .from('user_groups')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', user.user_id);
+
+              // Get team count
+              const { count: teamCount } = await supabase
+                .from('user_teams')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', user.user_id);
+
+              return {
+                ...user,
+                profiles: user.profiles || { first_name: 'Unknown', last_name: 'User' },
+                email: userData?.user?.email || 'No email found',
+                groups: Array(groupCount || 0),
+                teams: Array(teamCount || 0)
+              };
+            } catch (error) {
+              console.error('Error processing user:', user.user_id, error);
+              return {
+                ...user,
+                profiles: user.profiles || { first_name: 'Unknown', last_name: 'User' },
+                email: 'Error loading email',
+                groups: [],
+                teams: []
+              };
             }
-          );
+          })
+        );
 
-          if (userError) {
-            console.error('Error fetching user:', userError);
-          }
-
-          // Get group count
-          const { count: groupCount, error: groupError } = await supabase
-            .from('user_groups')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.user_id);
-
-          if (groupError) {
-            console.error('Error counting groups:', groupError);
-          }
-
-          // Get team count
-          const { count: teamCount, error: teamError } = await supabase
-            .from('user_teams')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.user_id);
-
-          if (teamError) {
-            console.error('Error counting teams:', teamError);
-          }
-
-          return {
-            ...user,
-            profiles: user.profiles || { first_name: 'Unknown', last_name: 'User' },
-            email: userData?.user?.email || 'No email found',
-            groups: Array(groupCount || 0),
-            teams: Array(teamCount || 0)
-          };
-        })
-      );
-
-      console.log('Fetched users:', usersWithDetails);
-      return usersWithDetails;
+        console.log('Fetched users:', usersWithDetails);
+        return usersWithDetails;
+      } catch (error) {
+        console.error('Error in queryFn:', error);
+        throw error;
+      }
     },
   });
 
