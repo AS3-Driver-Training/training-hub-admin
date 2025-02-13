@@ -25,10 +25,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           client_id,
           created_at,
           updated_at,
-          user:user_id (
-            email
-          ),
-          profile:user_id (
+          profiles:user_id (
             first_name,
             last_name
           )
@@ -79,8 +76,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
           return {
             ...user,
-            profiles: user.profile || { first_name: 'Unknown', last_name: 'User' },
-            email: userData?.user?.email || user.user?.email || 'No email found',
+            profiles: user.profiles || { first_name: 'Unknown', last_name: 'User' },
+            email: userData?.user?.email || 'No email found',
             groups: Array(groupCount || 0),
             teams: Array(teamCount || 0)
           };
