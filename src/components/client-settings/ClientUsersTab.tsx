@@ -70,8 +70,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           *,
           profiles:user_id (
             first_name,
-            last_name,
-            email
+            last_name
           )
         `)
         .eq('client_id', clientId);
@@ -97,9 +96,21 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
           if (teamsError) console.error('Error fetching teams:', teamsError);
 
+          // Get user's email from auth.users using an Edge Function
+          const { data: userData, error: userError } = await supabase.functions.invoke(
+            'get-user-by-id',
+            { 
+              body: { 
+                userId: user.user_id 
+              } 
+            }
+          );
+
+          if (userError) console.error('Error fetching user:', userError);
+
           return {
             ...user,
-            email: user.profiles.email,
+            email: userData?.user?.email || '',
             groups: userGroups?.map(g => g.groups) || [],
             teams: userTeams?.map(t => t.teams) || []
           };
