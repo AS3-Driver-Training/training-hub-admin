@@ -1,3 +1,4 @@
+
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,8 +8,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { ClientUsersTab } from "@/components/client-settings/ClientUsersTab";
-import { ClientInvitationsTab } from "@/components/client-settings/ClientInvitationsTab";
 import { ClientSettingsTab } from "@/components/client-settings/ClientSettingsTab";
+import { ClientGroupsTab } from "@/components/client-settings/ClientGroupsTab";
 
 export default function ClientSettings() {
   const { clientId } = useParams();
@@ -51,7 +52,7 @@ export default function ClientSettings() {
           <div>
             <h1 className="text-3xl font-bold">{client.name}</h1>
             <p className="text-muted-foreground">
-              Manage client settings, users, and invitations
+              Manage client settings, users, and groups
             </p>
           </div>
         </div>
@@ -59,16 +60,16 @@ export default function ClientSettings() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="invitations">Invitations</TabsTrigger>
+            <TabsTrigger value="groups">Groups & Teams</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
-            <ClientUsersTab clientId={clientId!} />
+            <ClientUsersTab clientId={clientId!} clientName={client.name} />
           </TabsContent>
 
-          <TabsContent value="invitations">
-            <ClientInvitationsTab clientId={clientId!} clientName={client.name} />
+          <TabsContent value="groups">
+            <ClientGroupsTab clientId={clientId!} />
           </TabsContent>
 
           <TabsContent value="settings">

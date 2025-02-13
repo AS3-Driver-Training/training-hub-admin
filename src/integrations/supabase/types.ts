@@ -15,6 +15,7 @@ export type Database = {
           created_at: string
           id: string
           role: string
+          status: string
           updated_at: string
           user_id: string
         }
@@ -23,6 +24,7 @@ export type Database = {
           created_at?: string
           id?: string
           role?: string
+          status?: string
           updated_at?: string
           user_id: string
         }
@@ -31,6 +33,7 @@ export type Database = {
           created_at?: string
           id?: string
           role?: string
+          status?: string
           updated_at?: string
           user_id?: string
         }
@@ -78,37 +81,31 @@ export type Database = {
         }
         Relationships: []
       }
-      invitations: {
+      groups: {
         Row: {
-          client_id: string | null
+          client_id: string
           created_at: string
-          email: string
-          expires_at: string
           id: string
-          status: string
-          token: string
+          name: string
+          updated_at: string
         }
         Insert: {
-          client_id?: string | null
+          client_id: string
           created_at?: string
-          email: string
-          expires_at: string
           id?: string
-          status?: string
-          token: string
+          name: string
+          updated_at?: string
         }
         Update: {
-          client_id?: string | null
+          client_id?: string
           created_at?: string
-          email?: string
-          expires_at?: string
           id?: string
-          status?: string
-          token?: string
+          name?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "invitations_client_id_fkey"
+            foreignKeyName: "groups_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -142,6 +139,110 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      teams: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_groups: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_groups_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_groups_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_teams: {
+        Row: {
+          created_at: string
+          id: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_teams_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_teams_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
