@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +42,7 @@ interface InternalUser {
   last_name: string;
   title: string;
   created_at: string;
+  last_login: string | null;
 }
 
 interface EditUserFormData {
@@ -115,7 +117,7 @@ export function InternalUsersTab() {
   };
 
   const handleDelete = async (user: InternalUser) => {
-    if (!confirm(`Are you sure you want to delete ${user.first_name} ${user.last_name}?`)) {
+    if (!confirm(`Are you sure you want to deactivate ${user.first_name} ${user.last_name}? This action cannot be undone.`)) {
       return;
     }
 
@@ -179,63 +181,66 @@ export function InternalUsersTab() {
         </Button>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>Created At</TableHead>
-            <TableHead className="w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users?.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>
-                {user.first_name} {user.last_name}
-              </TableCell>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>
-                <Badge variant={user.role === 'superadmin' ? 'destructive' : user.role === 'admin' ? 'default' : 'secondary'}>
-                  {user.role}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
-                  {user.status}
-                </Badge>
-              </TableCell>
-              <TableCell>{user.title || '-'}</TableCell>
-              <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleEdit(user)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Edit User
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleDelete(user)}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete User
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="grid gap-4">
+        {users?.map((user) => (
+          <Card key={user.id} className="p-4">
+            <div className="flex justify-between items-start">
+              <div className="space-y-4 flex-grow">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <h4 className="font-medium">
+                        {user.first_name} {user.last_name}
+                      </h4>
+                      <Badge variant={user.role === 'superadmin' ? 'destructive' : user.role === 'admin' ? 'default' : 'secondary'}>
+                        {user.role}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
+                    <p className="text-sm mt-1">{user.title || 'No title'}</p>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEdit(user)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit User
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleDelete(user)}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Deactivate User
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <div className="flex gap-4 text-sm text-muted-foreground">
+                  <div>
+                    <span className="font-medium text-foreground">Status: </span>
+                    <Badge variant={user.status === 'active' ? 'default' : 'secondary'} className="ml-1">
+                      {user.status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <span className="font-medium text-foreground">Created: </span>
+                    {new Date(user.created_at).toLocaleDateString()}
+                  </div>
+                  <div>
+                    <span className="font-medium text-foreground">Last Login: </span>
+                    {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
