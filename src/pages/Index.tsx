@@ -17,7 +17,6 @@ import { InviteClientDialog } from "@/components/InviteClientDialog";
 import { useProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 
 const stats = [
   {
@@ -71,8 +70,8 @@ const Index = () => {
   console.log('Render state:', { isSuperAdmin, clients, isLoading, error });
 
   const handleClientClick = (clientId: string) => {
-    console.log('Navigating to:', `/client-settings/${clientId}`);
-    navigate(`/client-settings/${clientId}`);
+    console.log('Navigating to:', `/clients/${clientId}/settings`);
+    navigate(`/clients/${clientId}/settings`);
   };
 
   return (
@@ -122,25 +121,24 @@ const Index = () => {
                     <TableHead>Client Name</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created At</TableHead>
-                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center">
+                      <TableCell colSpan={3} className="text-center">
                         Loading...
                       </TableCell>
                     </TableRow>
                   ) : error ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-destructive">
+                      <TableCell colSpan={3} className="text-center text-destructive">
                         Failed to load clients. Please try again later.
                       </TableCell>
                     </TableRow>
                   ) : !clients || clients.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center">
+                      <TableCell colSpan={3} className="text-center">
                         No clients found. Invite your first client to get started.
                       </TableCell>
                     </TableRow>
@@ -167,17 +165,6 @@ const Index = () => {
                         </TableCell>
                         <TableCell>
                           {new Date(client.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleClientClick(client.id);
-                            }}
-                          >
-                            Manage Settings
-                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
