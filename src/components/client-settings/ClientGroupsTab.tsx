@@ -3,12 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Building2 } from "lucide-react";
+import { Building2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
 import { AddGroupDialog } from "./groups/AddGroupDialog";
 import { GroupsTable } from "./groups/GroupsTable";
+import { AddTeamDialog } from "./groups/AddTeamDialog";
 
 interface ClientGroupsTabProps {
   clientId: string;
@@ -16,6 +17,7 @@ interface ClientGroupsTabProps {
 
 export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
+  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: groups, isLoading } = useQuery({
@@ -75,6 +77,7 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['client_groups', clientId] });
+      setIsTeamDialogOpen(false);
       toast.success("Team created successfully");
     },
     onError: (error: Error) => {
@@ -90,6 +93,17 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
     addTeamMutation.mutate({ groupId, name });
   };
 
+  const handleCreateTeam = (name: string) => {
+    // If no groups exist or only default group exists, use the default group
+    const defaultGroup = groups?.find(g => g.is_default);
+    if (defaultGroup) {
+      handleAddTeam(defaultGroup.id, name);
+    } else {
+      // This shouldn't happen due to the ensure_default_group trigger, but handling just in case
+      toast.error("Unable to create team. Please try again.");
+    }
+  };
+
   if (isLoading) return <div>Loading...</div>;
 
   return (
@@ -102,19 +116,35 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
               Manage your organization's structure and teams
             </p>
           </div>
-          <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Building2 className="mr-2 h-4 w-4" />
-                Create New Group
-              </Button>
-            </DialogTrigger>
-            <AddGroupDialog
-              isOpen={isGroupDialogOpen}
-              onOpenChange={setIsGroupDialogOpen}
-              onSubmit={handleAddGroup}
-            />
-          </Dialog>
+          <div className="flex gap-3">
+            <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="secondary">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Create Team
+                </Button>
+              </DialogTrigger>
+              <AddTeamDialog
+                isOpen={isTeamDialogOpen}
+                onOpenChange={setIsTeamDialogOpen}
+                onSubmit={handleCreateTeam}
+                groupName="Default Group"
+              />
+            </Dialog>
+            <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Building2 className="mr-2 h-4 w-4" />
+                  Create Group
+                </Button>
+              </DialogTrigger>
+              <AddGroupDialog
+                isOpen={isGroupDialogOpen}
+                onOpenChange={setIsGroupDialogOpen}
+                onSubmit={handleAddGroup}
+              />
+            </Dialog>
+          </div>
         </div>
 
         <div className="rounded-md">
