@@ -26,7 +26,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
             client_id,
             created_at,
             updated_at,
-            profiles:user_id (
+            profiles!client_users_user_id_fkey (
               first_name,
               last_name
             )
