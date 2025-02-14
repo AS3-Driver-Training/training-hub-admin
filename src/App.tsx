@@ -1,88 +1,36 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import Clients from "./pages/Clients";
-import ClientSettings from "./pages/ClientSettings";
+import { Toaster } from "@/components/ui/toaster";
+import { Auth } from "@/pages/Auth";
+import { Index } from "@/pages/Index";
+import { Settings } from "@/pages/Settings";
+import { ClientSettings } from "@/pages/ClientSettings";
+import { Clients } from "@/pages/Clients";
+import Profile from "@/pages/Profile";
+import { NotFound } from "@/pages/NotFound";
+import "./App.css";
 
 const queryClient = new QueryClient();
 
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const [session, setSession] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(!!session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(!!session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  if (session === null) {
-    return null; // Loading state
-  }
-
-  return session ? <>{children}</> : <Navigate to="/auth" replace />;
-};
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
         <Routes>
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <Index />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/clients"
-            element={
-              <PrivateRoute>
-                <Clients />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/clients/:clientId"
-            element={
-              <PrivateRoute>
-                <ClientSettings />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <PrivateRoute>
-                <Settings />
-              </PrivateRoute>
-            }
-          />
+          <Route path="/" element={<Navigate to="/dashboard" />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/dashboard" element={<Index />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/clients" element={<Clients />} />
+          <Route path="/clients/:clientId/settings" element={<ClientSettings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </Router>
+      <Toaster />
+    </QueryClientProvider>
+  );
+}
 
 export default App;
