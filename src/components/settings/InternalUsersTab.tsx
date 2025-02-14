@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,10 +30,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type AppRole = 'superadmin' | 'admin' | 'staff';
+
 interface InternalUser {
   id: string;
   email: string;
-  role: string;
+  role: AppRole;
   status: string;
   first_name: string;
   last_name: string;
@@ -46,7 +47,7 @@ interface EditUserFormData {
   first_name: string;
   last_name: string;
   title: string;
-  role: string;
+  role: AppRole;
 }
 
 export function InternalUsersTab() {
@@ -56,7 +57,7 @@ export function InternalUsersTab() {
     first_name: '',
     last_name: '',
     title: '',
-    role: '',
+    role: 'staff',
   });
 
   const { data: users, isLoading, refetch } = useQuery({
@@ -70,7 +71,6 @@ export function InternalUsersTab() {
 
       if (error) throw error;
 
-      // Fetch email addresses for each user
       const usersWithEmails = await Promise.all(
         profiles.map(async (profile) => {
           try {
@@ -273,7 +273,7 @@ export function InternalUsersTab() {
               <Label htmlFor="role">Role</Label>
               <Select
                 value={formData.role}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
+                onValueChange={(value: AppRole) => setFormData(prev => ({ ...prev, role: value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a role" />
