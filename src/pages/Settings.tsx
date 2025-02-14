@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -11,6 +13,10 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     const getProfile = async () => {
@@ -63,6 +69,35 @@ const Settings = () => {
     }
   };
 
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangingPassword(true);
+
+    try {
+      if (newPassword !== confirmPassword) {
+        throw new Error('New passwords do not match');
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      // Clear password fields
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      
+      toast.success('Password updated successfully');
+    } catch (error: any) {
+      console.error('Error updating password:', error);
+      toast.error(error.message || 'Failed to update password');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -75,6 +110,7 @@ const Settings = () => {
 
         <Card className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
+            <h2 className="text-xl font-semibold">Profile Information</h2>
             <div className="space-y-4">
               <div>
                 <Label htmlFor="firstName">First Name</Label>
@@ -97,6 +133,37 @@ const Settings = () => {
             </div>
             <Button type="submit" disabled={loading}>
               {loading ? "Saving..." : "Save Changes"}
+            </Button>
+          </form>
+        </Card>
+
+        <Card className="p-6">
+          <form onSubmit={handlePasswordChange} className="space-y-4">
+            <h2 className="text-xl font-semibold">Change Password</h2>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password"
+                />
+              </div>
+              <div>
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                />
+              </div>
+            </div>
+            <Button type="submit" disabled={changingPassword}>
+              {changingPassword ? "Updating Password..." : "Update Password"}
             </Button>
           </form>
         </Card>
