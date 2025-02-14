@@ -17,19 +17,24 @@ import { BrandingPreview } from "./branding/BrandingPreview";
 export function ClientSettingsTab() {
   const { clientId } = useParams();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState("branding");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: client, isLoading } = useQuery({
     queryKey: ['client', clientId],
     queryFn: async () => {
+      console.log('Fetching client data for:', clientId);
       const { data, error } = await supabase
         .from('clients')
         .select('*')
         .eq('id', clientId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching client:', error);
+        throw error;
+      }
+      console.log('Fetched client data:', data);
       return data;
     },
   });
@@ -48,6 +53,7 @@ export function ClientSettingsTab() {
 
   useEffect(() => {
     if (client) {
+      console.log('Updating form data with client:', client);
       setFormData({
         name: client.name || '',
         address: client.address || '',
@@ -67,9 +73,8 @@ export function ClientSettingsTab() {
   };
 
   const handleColorChange = async (color: string, field: 'primaryColor' | 'secondaryColor') => {
-    setFormData(prev => ({ ...prev, [field]: color }));
-    
     try {
+      console.log('Updating color:', field, color);
       const { error } = await supabase
         .from('clients')
         .update({
@@ -77,8 +82,12 @@ export function ClientSettingsTab() {
         })
         .eq('id', clientId);
 
-      if (error) throw error;
-      
+      if (error) {
+        console.error('Color update error:', error);
+        throw error;
+      }
+
+      setFormData(prev => ({ ...prev, [field]: color }));
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
       toast.success(`${field === 'primaryColor' ? 'Primary' : 'Secondary'} color updated`);
     } catch (error: any) {
@@ -89,13 +98,17 @@ export function ClientSettingsTab() {
 
   const handleLogoUploadSuccess = async (logoUrl: string) => {
     try {
+      console.log('Updating logo URL:', logoUrl);
       const { error } = await supabase
         .from('clients')
         .update({ logo_url: logoUrl })
         .eq('id', clientId);
 
-      if (error) throw error;
-      
+      if (error) {
+        console.error('Logo update error:', error);
+        throw error;
+      }
+
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
       toast.success('Logo updated successfully');
     } catch (error: any) {
@@ -110,6 +123,7 @@ export function ClientSettingsTab() {
     
     setIsSubmitting(true);
     try {
+      console.log('Submitting form data:', formData);
       const { error } = await supabase
         .from('clients')
         .update({
@@ -120,8 +134,6 @@ export function ClientSettingsTab() {
           zip_code: formData.zipCode,
           phone: formData.phone,
           contact_email: formData.contactEmail,
-          primary_color: formData.primaryColor,
-          secondary_color: formData.secondaryColor,
         })
         .eq('id', clientId);
 
