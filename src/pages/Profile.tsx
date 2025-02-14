@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -15,12 +16,23 @@ const Profile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: userName.split(' ')[0] || '',
-    lastName: userName.split(' ')[1] || '',
-    title: userTitle || '',
+    firstName: '',
+    lastName: '',
+    title: '',
     newPassword: '',
     confirmPassword: '',
   });
+
+  // Update form data when profile information changes
+  useEffect(() => {
+    const [firstName = '', lastName = ''] = userName.split(' ');
+    setFormData(prev => ({
+      ...prev,
+      firstName,
+      lastName,
+      title: userTitle || ''
+    }));
+  }, [userName, userTitle]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -32,6 +44,9 @@ const Profile = () => {
     setIsSaving(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -39,7 +54,7 @@ const Profile = () => {
           last_name: formData.lastName,
           title: formData.title,
         })
-        .eq('id', (await supabase.auth.getUser()).data.user?.id);
+        .eq('id', user.id);
 
       if (error) throw error;
       toast.success('Profile updated successfully');
