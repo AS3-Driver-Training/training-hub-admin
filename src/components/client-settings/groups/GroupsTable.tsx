@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { AddTeamDialog } from "./AddTeamDialog";
+import { EditTeamDialog } from "./EditTeamDialog";
 import { useState } from "react";
 import { 
   Collapsible,
@@ -48,13 +49,33 @@ interface GroupsTableProps {
 
 export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
+  const [isEditTeamDialogOpen, setIsEditTeamDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
 
   const handleAddTeam = (name: string) => {
     if (selectedGroup) {
       onAddTeam(selectedGroup.id, name);
+    }
+  };
+
+  const handleEditTeam = async (teamId: string, newName: string) => {
+    try {
+      const { error } = await supabase
+        .from('teams')
+        .update({ name: newName })
+        .eq('id', teamId);
+
+      if (error) throw error;
+
+      toast.success("Team updated successfully");
+      queryClient.invalidateQueries({ queryKey: ['client_groups'] });
+      setIsEditTeamDialogOpen(false);
+    } catch (error: any) {
+      console.error("Error updating team:", error);
+      toast.error(error.message || "Failed to update team");
     }
   };
 
@@ -172,7 +193,8 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
                                       size="sm"
                                       className="h-8 w-8"
                                       onClick={() => {
-                                        toast.info("Edit team feature coming soon");
+                                        setSelectedTeam(team);
+                                        setIsEditTeamDialogOpen(true);
                                       }}
                                     >
                                       <Pencil className="h-4 w-4" />
@@ -225,8 +247,17 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
             groupName={selectedGroup.name}
           />
         )}
+
+        <EditTeamDialog
+          isOpen={isEditTeamDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditTeamDialogOpen(open);
+            if (!open) setSelectedTeam(null);
+          }}
+          onSubmit={handleEditTeam}
+          team={selectedTeam}
+        />
       </div>
     </TooltipProvider>
   );
 }
-
