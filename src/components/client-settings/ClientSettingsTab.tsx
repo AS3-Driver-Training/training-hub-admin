@@ -143,12 +143,20 @@ export function ClientSettingsTab() {
     e.stopPropagation();
     
     const file = e.dataTransfer.files[0];
-    if (!file) return;
+    if (!file) {
+      toast.error('No file provided');
+      return;
+    }
     
     await handleFileUpload(file);
   };
 
   const handleFileUpload = async (file: File) => {
+    if (!clientId) {
+      toast.error('Client ID not found');
+      return;
+    }
+
     if (!file.type.startsWith('image/')) {
       toast.error('Please upload an image file (PNG, JPG, or SVG)');
       return;
@@ -160,36 +168,54 @@ export function ClientSettingsTab() {
     }
 
     setIsUploading(true);
+    console.log('Starting file upload for:', file.name, 'type:', file.type);
     
     try {
       const fileExt = file.name.split('.').pop();
       const filePath = `${clientId}/logo.${fileExt}`;
+      console.log('Uploading to path:', filePath);
 
-      const { error: uploadError } = await supabase.storage
+      // First upload the file
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('client-assets')
         .upload(filePath, file, { 
           upsert: true,
           contentType: file.type
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
+      console.log('File uploaded successfully:', uploadData);
+
+      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('client-assets')
         .getPublicUrl(filePath);
 
+      console.log('Generated public URL:', publicUrl);
+
+      // Update client record with new logo URL
       const { error: updateError } = await supabase
         .from('clients')
         .update({ logo_url: publicUrl })
         .eq('id', clientId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Client update error:', updateError);
+        throw updateError;
+      }
 
+      console.log('Client updated with new logo URL');
+
+      // Refresh client data
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
-      toast.success('Logo updated successfully');
+      toast.success('Logo uploaded and updated successfully');
     } catch (error: any) {
-      console.error('Upload error:', error);
-      toast.error('Failed to upload logo: ' + error.message);
+      console.error('Upload process failed:', error);
+      toast.error(error.message || 'Failed to upload logo');
     } finally {
       setIsUploading(false);
     }
@@ -351,11 +377,11 @@ export function ClientSettingsTab() {
                   className={cn(
                     "border-2 border-dashed rounded-lg p-8 transition-colors",
                     "hover:border-primary/50 hover:bg-primary/5",
-                    "flex flex-col items-center justify-center gap-4 cursor-pointer"
+                    isUploading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
                   )}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
-                  onClick={() => document.getElementById('logo-upload')?.click()}
+                  onClick={() => !isUploading && document.getElementById('logo-upload')?.click()}
                 >
                   {client?.logo_url ? (
                     <img 
@@ -381,7 +407,11 @@ export function ClientSettingsTab() {
                     type="file"
                     accept="image/png,image/jpeg,image/svg+xml"
                     className="hidden"
-                    onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                    disabled={isUploading}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file);
+                    }}
                   />
                 </div>
               </div>
