@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -49,6 +48,28 @@ export function ClientSettingsTab() {
 
   useEffect(() => {
     if (client) {
+      const originalData = {
+        name: client.name || '',
+        address: client.address || '',
+        city: client.city || '',
+        state: client.state || '',
+        zipCode: client.zip_code || '',
+        phone: client.phone || '',
+        contactEmail: client.contact_email || '',
+        primaryColor: client.primary_color || '#9b87f5',
+        secondaryColor: client.secondary_color || '#8E9196',
+      };
+
+      const hasChanges = Object.keys(formData).some(key => {
+        return formData[key as keyof typeof formData] !== originalData[key as keyof typeof originalData];
+      });
+
+      setHasChanges(hasChanges);
+    }
+  }, [formData, client]);
+
+  useEffect(() => {
+    if (client) {
       setFormData({
         name: client.name || '',
         address: client.address || '',
@@ -60,18 +81,16 @@ export function ClientSettingsTab() {
         primaryColor: client.primary_color || '#9b87f5',
         secondaryColor: client.secondary_color || '#8E9196',
       });
-      setHasChanges(false);
     }
   }, [client]);
 
   const handleProfileChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    setHasChanges(true);
   };
 
   const handleColorChange = (color: string, field: 'primaryColor' | 'secondaryColor') => {
+    console.log('Color changed:', field, color); // Debug log
     setFormData(prev => ({ ...prev, [field]: color }));
-    setHasChanges(true);
   };
 
   const handleLogoUploadSuccess = async (logoUrl: string) => {
@@ -101,6 +120,7 @@ export function ClientSettingsTab() {
     
     setIsSubmitting(true);
     try {
+      console.log('Submitting colors:', formData.primaryColor, formData.secondaryColor); // Debug log
       const { error } = await supabase
         .from('clients')
         .update({
@@ -119,7 +139,6 @@ export function ClientSettingsTab() {
       if (error) throw error;
 
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
-      setHasChanges(false);
       toast.success('Changes saved successfully', {
         description: 'Your settings have been updated',
         icon: <CheckCircle className="h-4 w-4 text-green-500" />,
