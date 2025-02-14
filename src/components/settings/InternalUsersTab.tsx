@@ -64,44 +64,47 @@ export function InternalUsersTab() {
   const { data: users, isLoading, refetch } = useQuery({
     queryKey: ['internal_users'],
     queryFn: async () => {
+      // First get all profiles
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
         .in('role', ['superadmin', 'admin', 'staff'])
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        throw error;
+      }
 
-      // Use Promise.all to wait for all email fetching operations
+      // Then fetch emails for each profile
       const usersWithEmails = await Promise.all(
         profiles.map(async (profile) => {
-          try {
-            const { data: userData, error: userError } = await supabase.functions.invoke(
-              'get-user-by-id',
-              { 
-                body: { 
-                  userId: profile.id 
-                } 
-              }
-            );
-
-            if (userError) throw userError;
-
-            // Make sure we have the user data before proceeding
-            if (!userData?.user) {
-              console.error('No user data found for profile:', profile.id);
-              throw new Error('User data not found');
+          const { data: userData, error: userError } = await supabase.functions.invoke(
+            'get-user-by-id',
+            { 
+              body: { 
+                userId: profile.id 
+              } 
             }
+          );
 
+          if (userError) {
+            console.error('Error fetching user data:', userError);
+            throw userError;
+          }
+
+          if (!userData?.user?.email) {
+            console.error('No email found for user:', profile.id);
             return {
               ...profile,
-              email: userData.user.email,
+              email: 'Email not found'
             };
-          } catch (error) {
-            console.error('Error fetching user email:', error);
-            // Instead of returning a placeholder, throw the error
-            throw new Error(`Failed to fetch email for user ${profile.id}`);
           }
+
+          return {
+            ...profile,
+            email: userData.user.email
+          };
         })
       );
 
@@ -203,34 +206,24 @@ export function InternalUsersTab() {
       <div className="space-y-4">
         {users?.map((user) => (
           <Card key={user.id} className="p-4">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="space-y-1.5">
+            <div className="flex flex-col gap-3">
+              {/* First row: Name, Title and Actions */}
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
                   <div className="flex items-center gap-3">
                     <h4 className="font-medium">
                       {user.first_name} {user.last_name}
                     </h4>
-                    <Badge variant={user.role === 'superadmin' ? 'destructive' : user.role === 'admin' ? 'default' : 'secondary'}>
-                      {user.role}
-                    </Badge>
-                    <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
-                      {user.status}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <span>{user.email}</span>
                     {user.title && (
                       <>
-                        <span>•</span>
-                        <span>{user.title}</span>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-sm text-muted-foreground">{user.title}</span>
                       </>
                     )}
                   </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 shrink-0">
-                <div className="text-sm text-muted-foreground">
-                  Last login: {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+                  <div className="text-sm text-muted-foreground">
+                    {user.email}
+                  </div>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -252,6 +245,22 @@ export function InternalUsersTab() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+              </div>
+
+              {/* Second row: Badges and Last Login */}
+              <div className="flex items-center gap-3">
+                <Badge variant={user.role === 'superadmin' ? 'destructive' : user.role === 'admin' ? 'default' : 'secondary'}>
+                  {user.role}
+                </Badge>
+                <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
+                  {user.status}
+                </Badge>
+                <span className="text-sm text-muted-foreground ml-auto">
+                  Last login: {user.last_login ? new Intl.DateTimeFormat('en-US', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                  }).format(new Date(user.last_login)) : 'Never'}
+                </span>
               </div>
             </div>
           </Card>
