@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Users, Calendar, CheckCircle } from "lucide-react";
@@ -147,7 +148,8 @@ const Index = () => {
                     clients.map((client) => (
                       <TableRow 
                         key={client.id}
-                        className="hover:bg-muted/50"
+                        className="hover:bg-muted/50 cursor-pointer"
+                        onClick={() => handleClientClick(client.id)}
                       >
                         <TableCell className="font-medium">
                           {client.name}
@@ -169,7 +171,10 @@ const Index = () => {
                         <TableCell>
                           <Button
                             variant="ghost"
-                            onClick={() => handleClientClick(client.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleClientClick(client.id);
+                            }}
                           >
                             Manage Settings
                           </Button>
