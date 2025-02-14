@@ -6,11 +6,12 @@ import { ClientUsersTab } from "@/components/client-settings/ClientUsersTab";
 import { ClientSettingsTab } from "@/components/client-settings/ClientSettingsTab";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("settings");
 
-  const { data: organization } = useQuery({
+  const { data: organization, isLoading, error } = useQuery({
     queryKey: ['organization'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -20,12 +21,33 @@ const Settings = () => {
         .from('clients')
         .select('*')
         .eq('created_by', user.id)
-        .single();
+        .maybeSingle(); // Changed from single() to maybeSingle()
 
       if (error) throw error;
       return data;
     },
   });
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div>Loading...</div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!organization) {
+    return (
+      <DashboardLayout>
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">No Organization Found</h2>
+          <p className="text-muted-foreground">
+            You are not currently associated with any organization. Please contact your administrator.
+          </p>
+        </Card>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -48,12 +70,10 @@ const Settings = () => {
           </TabsContent>
 
           <TabsContent value="users">
-            {organization && (
-              <ClientUsersTab 
-                clientId={organization.id} 
-                clientName={organization.name} 
-              />
-            )}
+            <ClientUsersTab 
+              clientId={organization.id} 
+              clientName={organization.name} 
+            />
           </TabsContent>
         </Tabs>
       </div>
