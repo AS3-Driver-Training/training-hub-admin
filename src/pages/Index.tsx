@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Users, Calendar, CheckCircle } from "lucide-react";
@@ -17,6 +16,7 @@ import { InviteClientDialog } from "@/components/InviteClientDialog";
 import { useProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 const stats = [
   {
@@ -47,7 +47,7 @@ const Index = () => {
   const { data: clients, isLoading, error } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
-      console.log('Fetching clients, user role:', userRole); // Debug log
+      console.log('Fetching clients, user role:', userRole);
       
       const { data, error } = await supabase
         .from('clients')
@@ -60,14 +60,18 @@ const Index = () => {
         throw error;
       }
 
-      console.log('Fetched clients:', data); // Debug log
+      console.log('Fetched clients:', data);
       
       return data || [];
     },
-    enabled: isSuperAdmin, // Only fetch if user is superadmin
+    enabled: isSuperAdmin,
   });
 
-  console.log('Render state:', { isSuperAdmin, clients, isLoading, error }); // Debug log
+  console.log('Render state:', { isSuperAdmin, clients, isLoading, error });
+
+  const handleClientClick = (clientId: string) => {
+    navigate(`/client-settings/${clientId}`);
+  };
 
   return (
     <DashboardLayout>
@@ -116,24 +120,25 @@ const Index = () => {
                     <TableHead>Client Name</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created At</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center">
+                      <TableCell colSpan={4} className="text-center">
                         Loading...
                       </TableCell>
                     </TableRow>
                   ) : error ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-destructive">
+                      <TableCell colSpan={4} className="text-center text-destructive">
                         Failed to load clients. Please try again later.
                       </TableCell>
                     </TableRow>
                   ) : !clients || clients.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center">
+                      <TableCell colSpan={4} className="text-center">
                         No clients found. Invite your first client to get started.
                       </TableCell>
                     </TableRow>
@@ -141,8 +146,7 @@ const Index = () => {
                     clients.map((client) => (
                       <TableRow 
                         key={client.id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => navigate(`/clients/${client.id}`)}
+                        className="hover:bg-muted/50"
                       >
                         <TableCell className="font-medium">
                           {client.name}
@@ -160,6 +164,14 @@ const Index = () => {
                         </TableCell>
                         <TableCell>
                           {new Date(client.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            onClick={() => handleClientClick(client.id)}
+                          >
+                            Manage Settings
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
