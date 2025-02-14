@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Palette, Loader2 } from "lucide-react";
+import { Palette, Loader2, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoUpload } from "./branding/LogoUpload";
 import { ColorPicker } from "./branding/ColorPicker";
@@ -18,22 +19,18 @@ export function ClientSettingsTab() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("branding");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
   const { data: client, isLoading } = useQuery({
     queryKey: ['client', clientId],
     queryFn: async () => {
-      console.log('Fetching client data for:', clientId);
       const { data, error } = await supabase
         .from('clients')
         .select('*')
         .eq('id', clientId)
         .single();
 
-      if (error) {
-        console.error('Error fetching client:', error);
-        throw error;
-      }
-      console.log('Fetched client data:', data);
+      if (error) throw error;
       return data;
     },
   });
@@ -52,7 +49,6 @@ export function ClientSettingsTab() {
 
   useEffect(() => {
     if (client) {
-      console.log('Updating form data with client:', client);
       setFormData({
         name: client.name || '',
         address: client.address || '',
@@ -64,45 +60,47 @@ export function ClientSettingsTab() {
         primaryColor: client.primary_color || '#9b87f5',
         secondaryColor: client.secondary_color || '#8E9196',
       });
+      setHasChanges(false);
     }
   }, [client]);
 
   const handleProfileChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
   };
 
-  const handleColorChange = async (color: string, field: 'primaryColor' | 'secondaryColor') => {
+  const handleColorChange = (color: string, field: 'primaryColor' | 'secondaryColor') => {
     setFormData(prev => ({ ...prev, [field]: color }));
+    setHasChanges(true);
   };
 
   const handleLogoUploadSuccess = async (logoUrl: string) => {
     try {
-      console.log('Updating logo URL:', logoUrl);
       const { error } = await supabase
         .from('clients')
         .update({ logo_url: logoUrl })
         .eq('id', clientId);
 
-      if (error) {
-        console.error('Logo update error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
-      toast.success('Logo updated successfully');
+      toast.success('Logo updated successfully', {
+        description: 'Your logo has been saved',
+        icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+      });
     } catch (error: any) {
-      console.error('Failed to update logo URL:', error);
-      toast.error('Failed to save logo URL');
+      toast.error('Failed to save logo', {
+        description: error.message,
+      });
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clientId) return;
+    if (!clientId || !hasChanges) return;
     
     setIsSubmitting(true);
     try {
-      console.log('Submitting form data:', formData);
       const { error } = await supabase
         .from('clients')
         .update({
@@ -121,10 +119,15 @@ export function ClientSettingsTab() {
       if (error) throw error;
 
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
-      toast.success('Client settings updated successfully');
+      setHasChanges(false);
+      toast.success('Changes saved successfully', {
+        description: 'Your settings have been updated',
+        icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+      });
     } catch (error: any) {
-      console.error('Failed to update client:', error);
-      toast.error(error.message || 'Failed to update client settings');
+      toast.error('Failed to save changes', {
+        description: error.message,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -201,7 +204,10 @@ export function ClientSettingsTab() {
       </Tabs>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button 
+          type="submit" 
+          disabled={isSubmitting || !hasChanges}
+        >
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -210,7 +216,7 @@ export function ClientSettingsTab() {
           ) : (
             <>
               <Palette className="h-4 w-4 mr-2" />
-              Save Changes
+              {hasChanges ? 'Save Changes' : 'No Changes'}
             </>
           )}
         </Button>
