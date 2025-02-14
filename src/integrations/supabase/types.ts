@@ -85,21 +85,27 @@ export type Database = {
         Row: {
           client_id: string
           created_at: string
+          description: string | null
           id: string
+          is_default: boolean | null
           name: string
           updated_at: string
         }
         Insert: {
           client_id: string
           created_at?: string
+          description?: string | null
           id?: string
+          is_default?: boolean | null
           name: string
           updated_at?: string
         }
         Update: {
           client_id?: string
           created_at?: string
+          description?: string | null
           id?: string
+          is_default?: boolean | null
           name?: string
           updated_at?: string
         }

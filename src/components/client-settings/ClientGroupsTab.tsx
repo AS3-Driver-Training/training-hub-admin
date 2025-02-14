@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -22,7 +22,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 interface ClientGroupsTabProps {
   clientId: string;
@@ -33,6 +36,7 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [groupName, setGroupName] = useState("");
+  const [groupDescription, setGroupDescription] = useState("");
   const [teamName, setTeamName] = useState("");
   const queryClient = useQueryClient();
 
@@ -49,6 +53,7 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
           )
         `)
         .eq('client_id', clientId)
+        .order('is_default', { ascending: true })
         .order('name');
 
       if (error) throw error;
@@ -57,12 +62,14 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
   });
 
   const addGroupMutation = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async ({ name, description }: { name: string; description: string }) => {
       const { error } = await supabase
         .from('groups')
         .insert({
           client_id: clientId,
-          name: name
+          name,
+          description,
+          is_default: false
         });
 
       if (error) throw error;
@@ -71,6 +78,7 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
       queryClient.invalidateQueries({ queryKey: ['client_groups', clientId] });
       setIsGroupDialogOpen(false);
       setGroupName("");
+      setGroupDescription("");
       toast.success("Group created successfully");
     },
     onError: (error: Error) => {
@@ -103,7 +111,10 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
 
   const handleAddGroup = (e: React.FormEvent) => {
     e.preventDefault();
-    addGroupMutation.mutate(groupName);
+    addGroupMutation.mutate({
+      name: groupName,
+      description: groupDescription
+    });
   };
 
   const handleAddTeam = (e: React.FormEvent) => {
@@ -119,19 +130,19 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
   if (isLoading) return <div>Loading...</div>;
 
   return (
-    <Card className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h3 className="text-lg font-semibold">Groups & Teams</h3>
-          <p className="text-sm text-muted-foreground">
-            Manage organizational structure
-          </p>
-        </div>
-        <div className="space-x-2">
+    <div className="space-y-6">
+      <Card className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h3 className="text-lg font-semibold">Groups</h3>
+            <p className="text-sm text-muted-foreground">
+              Manage organizational departments and divisions
+            </p>
+          </div>
           <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
             <DialogTrigger asChild>
               <Button>
-                <Users className="mr-2 h-4 w-4" />
+                <Building2 className="mr-2 h-4 w-4" />
                 Add Group
               </Button>
             </DialogTrigger>
@@ -146,7 +157,17 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
                     id="groupName"
                     value={groupName}
                     onChange={(e) => setGroupName(e.target.value)}
+                    placeholder="Enter group name"
                     required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="groupDescription">Description</Label>
+                  <Textarea
+                    id="groupDescription"
+                    value={groupDescription}
+                    onChange={(e) => setGroupDescription(e.target.value)}
+                    placeholder="Enter group description"
                   />
                 </div>
                 <Button type="submit" className="w-full">
@@ -156,75 +177,88 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
             </DialogContent>
           </Dialog>
         </div>
-      </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Group Name</TableHead>
-              <TableHead>Teams</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {groups?.map((group) => (
-              <TableRow key={group.id}>
-                <TableCell className="font-medium">{group.name}</TableCell>
-                <TableCell>
-                  {group.teams?.map((team) => (
-                    <span
-                      key={team.id}
-                      className="inline-block bg-secondary text-secondary-foreground rounded px-2 py-1 text-xs mr-2"
-                    >
-                      {team.name}
-                    </span>
-                  ))}
-                </TableCell>
-                <TableCell>
-                  <Dialog
-                    open={isTeamDialogOpen && selectedGroup === group.id}
-                    onOpenChange={(open) => {
-                      setIsTeamDialogOpen(open);
-                      if (!open) setSelectedGroup(null);
-                    }}
-                  >
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedGroup(group.id)}
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Group Name</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Teams</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {groups?.map((group) => (
+                <TableRow key={group.id}>
+                  <TableCell className="font-medium">
+                    {group.name}
+                    {group.is_default && (
+                      <Badge variant="secondary" className="ml-2">
+                        Default
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="max-w-md">
+                    {group.description}
+                  </TableCell>
+                  <TableCell>
+                    {group.teams?.map((team) => (
+                      <Badge
+                        key={team.id}
+                        variant="outline"
+                        className="mr-2"
                       >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Team
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add Team to {group.name}</DialogTitle>
-                      </DialogHeader>
-                      <form onSubmit={handleAddTeam} className="space-y-4">
-                        <div>
-                          <Label htmlFor="teamName">Team Name</Label>
-                          <Input
-                            id="teamName"
-                            value={teamName}
-                            onChange={(e) => setTeamName(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <Button type="submit" className="w-full">
+                        {team.name}
+                      </Badge>
+                    ))}
+                  </TableCell>
+                  <TableCell>
+                    <Dialog
+                      open={isTeamDialogOpen && selectedGroup === group.id}
+                      onOpenChange={(open) => {
+                        setIsTeamDialogOpen(open);
+                        if (!open) setSelectedGroup(null);
+                      }}
+                    >
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedGroup(group.id)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
                           Add Team
                         </Button>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </Card>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Add Team to {group.name}</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleAddTeam} className="space-y-4">
+                          <div>
+                            <Label htmlFor="teamName">Team Name</Label>
+                            <Input
+                              id="teamName"
+                              value={teamName}
+                              onChange={(e) => setTeamName(e.target.value)}
+                              placeholder="Enter team name"
+                              required
+                            />
+                          </div>
+                          <Button type="submit" className="w-full">
+                            Add Team
+                          </Button>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
+    </div>
   );
 }
