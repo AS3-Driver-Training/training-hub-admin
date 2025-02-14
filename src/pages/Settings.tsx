@@ -7,42 +7,20 @@ import { ClientSettingsTab } from "@/components/client-settings/ClientSettingsTa
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { useProfile } from "@/hooks/useProfile";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("settings");
-
-  const { data: organization, isLoading, error } = useQuery({
-    queryKey: ['organization'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user found');
-
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('created_by', user.id)
-        .maybeSingle(); // Changed from single() to maybeSingle()
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  if (isLoading) {
-    return (
-      <DashboardLayout>
-        <div>Loading...</div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!organization) {
+  const { userRole } = useProfile();
+  
+  // Only internal users (superadmin, admin, staff) should access this page
+  if (!["superadmin", "admin", "staff"].includes(userRole)) {
     return (
       <DashboardLayout>
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">No Organization Found</h2>
+          <h2 className="text-xl font-semibold mb-4">Access Denied</h2>
           <p className="text-muted-foreground">
-            You are not currently associated with any organization. Please contact your administrator.
+            You do not have permission to access this page. This section is reserved for internal system users.
           </p>
         </Card>
       </DashboardLayout>
@@ -53,28 +31,60 @@ const Settings = () => {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Organization Settings</h1>
+          <h1 className="text-3xl font-bold">System Settings</h1>
           <p className="text-muted-foreground">
-            Manage your organization settings and users
+            Manage internal system settings and staff users
           </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="settings">General</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="users">Internal Users</TabsTrigger>
+            {userRole === "superadmin" && (
+              <TabsTrigger value="system">System</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="settings">
-            <ClientSettingsTab />
+            <Card className="p-6">
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold">Platform Settings</h3>
+                <p className="text-sm text-muted-foreground">
+                  Configure global platform settings and defaults
+                </p>
+              </div>
+              {/* Add platform settings form here */}
+            </Card>
           </TabsContent>
 
           <TabsContent value="users">
-            <ClientUsersTab 
-              clientId={organization.id} 
-              clientName={organization.name} 
-            />
+            <Card className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold">Internal Users</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Manage system administrators and staff accounts
+                  </p>
+                </div>
+                {/* Add internal user management here */}
+              </div>
+            </Card>
           </TabsContent>
+
+          {userRole === "superadmin" && (
+            <TabsContent value="system">
+              <Card className="p-6">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold">System Configuration</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Advanced system settings and configurations
+                  </p>
+                </div>
+                {/* Add system configuration options here */}
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </DashboardLayout>
