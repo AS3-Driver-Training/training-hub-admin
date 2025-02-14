@@ -19,8 +19,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AddUserDialogProps {
   clientId: string;
@@ -29,11 +43,41 @@ interface AddUserDialogProps {
 export function AddUserDialog({ clientId }: AddUserDialogProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("employee");
+  const [role, setRole] = useState("supervisor");
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [openGroups, setOpenGroups] = useState(false);
+  const [openTeams, setOpenTeams] = useState(false);
   const queryClient = useQueryClient();
 
+  const { data: groups } = useQuery({
+    queryKey: ['client_groups', clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('groups')
+        .select(`
+          id,
+          name,
+          teams (
+            id,
+            name
+          )
+        `)
+        .eq('client_id', clientId)
+        .order('name');
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const addUserMutation = useMutation({
-    mutationFn: async ({ email, role }: { email: string; role: string }) => {
+    mutationFn: async ({ email, role, groupIds, teamIds }: { 
+      email: string; 
+      role: string;
+      groupIds: string[];
+      teamIds: string[];
+    }) => {
       const { data: userData, error: userError } = await supabase.functions.invoke(
         'get-user-by-email',
         { body: { email } }
@@ -53,12 +97,40 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
         });
 
       if (insertError) throw insertError;
+
+      // Insert group assignments
+      if (groupIds.length > 0) {
+        const { error: groupError } = await supabase
+          .from('user_groups')
+          .insert(
+            groupIds.map(groupId => ({
+              user_id: userData.user.id,
+              group_id: groupId
+            }))
+          );
+        if (groupError) throw groupError;
+      }
+
+      // Insert team assignments
+      if (teamIds.length > 0) {
+        const { error: teamError } = await supabase
+          .from('user_teams')
+          .insert(
+            teamIds.map(teamId => ({
+              user_id: userData.user.id,
+              team_id: teamId
+            }))
+          );
+        if (teamError) throw teamError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['client_users', clientId] });
       setIsDialogOpen(false);
       setEmail("");
-      setRole("employee");
+      setRole("supervisor");
+      setSelectedGroups([]);
+      setSelectedTeams([]);
       toast.success("User added successfully");
     },
     onError: (error: Error) => {
@@ -68,8 +140,15 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    addUserMutation.mutate({ email, role });
+    addUserMutation.mutate({ 
+      email, 
+      role, 
+      groupIds: selectedGroups,
+      teamIds: selectedTeams
+    });
   };
+
+  const allTeams = groups?.flatMap(group => group.teams) || [];
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -103,9 +182,103 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
               <SelectContent>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="employee">Employee</SelectItem>
+                <SelectItem value="supervisor">Supervisor (View Only)</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div>
+            <Label>Groups</Label>
+            <Popover open={openGroups} onOpenChange={setOpenGroups}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openGroups}
+                  className="w-full justify-between"
+                >
+                  {selectedGroups.length === 0
+                    ? "Select groups..."
+                    : `${selectedGroups.length} group(s) selected`}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[400px] p-0">
+                <Command>
+                  <CommandInput placeholder="Search groups..." />
+                  <CommandEmpty>No groups found.</CommandEmpty>
+                  <CommandGroup>
+                    {groups?.map((group) => (
+                      <CommandItem
+                        key={group.id}
+                        value={group.name}
+                        onSelect={() => {
+                          setSelectedGroups(
+                            selectedGroups.includes(group.id)
+                              ? selectedGroups.filter(id => id !== group.id)
+                              : [...selectedGroups, group.id]
+                          );
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedGroups.includes(group.id) ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {group.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div>
+            <Label>Teams</Label>
+            <Popover open={openTeams} onOpenChange={setOpenTeams}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openTeams}
+                  className="w-full justify-between"
+                >
+                  {selectedTeams.length === 0
+                    ? "Select teams..."
+                    : `${selectedTeams.length} team(s) selected`}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[400px] p-0">
+                <Command>
+                  <CommandInput placeholder="Search teams..." />
+                  <CommandEmpty>No teams found.</CommandEmpty>
+                  <CommandGroup>
+                    {allTeams.map((team) => (
+                      <CommandItem
+                        key={team.id}
+                        value={team.name}
+                        onSelect={() => {
+                          setSelectedTeams(
+                            selectedTeams.includes(team.id)
+                              ? selectedTeams.filter(id => id !== team.id)
+                              : [...selectedTeams, team.id]
+                          );
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedTeams.includes(team.id) ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {team.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <Button type="submit" className="w-full">
             Add User
