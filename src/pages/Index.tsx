@@ -47,43 +47,21 @@ const Index = () => {
   const { data: clients, isLoading, error } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
-      console.log('Starting clients fetch. User role:', userRole);
-      
-      // First check if we have an authenticated session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        throw sessionError;
-      }
-      
-      if (!session) {
-        console.error('No active session found');
-        throw new Error('No active session');
-      }
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      console.log('Session found, user ID:', session.user.id);
-
-      try {
-        const { data, error } = await supabase
-          .from('clients')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Error fetching clients:', error);
-          toast.error('Failed to load clients');
-          throw error;
-        }
-        
-        console.log('Successfully fetched clients:', data);
-        return data || [];
-      } catch (error) {
-        console.error('Query error:', error);
+      if (error) {
+        console.error('Error fetching clients:', error);
+        toast.error('Failed to load clients');
         throw error;
       }
+      
+      return data || [];
     },
-    enabled: Boolean(userRole), // Only run query when we have the user role
-    retry: 1, // Only retry once on failure
+    enabled: isSuperAdmin, // Only fetch if user is superadmin
+    retry: 1
   });
 
   return (
