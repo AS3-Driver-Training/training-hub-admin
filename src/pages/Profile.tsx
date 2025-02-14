@@ -9,15 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { PenIcon } from "lucide-react";
 
 const Profile = () => {
   const { userName, userRole, userTitle } = useProfile();
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: userName.split(' ')[0] || '',
     lastName: userName.split(' ')[1] || '',
     title: userTitle || '',
-    currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
@@ -43,6 +44,7 @@ const Profile = () => {
 
       if (error) throw error;
       toast.success('Profile updated successfully');
+      setIsEditing(false);
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
@@ -69,7 +71,6 @@ const Profile = () => {
       toast.success('Password updated successfully');
       setFormData(prev => ({
         ...prev,
-        currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       }));
@@ -92,60 +93,92 @@ const Profile = () => {
         </div>
 
         <Card className="p-6">
-          <form onSubmit={handleProfileUpdate} className="space-y-4">
+          <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Personal Information</h3>
-            <div className="grid gap-4 md:grid-cols-2">
+            {!isEditing && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsEditing(true)}
+              >
+                <PenIcon className="w-4 h-4 mr-2" />
+                Edit Profile
+              </Button>
+            )}
+          </div>
+
+          {isEditing ? (
+            <form onSubmit={handleProfileUpdate} className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
               <div>
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="title">Title</Label>
                 <Input
-                  id="firstName"
-                  name="firstName"
-                  value={formData.firstName}
+                  id="title"
+                  name="title"
+                  value={formData.title}
                   onChange={handleInputChange}
                 />
               </div>
+              <div className="flex gap-2">
+                <Button type="submit" disabled={isLoading}>
+                  Save Changes
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsEditing(false)}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label>First Name</Label>
+                  <p className="mt-1">{formData.firstName}</p>
+                </div>
+                <div>
+                  <Label>Last Name</Label>
+                  <p className="mt-1">{formData.lastName}</p>
+                </div>
+              </div>
               <div>
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                />
+                <Label>Title</Label>
+                <p className="mt-1">{formData.title}</p>
+              </div>
+              <div>
+                <Label>Role</Label>
+                <p className="mt-1">{userRole}</p>
               </div>
             </div>
-            <div>
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <Label>Role</Label>
-              <Input value={userRole} disabled />
-            </div>
-            <Button type="submit" disabled={isLoading}>
-              Save Changes
-            </Button>
-          </form>
+          )}
 
           <Separator className="my-8" />
 
           <form onSubmit={handlePasswordChange} className="space-y-4">
             <h3 className="text-lg font-semibold">Change Password</h3>
-            <div>
-              <Label htmlFor="currentPassword">Current Password</Label>
-              <Input
-                id="currentPassword"
-                name="currentPassword"
-                type="password"
-                value={formData.currentPassword}
-                onChange={handleInputChange}
-              />
-            </div>
             <div>
               <Label htmlFor="newPassword">New Password</Label>
               <Input
