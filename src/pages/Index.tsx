@@ -47,26 +47,28 @@ const Index = () => {
   const { data: clients, isLoading, error } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('clients')
-          .select('*')
-          .order('created_at', { ascending: false });
+      console.log('Fetching clients with role:', userRole);
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching clients:', error);
-          toast.error('Failed to load clients');
-          throw error;
-        }
-        
-        return data || [];
-      } catch (error) {
-        console.error('Query error:', error);
+      if (error) {
+        console.error('Error fetching clients:', error);
         throw error;
       }
+      
+      console.log('Fetched clients:', data);
+      return data || [];
     },
     enabled: Boolean(userRole), // Only run query when we have the user role
-    retry: 1, // Only retry once on failure
+    retry: false, // Don't retry on failure to avoid infinite loops
+    meta: {
+      onError: (error: any) => {
+        console.error('Query error:', error);
+        toast.error('Failed to load clients');
+      }
+    }
   });
 
   return (
