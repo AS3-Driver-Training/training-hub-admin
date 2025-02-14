@@ -76,38 +76,46 @@ export function InternalUsersTab() {
         throw error;
       }
 
+      console.log('Fetched profiles:', profiles); // Debug log
+
       // Then fetch emails for each profile
       const usersWithEmails = await Promise.all(
         profiles.map(async (profile) => {
-          const { data: userData, error: userError } = await supabase.functions.invoke(
-            'get-user-by-id',
-            { 
-              body: { 
-                userId: profile.id 
-              } 
+          try {
+            const { data: userData, error: userError } = await supabase.functions.invoke(
+              'get-user-by-id',
+              { 
+                body: { 
+                  userId: profile.id 
+                } 
+              }
+            );
+
+            console.log('User data from edge function:', userData); // Debug log
+
+            if (userError) {
+              console.error('Error fetching user data:', userError);
+              throw userError;
             }
-          );
 
-          if (userError) {
-            console.error('Error fetching user data:', userError);
-            throw userError;
-          }
-
-          if (!userData?.user?.email) {
-            console.error('No email found for user:', profile.id);
+            // The edge function returns { user: { email, ... } }
             return {
               ...profile,
-              email: 'Email not found'
+              email: userData?.user?.email || 'Email not found',
+              last_login: userData?.user?.last_sign_in_at || profile.last_login || null
+            };
+          } catch (error) {
+            console.error('Error processing user:', profile.id, error);
+            return {
+              ...profile,
+              email: 'Error loading email',
+              last_login: profile.last_login || null
             };
           }
-
-          return {
-            ...profile,
-            email: userData.user.email
-          };
         })
       );
 
+      console.log('Final users data:', usersWithEmails); // Debug log
       return usersWithEmails;
     },
   });
@@ -222,7 +230,7 @@ export function InternalUsersTab() {
                     )}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {user.email}
+                    {user.email || 'No email available'}
                   </div>
                 </div>
                 <DropdownMenu>
@@ -256,10 +264,7 @@ export function InternalUsersTab() {
                   {user.status}
                 </Badge>
                 <span className="text-sm text-muted-foreground ml-auto">
-                  Last login: {user.last_login ? new Intl.DateTimeFormat('en-US', {
-                    dateStyle: 'medium',
-                    timeStyle: 'short'
-                  }).format(new Date(user.last_login)) : 'Never'}
+                  Last login: {user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}
                 </span>
               </div>
             </div>
