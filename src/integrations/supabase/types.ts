@@ -56,28 +56,55 @@ export type Database = {
       }
       clients: {
         Row: {
+          address: string | null
+          city: string | null
+          contact_email: string | null
           created_at: string
           created_by: string | null
           id: string
+          logo_url: string | null
           name: string
+          phone: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          state: string | null
           status: string
           updated_at: string
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
+          city?: string | null
+          contact_email?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
+          logo_url?: string | null
           name: string
+          phone?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          state?: string | null
           status?: string
           updated_at?: string
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
+          city?: string | null
+          contact_email?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
+          logo_url?: string | null
           name?: string
+          phone?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          state?: string | null
           status?: string
           updated_at?: string
+          zip_code?: string | null
         }
         Relationships: []
       }
