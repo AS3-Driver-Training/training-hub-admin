@@ -107,7 +107,7 @@ export function InternalUsersTab() {
                 </Badge>
               </TableCell>
               <TableCell>
-                <Badge variant={user.status === 'active' ? 'success' : 'warning'}>
+                <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
                   {user.status}
                 </Badge>
               </TableCell>
