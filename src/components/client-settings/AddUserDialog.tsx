@@ -14,17 +14,14 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Check } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 interface AddUserDialogProps {
   clientId: string;
@@ -34,8 +31,8 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("supervisor");
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
-  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
@@ -59,22 +56,24 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
     },
   });
 
-  const allTeams = groups.reduce<Array<{ id: string; name: string; groupName: string }>>((acc, group) => {
-    if (group.teams && Array.isArray(group.teams)) {
-      acc.push(...group.teams.map(team => ({
-        ...team,
-        groupName: group.name
-      })));
+  // Set default group when groups are loaded
+  useEffect(() => {
+    if (groups.length > 0 && !selectedGroup) {
+      setSelectedGroup(groups[0].id);
     }
-    return acc;
-  }, []);
+  }, [groups]);
+
+  // Get available teams for selected group
+  const availableTeams = selectedGroup 
+    ? groups.find(g => g.id === selectedGroup)?.teams || []
+    : [];
 
   const addUserMutation = useMutation({
-    mutationFn: async ({ email, role, groupIds, teamIds }: { 
+    mutationFn: async ({ email, role, groupId, teamId }: { 
       email: string; 
       role: string;
-      groupIds: string[];
-      teamIds: string[];
+      groupId: string | null;
+      teamId: string | null;
     }) => {
       const { data: userData, error: userError } = await supabase.functions.invoke(
         'get-user-by-email',
@@ -96,29 +95,25 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
 
       if (insertError) throw insertError;
 
-      // Insert group assignments
-      if (groupIds.length > 0) {
+      // Insert group assignment
+      if (groupId) {
         const { error: groupError } = await supabase
           .from('user_groups')
-          .insert(
-            groupIds.map(groupId => ({
-              user_id: userData.user.id,
-              group_id: groupId
-            }))
-          );
+          .insert({
+            user_id: userData.user.id,
+            group_id: groupId
+          });
         if (groupError) throw groupError;
       }
 
-      // Insert team assignments
-      if (teamIds.length > 0) {
+      // Insert team assignment
+      if (teamId) {
         const { error: teamError } = await supabase
           .from('user_teams')
-          .insert(
-            teamIds.map(teamId => ({
-              user_id: userData.user.id,
-              team_id: teamId
-            }))
-          );
+          .insert({
+            user_id: userData.user.id,
+            team_id: teamId
+          });
         if (teamError) throw teamError;
       }
     },
@@ -127,8 +122,8 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       setIsDialogOpen(false);
       setEmail("");
       setRole("supervisor");
-      setSelectedGroups([]);
-      setSelectedTeams([]);
+      setSelectedGroup(groups[0]?.id || null);
+      setSelectedTeam(null);
       toast.success("User added successfully");
     },
     onError: (error: Error) => {
@@ -138,28 +133,16 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedGroup) {
+      toast.error("Please select a group");
+      return;
+    }
     addUserMutation.mutate({ 
       email, 
       role, 
-      groupIds: selectedGroups,
-      teamIds: selectedTeams
+      groupId: selectedGroup,
+      teamId: selectedTeam
     });
-  };
-
-  const toggleGroup = (groupId: string) => {
-    setSelectedGroups(current => 
-      current.includes(groupId)
-        ? current.filter(id => id !== groupId)
-        : [...current, groupId]
-    );
-  };
-
-  const toggleTeam = (teamId: string) => {
-    setSelectedTeams(current => 
-      current.includes(teamId)
-        ? current.filter(id => id !== teamId)
-        : [...current, teamId]
-    );
   };
 
   return (
@@ -200,73 +183,55 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
           </div>
 
           <div>
-            <Label>Groups</Label>
-            <ScrollArea className="h-[200px] rounded-md border">
-              <div className="p-4 space-y-2">
-                {groups.map((group) => (
-                  <div
-                    key={group.id}
-                    className={cn(
-                      "flex items-center justify-between rounded-lg px-4 py-2 cursor-pointer hover:bg-accent",
-                      selectedGroups.includes(group.id) && "bg-accent"
-                    )}
-                    onClick={() => toggleGroup(group.id)}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Check
-                        className={cn(
-                          "h-4 w-4",
-                          selectedGroups.includes(group.id) ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      <span>{group.name}</span>
-                    </div>
-                    {group.teams?.length ? (
-                      <Badge variant="outline">{group.teams.length} teams</Badge>
-                    ) : null}
-                  </div>
-                ))}
-                {groups.length === 0 && (
-                  <div className="text-center text-sm text-muted-foreground py-4">
-                    No groups available
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
+            <Label>Group</Label>
+            <Select 
+              value={selectedGroup || undefined} 
+              onValueChange={(value) => {
+                setSelectedGroup(value);
+                setSelectedTeam(null); // Reset team selection when group changes
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a group" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {groups.map((group) => (
+                    <SelectItem key={group.id} value={group.id}>
+                      {group.name} {group.teams?.length ? `(${group.teams.length} teams)` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
-            <Label>Teams</Label>
-            <ScrollArea className="h-[200px] rounded-md border">
-              <div className="p-4 space-y-2">
-                {allTeams.map((team) => (
-                  <div
-                    key={team.id}
-                    className={cn(
-                      "flex items-center justify-between rounded-lg px-4 py-2 cursor-pointer hover:bg-accent",
-                      selectedTeams.includes(team.id) && "bg-accent"
-                    )}
-                    onClick={() => toggleTeam(team.id)}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Check
-                        className={cn(
-                          "h-4 w-4",
-                          selectedTeams.includes(team.id) ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      <span>{team.name}</span>
-                    </div>
-                    <Badge variant="secondary">{team.groupName}</Badge>
-                  </div>
-                ))}
-                {allTeams.length === 0 && (
-                  <div className="text-center text-sm text-muted-foreground py-4">
-                    No teams available
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
+            <Label>Team</Label>
+            <Select 
+              value={selectedTeam || undefined}
+              onValueChange={setSelectedTeam}
+              disabled={!selectedGroup || availableTeams.length === 0}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={
+                  !selectedGroup 
+                    ? "Select a group first" 
+                    : availableTeams.length === 0 
+                      ? "No teams available" 
+                      : "Select a team"
+                } />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {availableTeams.map((team) => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
 
           <Button type="submit" className="w-full">
