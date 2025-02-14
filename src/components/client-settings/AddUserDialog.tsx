@@ -66,8 +66,9 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
         .order('name');
 
       if (error) throw error;
-      return data || [];  // Ensure we always return an array
+      return data || [];
     },
+    initialData: [], // Provide initial data
   });
 
   const addUserMutation = useMutation({
@@ -149,6 +150,74 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
 
   const allTeams = groups?.flatMap(group => (group.teams || [])) || [];
 
+  const renderGroupsCommand = () => {
+    if (isLoadingGroups) return null;
+    
+    return (
+      <Command>
+        <CommandInput placeholder="Search groups..." />
+        <CommandEmpty>No groups found.</CommandEmpty>
+        <CommandGroup>
+          {groups.map((group) => (
+            <CommandItem
+              key={group.id}
+              value={group.name}
+              onSelect={() => {
+                setSelectedGroups(
+                  selectedGroups.includes(group.id)
+                    ? selectedGroups.filter(id => id !== group.id)
+                    : [...selectedGroups, group.id]
+                );
+              }}
+            >
+              <Check
+                className={cn(
+                  "mr-2 h-4 w-4",
+                  selectedGroups.includes(group.id) ? "opacity-100" : "opacity-0"
+                )}
+              />
+              {group.name}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </Command>
+    );
+  };
+
+  const renderTeamsCommand = () => {
+    if (isLoadingGroups) return null;
+    
+    return (
+      <Command>
+        <CommandInput placeholder="Search teams..." />
+        <CommandEmpty>No teams found.</CommandEmpty>
+        <CommandGroup>
+          {allTeams.map((team) => (
+            <CommandItem
+              key={team.id}
+              value={team.name}
+              onSelect={() => {
+                setSelectedTeams(
+                  selectedTeams.includes(team.id)
+                    ? selectedTeams.filter(id => id !== team.id)
+                    : [...selectedTeams, team.id]
+                );
+              }}
+            >
+              <Check
+                className={cn(
+                  "mr-2 h-4 w-4",
+                  selectedTeams.includes(team.id) ? "opacity-100" : "opacity-0"
+                )}
+              />
+              {team.name}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </Command>
+    );
+  };
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
@@ -203,33 +272,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[400px] p-0">
-                <Command>
-                  <CommandInput placeholder="Search groups..." />
-                  <CommandEmpty>No groups found.</CommandEmpty>
-                  <CommandGroup>
-                    {(groups || []).map((group) => (
-                      <CommandItem
-                        key={group.id}
-                        value={group.name}
-                        onSelect={() => {
-                          setSelectedGroups(
-                            selectedGroups.includes(group.id)
-                              ? selectedGroups.filter(id => id !== group.id)
-                              : [...selectedGroups, group.id]
-                          );
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            selectedGroups.includes(group.id) ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {group.name}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </Command>
+                {renderGroupsCommand()}
               </PopoverContent>
             </Popover>
           </div>
@@ -251,33 +294,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[400px] p-0">
-                <Command>
-                  <CommandInput placeholder="Search teams..." />
-                  <CommandEmpty>No teams found.</CommandEmpty>
-                  <CommandGroup>
-                    {allTeams.map((team) => (
-                      <CommandItem
-                        key={team.id}
-                        value={team.name}
-                        onSelect={() => {
-                          setSelectedTeams(
-                            selectedTeams.includes(team.id)
-                              ? selectedTeams.filter(id => id !== team.id)
-                              : [...selectedTeams, team.id]
-                          );
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            selectedTeams.includes(team.id) ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {team.name}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </Command>
+                {renderTeamsCommand()}
               </PopoverContent>
             </Popover>
           </div>

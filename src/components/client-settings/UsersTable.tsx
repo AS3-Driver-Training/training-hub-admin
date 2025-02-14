@@ -89,8 +89,9 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
         .order('name');
 
       if (error) throw error;
-      return data || [];  // Ensure we always return an array
+      return data || [];
     },
+    initialData: [],
   });
 
   const handleResendInvitation = async (user: UserData) => {
@@ -204,6 +205,74 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
   };
 
   const allTeams = groups?.flatMap(group => (group.teams || [])) || [];
+
+  const renderGroupsCommand = () => {
+    if (isLoadingGroups) return null;
+    
+    return (
+      <Command>
+        <CommandInput placeholder="Search groups..." />
+        <CommandEmpty>No groups found.</CommandEmpty>
+        <CommandGroup>
+          {groups.map((group) => (
+            <CommandItem
+              key={group.id}
+              value={group.name}
+              onSelect={() => {
+                setSelectedGroups(
+                  selectedGroups.includes(group.id)
+                    ? selectedGroups.filter(id => id !== group.id)
+                    : [...selectedGroups, group.id]
+                );
+              }}
+            >
+              <Check
+                className={cn(
+                  "mr-2 h-4 w-4",
+                  selectedGroups.includes(group.id) ? "opacity-100" : "opacity-0"
+                )}
+              />
+              {group.name}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </Command>
+    );
+  };
+
+  const renderTeamsCommand = () => {
+    if (isLoadingGroups) return null;
+    
+    return (
+      <Command>
+        <CommandInput placeholder="Search teams..." />
+        <CommandEmpty>No teams found.</CommandEmpty>
+        <CommandGroup>
+          {allTeams.map((team) => (
+            <CommandItem
+              key={team.id}
+              value={team.name}
+              onSelect={() => {
+                setSelectedTeams(
+                  selectedTeams.includes(team.id)
+                    ? selectedTeams.filter(id => id !== team.id)
+                    : [...selectedTeams, team.id]
+                );
+              }}
+            >
+              <Check
+                className={cn(
+                  "mr-2 h-4 w-4",
+                  selectedTeams.includes(team.id) ? "opacity-100" : "opacity-0"
+                )}
+              />
+              {team.name}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </Command>
+    );
+  };
 
   if (isLoadingGroups) {
     return <div>Loading groups...</div>;
@@ -322,33 +391,7 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[400px] p-0">
-                  <Command>
-                    <CommandInput placeholder="Search groups..." />
-                    <CommandEmpty>No groups found.</CommandEmpty>
-                    <CommandGroup>
-                      {(groups || []).map((group) => (
-                        <CommandItem
-                          key={group.id}
-                          value={group.name}
-                          onSelect={() => {
-                            setSelectedGroups(
-                              selectedGroups.includes(group.id)
-                                ? selectedGroups.filter(id => id !== group.id)
-                                : [...selectedGroups, group.id]
-                            );
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedGroups.includes(group.id) ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {group.name}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </Command>
+                  {renderGroupsCommand()}
                 </PopoverContent>
               </Popover>
             </div>
@@ -369,33 +412,7 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[400px] p-0">
-                  <Command>
-                    <CommandInput placeholder="Search teams..." />
-                    <CommandEmpty>No teams found.</CommandEmpty>
-                    <CommandGroup>
-                      {allTeams.map((team) => (
-                        <CommandItem
-                          key={team.id}
-                          value={team.name}
-                          onSelect={() => {
-                            setSelectedTeams(
-                              selectedTeams.includes(team.id)
-                                ? selectedTeams.filter(id => id !== team.id)
-                                : [...selectedTeams, team.id]
-                            );
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedTeams.includes(team.id) ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {team.name}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </Command>
+                  {renderTeamsCommand()}
                 </PopoverContent>
               </Popover>
             </div>
