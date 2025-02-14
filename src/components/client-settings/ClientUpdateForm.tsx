@@ -14,6 +14,12 @@ interface ClientUpdateFormProps {
   onSuccess: () => void;
 }
 
+interface CreateClientResponse {
+  client_id: string;
+  invitation_id: string;
+  token: string;
+}
+
 export function ClientUpdateForm({ clientId, initialName, onSuccess }: ClientUpdateFormProps) {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
@@ -43,12 +49,15 @@ export function ClientUpdateForm({ clientId, initialName, onSuccess }: ClientUpd
 
         if (error) throw error;
 
+        // Type assertion with unknown first to satisfy TypeScript
+        const response = data as unknown as CreateClientResponse;
+
         // Send invitation email
         const emailResponse = await supabase.functions.invoke('send-invitation', {
           body: {
             clientName: formData.clientName,
             email: formData.email,
-            token: data.token,
+            token: response.token,
           },
         });
 
