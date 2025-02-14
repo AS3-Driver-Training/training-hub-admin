@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Upload, Image as ImageIcon, Palette, Info } from "lucide-react";
+import { Upload, Image as ImageIcon, Palette, Info, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HexColorPicker } from "react-colorful";
 
@@ -46,10 +47,13 @@ export function ClientSettingsTab() {
   const [activeTab, setActiveTab] = useState("profile");
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [tempLogo, setTempLogo] = useState<string | null>(null);
 
   const { data: client, isLoading } = useQuery({
     queryKey: ['client', clientId],
     queryFn: async () => {
+      console.log('Fetching client details for:', clientId);
       const { data, error } = await supabase
         .from('clients')
         .select('*')
@@ -57,6 +61,7 @@ export function ClientSettingsTab() {
         .single();
 
       if (error) throw error;
+      console.log('Fetched client:', data);
       return data;
     },
   });
@@ -93,6 +98,27 @@ export function ClientSettingsTab() {
     setFormData(prev => ({ ...prev, [field]: e.target.value }));
   };
 
+  const handleColorChange = async (color: string, field: 'primaryColor' | 'secondaryColor') => {
+    setFormData(prev => ({ ...prev, [field]: color }));
+    
+    // Immediately update the database with the new color
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .update({
+          [field === 'primaryColor' ? 'primary_color' : 'secondary_color']: color
+        })
+        .eq('id', clientId);
+
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+    } catch (error: any) {
+      console.error('Failed to update color:', error);
+      toast.error('Failed to save color change');
+    }
+  };
+
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -102,45 +128,25 @@ export function ClientSettingsTab() {
       return;
     }
 
-    setIsUploading(true);
-    try {
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${clientId}/logo.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('client-assets')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('client-assets')
-        .getPublicUrl(filePath);
-
-      const { error: updateError } = await supabase
-        .from('clients')
-        .update({ logo_url: publicUrl })
-        .eq('id', clientId);
-
-      if (updateError) throw updateError;
-
-      queryClient.invalidateQueries({ queryKey: ['client', clientId] });
-      toast.success('Logo updated successfully');
-    } catch (error: any) {
-      toast.error('Failed to upload logo: ' + error.message);
-    } finally {
-      setIsUploading(false);
-    }
+    await handleFileUpload(file);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
   };
 
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsDragging(false);
     
     const file = e.dataTransfer.files[0];
     if (!file) {
@@ -171,6 +177,10 @@ export function ClientSettingsTab() {
     console.log('Starting file upload for:', file.name, 'type:', file.type);
     
     try {
+      // Create a temporary preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setTempLogo(previewUrl);
+
       const fileExt = file.name.split('.').pop();
       const filePath = `${clientId}/logo.${fileExt}`;
       console.log('Uploading to path:', filePath);
@@ -216,6 +226,7 @@ export function ClientSettingsTab() {
     } catch (error: any) {
       console.error('Upload process failed:', error);
       toast.error(error.message || 'Failed to upload logo');
+      setTempLogo(null);
     } finally {
       setIsUploading(false);
     }
@@ -373,27 +384,34 @@ export function ClientSettingsTab() {
                   </div>
                 </div>
                 
-                <div
-                  className={cn(
-                    "border-2 border-dashed rounded-lg p-8 transition-colors",
-                    "hover:border-primary/50 hover:bg-primary/5",
-                    "flex flex-col items-center justify-center gap-4",
-                    isUploading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-                  )}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  onClick={() => !isUploading && document.getElementById('logo-upload')?.click()}
-                >
-                  {client?.logo_url ? (
+                {/* Logo Preview */}
+                {(tempLogo || client?.logo_url) && (
+                  <div className="flex items-center justify-center p-4 bg-muted rounded-lg">
                     <img 
-                      src={client.logo_url} 
+                      src={tempLogo || client?.logo_url} 
                       alt="Current logo" 
                       className="h-24 w-auto object-contain"
                     />
+                  </div>
+                )}
+
+                {/* Upload Area */}
+                <div
+                  className={cn(
+                    "border-2 border-dashed rounded-lg p-8 transition-colors",
+                    "flex flex-col items-center justify-center gap-4",
+                    isDragging ? "border-primary bg-primary/5" : "hover:border-primary/50 hover:bg-primary/5",
+                    isUploading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                  )}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => !isUploading && document.getElementById('logo-upload')?.click()}
+                >
+                  {isUploading ? (
+                    <Loader2 className="h-12 w-12 text-primary animate-spin" />
                   ) : (
-                    <div className="h-24 w-24 rounded bg-muted flex items-center justify-center">
-                      <ImageIcon className="h-12 w-12 text-muted-foreground" />
-                    </div>
+                    <Upload className="h-12 w-12 text-muted-foreground" />
                   )}
                   <div className="text-center">
                     <p className="text-sm font-medium">
@@ -432,14 +450,14 @@ export function ClientSettingsTab() {
                       <PopoverContent className="w-auto p-3">
                         <HexColorPicker
                           color={formData.primaryColor}
-                          onChange={(color) => setFormData(prev => ({ ...prev, primaryColor: color }))}
+                          onChange={(color) => handleColorChange(color, 'primaryColor')}
                         />
                       </PopoverContent>
                     </Popover>
                     <Input
                       id="primaryColor"
                       value={formData.primaryColor}
-                      onChange={handleInputChange('primaryColor')}
+                      onChange={(e) => handleColorChange(e.target.value, 'primaryColor')}
                       placeholder="#000000"
                       className="font-mono"
                     />
@@ -460,14 +478,14 @@ export function ClientSettingsTab() {
                       <PopoverContent className="w-auto p-3">
                         <HexColorPicker
                           color={formData.secondaryColor}
-                          onChange={(color) => setFormData(prev => ({ ...prev, secondaryColor: color }))}
+                          onChange={(color) => handleColorChange(color, 'secondaryColor')}
                         />
                       </PopoverContent>
                     </Popover>
                     <Input
                       id="secondaryColor"
                       value={formData.secondaryColor}
-                      onChange={handleInputChange('secondaryColor')}
+                      onChange={(e) => handleColorChange(e.target.value, 'secondaryColor')}
                       placeholder="#000000"
                       className="font-mono"
                     />
@@ -475,7 +493,7 @@ export function ClientSettingsTab() {
                 </div>
 
                 <BrandingPreview
-                  logoUrl={client?.logo_url}
+                  logoUrl={tempLogo || client?.logo_url}
                   primaryColor={formData.primaryColor}
                   secondaryColor={formData.secondaryColor}
                 />
@@ -487,10 +505,20 @@ export function ClientSettingsTab() {
 
       <div className="flex justify-end">
         <Button type="submit" disabled={isSubmitting}>
-          <Palette className="h-4 w-4 mr-2" />
-          {isSubmitting ? 'Saving...' : 'Save Changes'}
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Palette className="h-4 w-4 mr-2" />
+              Save Changes
+            </>
+          )}
         </Button>
       </div>
     </form>
   );
 }
+
