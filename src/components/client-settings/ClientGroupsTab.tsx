@@ -97,16 +97,16 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
       <Card className="p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h3 className="text-lg font-semibold">Groups</h3>
+            <h3 className="text-lg font-semibold">Groups & Teams</h3>
             <p className="text-sm text-muted-foreground">
-              Manage organizational departments and divisions
+              Manage your organization's structure and teams
             </p>
           </div>
           <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Building2 className="mr-2 h-4 w-4" />
-                Add Group
+                Create New Group
               </Button>
             </DialogTrigger>
             <AddGroupDialog
@@ -117,10 +117,25 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
           </Dialog>
         </div>
 
-        <GroupsTable 
-          groups={groups || []} 
-          onAddTeam={handleAddTeam}
-        />
+        <div className="rounded-md">
+          <div className="mb-6">
+            <h4 className="text-sm font-medium text-muted-foreground mb-1">
+              Company Structure
+            </h4>
+            <p className="text-sm text-muted-foreground">
+              {groups?.length === 0
+                ? "No groups created yet. A default group will be used for all teams."
+                : `${groups?.length} ${
+                    groups?.length === 1 ? "group" : "groups"
+                  } created`}
+            </p>
+          </div>
+
+          <GroupsTable 
+            groups={groups || []} 
+            onAddTeam={handleAddTeam}
+          />
+        </div>
       </Card>
     </div>
   );
