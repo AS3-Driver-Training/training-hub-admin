@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Users, Calendar, CheckCircle } from "lucide-react";
@@ -15,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { InviteClientDialog } from "@/components/InviteClientDialog";
 import { useProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const stats = [
   {
@@ -42,31 +44,30 @@ const Index = () => {
   const navigate = useNavigate();
   const isSuperAdmin = userRole === 'superadmin';
   
-  console.log('Current user role:', userRole); // Debug log
-
   const { data: clients, isLoading, error } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
-      console.log('Fetching clients...'); // Debug log
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching clients:', error); // Debug log
+        if (error) {
+          console.error('Error fetching clients:', error);
+          toast.error('Failed to load clients');
+          throw error;
+        }
+        
+        return data || [];
+      } catch (error) {
+        console.error('Query error:', error);
         throw error;
       }
-      
-      console.log('Fetched clients:', data); // Debug log
-      return data;
     },
-    enabled: isSuperAdmin,
+    enabled: Boolean(userRole), // Only run query when we have the user role
+    retry: 1, // Only retry once on failure
   });
-
-  if (error) {
-    console.error('Query error:', error); // Debug log
-  }
 
   return (
     <DashboardLayout>
@@ -122,6 +123,12 @@ const Index = () => {
                     <TableRow>
                       <TableCell colSpan={3} className="text-center">
                         Loading...
+                      </TableCell>
+                    </TableRow>
+                  ) : error ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-destructive">
+                        Failed to load clients. Please try again later.
                       </TableCell>
                     </TableRow>
                   ) : clients?.length === 0 ? (
