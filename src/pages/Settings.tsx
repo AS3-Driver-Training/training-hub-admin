@@ -2,12 +2,11 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClientUsersTab } from "@/components/client-settings/ClientUsersTab";
-import { ClientSettingsTab } from "@/components/client-settings/ClientSettingsTab";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
 import { useProfile } from "@/hooks/useProfile";
+import { Card } from "@/components/ui/card";
+import { InternalUsersTab } from "@/components/settings/InternalUsersTab";
+import { SystemSettingsTab } from "@/components/settings/SystemSettingsTab";
+import { PlatformSettingsTab } from "@/components/settings/PlatformSettingsTab";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("settings");
@@ -47,42 +46,16 @@ const Settings = () => {
           </TabsList>
 
           <TabsContent value="settings">
-            <Card className="p-6">
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold">Platform Settings</h3>
-                <p className="text-sm text-muted-foreground">
-                  Configure global platform settings and defaults
-                </p>
-              </div>
-              {/* Add platform settings form here */}
-            </Card>
+            <PlatformSettingsTab />
           </TabsContent>
 
           <TabsContent value="users">
-            <Card className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold">Internal Users</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Manage system administrators and staff accounts
-                  </p>
-                </div>
-                {/* Add internal user management here */}
-              </div>
-            </Card>
+            <InternalUsersTab />
           </TabsContent>
 
           {userRole === "superadmin" && (
             <TabsContent value="system">
-              <Card className="p-6">
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold">System Configuration</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Advanced system settings and configurations
-                  </p>
-                </div>
-                {/* Add system configuration options here */}
-              </Card>
+              <SystemSettingsTab />
             </TabsContent>
           )}
         </Tabs>
