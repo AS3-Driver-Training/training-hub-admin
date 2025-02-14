@@ -149,19 +149,21 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
                     <Table>
                       <TableHeader>
                         <TableRow className="hover:bg-gray-50/50">
-                          <TableHead>Team Name</TableHead>
-                          <TableHead className="text-center">Members</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
+                          <TableHead className="text-left">Team Name</TableHead>
+                          <TableHead className="text-center w-[100px]">Members</TableHead>
+                          <TableHead className="text-right w-[100px]">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {group.teams.map((team) => (
                           <TableRow key={team.id} className="hover:bg-gray-50/50">
-                            <TableCell>{team.name}</TableCell>
+                            <TableCell className="text-left font-medium">
+                              {team.name}
+                            </TableCell>
                             <TableCell className="text-center">
                               <Badge variant="secondary" className="mx-auto">0</Badge>
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell>
                               <div className="flex justify-end gap-2">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
