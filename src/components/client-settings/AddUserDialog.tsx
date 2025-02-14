@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
@@ -50,7 +49,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
   const [openTeams, setOpenTeams] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: groups } = useQuery({
+  const { data: groups, isLoading: isLoadingGroups } = useQuery({
     queryKey: ['client_groups', clientId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -67,7 +66,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
         .order('name');
 
       if (error) throw error;
-      return data;
+      return data || [];  // Ensure we always return an array
     },
   });
 
@@ -148,7 +147,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
     });
   };
 
-  const allTeams = groups?.flatMap(group => group.teams) || [];
+  const allTeams = groups?.flatMap(group => (group.teams || [])) || [];
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -195,6 +194,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
                   role="combobox"
                   aria-expanded={openGroups}
                   className="w-full justify-between"
+                  disabled={isLoadingGroups}
                 >
                   {selectedGroups.length === 0
                     ? "Select groups..."
@@ -207,7 +207,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
                   <CommandInput placeholder="Search groups..." />
                   <CommandEmpty>No groups found.</CommandEmpty>
                   <CommandGroup>
-                    {groups?.map((group) => (
+                    {(groups || []).map((group) => (
                       <CommandItem
                         key={group.id}
                         value={group.name}
@@ -242,6 +242,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
                   role="combobox"
                   aria-expanded={openTeams}
                   className="w-full justify-between"
+                  disabled={isLoadingGroups}
                 >
                   {selectedTeams.length === 0
                     ? "Select teams..."

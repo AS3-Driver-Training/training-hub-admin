@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -73,7 +72,7 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
   const [openGroups, setOpenGroups] = useState(false);
   const [openTeams, setOpenTeams] = useState(false);
 
-  const { data: groups } = useQuery({
+  const { data: groups, isLoading: isLoadingGroups } = useQuery({
     queryKey: ['client_groups', clientId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -90,7 +89,7 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
         .order('name');
 
       if (error) throw error;
-      return data;
+      return data || [];  // Ensure we always return an array
     },
   });
 
@@ -204,7 +203,11 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
     }
   };
 
-  const allTeams = groups?.flatMap(group => group.teams) || [];
+  const allTeams = groups?.flatMap(group => (group.teams || [])) || [];
+
+  if (isLoadingGroups) {
+    return <div>Loading groups...</div>;
+  }
 
   return (
     <div className="relative rounded-md border">
@@ -323,7 +326,7 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
                     <CommandInput placeholder="Search groups..." />
                     <CommandEmpty>No groups found.</CommandEmpty>
                     <CommandGroup>
-                      {groups?.map((group) => (
+                      {(groups || []).map((group) => (
                         <CommandItem
                           key={group.id}
                           value={group.name}
