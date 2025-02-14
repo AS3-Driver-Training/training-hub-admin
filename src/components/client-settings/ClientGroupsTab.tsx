@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Building2 } from "lucide-react";
 import { toast } from "sonner";
-import { DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
 import { AddGroupDialog } from "./groups/AddGroupDialog";
 import { GroupsTable } from "./groups/GroupsTable";
@@ -102,23 +102,24 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
               Manage organizational departments and divisions
             </p>
           </div>
-          <DialogTrigger asChild>
-            <Button onClick={() => setIsGroupDialogOpen(true)}>
-              <Building2 className="mr-2 h-4 w-4" />
-              Add Group
-            </Button>
-          </DialogTrigger>
+          <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Building2 className="mr-2 h-4 w-4" />
+                Add Group
+              </Button>
+            </DialogTrigger>
+            <AddGroupDialog
+              isOpen={isGroupDialogOpen}
+              onOpenChange={setIsGroupDialogOpen}
+              onSubmit={handleAddGroup}
+            />
+          </Dialog>
         </div>
 
         <GroupsTable 
           groups={groups || []} 
           onAddTeam={handleAddTeam}
-        />
-
-        <AddGroupDialog
-          isOpen={isGroupDialogOpen}
-          onOpenChange={setIsGroupDialogOpen}
-          onSubmit={handleAddGroup}
         />
       </Card>
     </div>
