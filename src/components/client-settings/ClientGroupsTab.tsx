@@ -23,7 +23,8 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
   const { data: groups, isLoading } = useQuery({
     queryKey: ['client_groups', clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, ensure we have a default group
+      const { data: existingGroups, error: fetchError } = await supabase
         .from('groups')
         .select(`
           *,
@@ -36,8 +37,40 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
         .order('is_default', { ascending: true })
         .order('name');
 
-      if (error) throw error;
-      return data;
+      if (fetchError) throw fetchError;
+
+      // If no default group exists, create one
+      if (!existingGroups?.some(group => group.is_default)) {
+        const { error: insertError } = await supabase
+          .from('groups')
+          .insert({
+            client_id: clientId,
+            name: 'Default Group',
+            description: 'Default group for teams without explicit group assignment',
+            is_default: true
+          });
+
+        if (insertError) throw insertError;
+
+        // Fetch again to get the updated list including the new default group
+        const { data: updatedGroups, error: refetchError } = await supabase
+          .from('groups')
+          .select(`
+            *,
+            teams (
+              id,
+              name
+            )
+          `)
+          .eq('client_id', clientId)
+          .order('is_default', { ascending: true })
+          .order('name');
+
+        if (refetchError) throw refetchError;
+        return updatedGroups;
+      }
+
+      return existingGroups;
     },
   });
 
@@ -93,15 +126,19 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
     addTeamMutation.mutate({ groupId, name });
   };
 
-  const handleCreateTeam = (name: string) => {
-    // If no groups exist or only default group exists, use the default group
-    const defaultGroup = groups?.find(g => g.is_default);
-    if (defaultGroup) {
-      handleAddTeam(defaultGroup.id, name);
-    } else {
-      // This shouldn't happen due to the ensure_default_group trigger, but handling just in case
+  const handleCreateTeam = async (name: string) => {
+    if (!groups || groups.length === 0) {
       toast.error("Unable to create team. Please try again.");
+      return;
     }
+
+    const defaultGroup = groups.find(g => g.is_default);
+    if (!defaultGroup) {
+      toast.error("Unable to create team. Default group not found.");
+      return;
+    }
+
+    handleAddTeam(defaultGroup.id, name);
   };
 
   if (isLoading) return <div>Loading...</div>;
