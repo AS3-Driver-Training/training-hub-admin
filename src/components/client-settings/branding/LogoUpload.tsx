@@ -55,26 +55,38 @@ export function LogoUpload({ clientId, currentLogo, onUploadSuccess }: LogoUploa
     }
 
     setIsUploading(true);
+    console.log('Starting file upload for:', file.name, 'type:', file.type);
     
     try {
+      // Create a temporary preview URL
       const previewUrl = URL.createObjectURL(file);
       setTempLogo(previewUrl);
 
       const fileExt = file.name.split('.').pop();
-      const filePath = `${clientId}/logo.${fileExt}`;
+      const filePath = `${clientId}/logo-${Date.now()}.${fileExt}`;
+      console.log('Uploading to path:', filePath);
 
-      const { error: uploadError } = await supabase.storage
+      // First upload the file
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('client-assets')
         .upload(filePath, file, { 
           upsert: true,
           contentType: file.type
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
+      console.log('File uploaded successfully:', uploadData);
+
+      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('client-assets')
         .getPublicUrl(filePath);
+
+      console.log('Generated public URL:', publicUrl);
 
       onUploadSuccess(publicUrl);
       toast.success('Logo uploaded successfully');

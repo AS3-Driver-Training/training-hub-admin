@@ -79,7 +79,8 @@ export function ClientSettingsTab() {
 
       if (error) throw error;
       
-      queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+      await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+      toast.success(`${field === 'primaryColor' ? 'Primary' : 'Secondary'} color updated`);
     } catch (error: any) {
       console.error('Failed to update color:', error);
       toast.error('Failed to save color change');
@@ -94,7 +95,9 @@ export function ClientSettingsTab() {
         .eq('id', clientId);
 
       if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+      
+      await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+      toast.success('Logo updated successfully');
     } catch (error: any) {
       console.error('Failed to update logo URL:', error);
       toast.error('Failed to save logo URL');
