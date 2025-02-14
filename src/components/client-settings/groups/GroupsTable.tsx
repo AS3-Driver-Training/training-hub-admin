@@ -128,7 +128,7 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
                       )}
                     </Button>
                   </CollapsibleTrigger>
-                  <div>
+                  <div className="w-[200px]">
                     <div className="font-medium flex items-center gap-2 text-gray-900">
                       {group.name}
                       {group.is_default && (
@@ -136,32 +136,41 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
                       )}
                     </div>
                     {group.description && (
-                      <p className="text-sm text-gray-500 mt-0.5">
+                      <p className="text-sm text-gray-500 mt-0.5 truncate">
                         {group.description}
                       </p>
                     )}
                   </div>
                 </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedGroup(group);
-                        setIsTeamDialogOpen(true);
-                      }}
-                      className="ml-4"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Team
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Add a new team to {group.name}
-                  </TooltipContent>
-                </Tooltip>
+
+                <div className="flex items-center gap-4">
+                  <div className="w-[100px] text-center">
+                    <Badge variant="secondary">
+                      {group.teams?.length || 0} teams
+                    </Badge>
+                  </div>
+                  <div className="w-[100px] flex justify-end">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedGroup(group);
+                            setIsTeamDialogOpen(true);
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Team
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Add a new team to {group.name}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </div>
               </div>
 
               <CollapsibleContent>
@@ -170,7 +179,7 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
                     <Table>
                       <TableHeader>
                         <TableRow className="hover:bg-gray-50/50">
-                          <TableHead className="text-left">Team Name</TableHead>
+                          <TableHead className="text-left w-[200px]">Team Name</TableHead>
                           <TableHead className="text-center w-[100px]">Members</TableHead>
                           <TableHead className="text-right w-[100px]">Actions</TableHead>
                         </TableRow>
@@ -178,13 +187,13 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
                       <TableBody>
                         {group.teams.map((team) => (
                           <TableRow key={team.id} className="hover:bg-gray-50/50">
-                            <TableCell className="text-left font-medium">
+                            <TableCell className="text-left font-medium w-[200px]">
                               {team.name}
                             </TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="text-center w-[100px]">
                               <Badge variant="secondary" className="mx-auto">0</Badge>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="text-right w-[100px]">
                               <div className="flex justify-end gap-2">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
