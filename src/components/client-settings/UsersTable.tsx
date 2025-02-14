@@ -72,7 +72,7 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
   const [openGroups, setOpenGroups] = useState(false);
   const [openTeams, setOpenTeams] = useState(false);
 
-  const { data: groups, isLoading: isLoadingGroups } = useQuery({
+  const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
     queryKey: ['client_groups', clientId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -149,8 +149,8 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
 
   const handleManageUser = (user: UserData) => {
     setSelectedUser(user);
-    setSelectedGroups(user.groups.map(g => g.id));
-    setSelectedTeams(user.teams.map(t => t.id));
+    setSelectedGroups(user.groups?.map(g => g.id) || []);
+    setSelectedTeams(user.teams?.map(t => t.id) || []);
     setIsManageUserOpen(true);
   };
 
@@ -204,75 +204,12 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
     }
   };
 
-  const allTeams = groups?.flatMap(group => (group.teams || [])) || [];
-
-  const renderGroupsCommand = () => {
-    if (isLoadingGroups) return null;
-    
-    return (
-      <Command>
-        <CommandInput placeholder="Search groups..." />
-        <CommandEmpty>No groups found.</CommandEmpty>
-        <CommandGroup>
-          {groups.map((group) => (
-            <CommandItem
-              key={group.id}
-              value={group.name}
-              onSelect={() => {
-                setSelectedGroups(
-                  selectedGroups.includes(group.id)
-                    ? selectedGroups.filter(id => id !== group.id)
-                    : [...selectedGroups, group.id]
-                );
-              }}
-            >
-              <Check
-                className={cn(
-                  "mr-2 h-4 w-4",
-                  selectedGroups.includes(group.id) ? "opacity-100" : "opacity-0"
-                )}
-              />
-              {group.name}
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      </Command>
-    );
-  };
-
-  const renderTeamsCommand = () => {
-    if (isLoadingGroups) return null;
-    
-    return (
-      <Command>
-        <CommandInput placeholder="Search teams..." />
-        <CommandEmpty>No teams found.</CommandEmpty>
-        <CommandGroup>
-          {allTeams.map((team) => (
-            <CommandItem
-              key={team.id}
-              value={team.name}
-              onSelect={() => {
-                setSelectedTeams(
-                  selectedTeams.includes(team.id)
-                    ? selectedTeams.filter(id => id !== team.id)
-                    : [...selectedTeams, team.id]
-                );
-              }}
-            >
-              <Check
-                className={cn(
-                  "mr-2 h-4 w-4",
-                  selectedTeams.includes(team.id) ? "opacity-100" : "opacity-0"
-                )}
-              />
-              {team.name}
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      </Command>
-    );
-  };
+  const allTeams = groups.reduce<Array<{ id: string; name: string }>>((acc, group) => {
+    if (group.teams && Array.isArray(group.teams)) {
+      acc.push(...group.teams);
+    }
+    return acc;
+  }, []);
 
   if (isLoadingGroups) {
     return <div>Loading groups...</div>;
@@ -391,7 +328,33 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[400px] p-0">
-                  {renderGroupsCommand()}
+                  <Command>
+                    <CommandInput placeholder="Search groups..." />
+                    <CommandEmpty>No groups found.</CommandEmpty>
+                    <CommandGroup>
+                      {groups.map((group) => (
+                        <CommandItem
+                          key={group.id}
+                          value={group.name}
+                          onSelect={() => {
+                            setSelectedGroups(
+                              selectedGroups.includes(group.id)
+                                ? selectedGroups.filter(id => id !== group.id)
+                                : [...selectedGroups, group.id]
+                            );
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedGroups.includes(group.id) ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {group.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
                 </PopoverContent>
               </Popover>
             </div>
@@ -404,6 +367,7 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
                     role="combobox"
                     aria-expanded={openTeams}
                     className="w-full justify-between"
+                    disabled={allTeams.length === 0}
                   >
                     {selectedTeams.length === 0
                       ? "Select teams..."
@@ -412,7 +376,33 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[400px] p-0">
-                  {renderTeamsCommand()}
+                  <Command>
+                    <CommandInput placeholder="Search teams..." />
+                    <CommandEmpty>No teams found.</CommandEmpty>
+                    <CommandGroup>
+                      {allTeams.map((team) => (
+                        <CommandItem
+                          key={team.id}
+                          value={team.name}
+                          onSelect={() => {
+                            setSelectedTeams(
+                              selectedTeams.includes(team.id)
+                                ? selectedTeams.filter(id => id !== team.id)
+                                : [...selectedTeams, team.id]
+                            );
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedTeams.includes(team.id) ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {team.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
                 </PopoverContent>
               </Popover>
             </div>
