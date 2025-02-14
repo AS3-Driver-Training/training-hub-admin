@@ -13,7 +13,7 @@ import { Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { ClientUpdateForm } from "./client-settings/ClientUpdateForm";
+import { ClientUpdateForm } from "./ClientUpdateForm";
 
 interface Client {
   id: string;
