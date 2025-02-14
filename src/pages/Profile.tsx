@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -9,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { UserIcon, BriefcaseIcon, BadgeIcon, PenIcon, KeyIcon } from "lucide-react";
+import { KeyIcon, PenIcon } from "lucide-react";
 
 const Profile = () => {
   const { userName, userRole, userTitle, isLoading } = useProfile();
@@ -108,20 +107,17 @@ const Profile = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-3xl mx-auto space-y-8">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Profile Settings</h1>
-          <p className="text-sm text-muted-foreground">
-            View and manage your personal information and account settings
+      <div className="container max-w-2xl py-6 space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Profile Settings</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage your account settings and change your password
           </p>
         </div>
 
         <Card className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-2">
-              <UserIcon className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-semibold">Personal Information</h3>
-            </div>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-medium">Personal Information</h2>
             {!isEditing && (
               <Button 
                 variant="outline" 
@@ -130,48 +126,55 @@ const Profile = () => {
                 className="gap-2"
               >
                 <PenIcon className="w-4 h-4" />
-                Edit Profile
+                Edit
               </Button>
             )}
           </div>
 
           {isEditing ? (
-            <form onSubmit={handleProfileUpdate} className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
+            <form onSubmit={handleProfileUpdate} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="firstName">First Name</Label>
                   <Input
                     id="firstName"
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    className="bg-background"
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="lastName">Last Name</Label>
                   <Input
                     id="lastName"
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
-                    className="bg-background"
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  className="bg-background"
-                />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Role</Label>
+                  <Input
+                    value={userRole}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
               </div>
-              <div className="flex gap-2 pt-2">
+              <div className="flex gap-2 pt-4">
                 <Button type="submit" disabled={isSaving}>
-                  Save Changes
+                  Save changes
                 </Button>
                 <Button 
                   type="button" 
@@ -184,70 +187,63 @@ const Profile = () => {
               </div>
             </form>
           ) : (
-            <div className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-1">
+            <div className="grid gap-6">
+              <div className="grid gap-1 sm:grid-cols-2">
+                <div>
                   <Label className="text-xs text-muted-foreground">First Name</Label>
-                  <p className="text-sm font-medium">{formData.firstName || '-'}</p>
+                  <p className="text-sm mt-1">{formData.firstName || '-'}</p>
                 </div>
-                <div className="space-y-1">
+                <div>
                   <Label className="text-xs text-muted-foreground">Last Name</Label>
-                  <p className="text-sm font-medium">{formData.lastName || '-'}</p>
+                  <p className="text-sm mt-1">{formData.lastName || '-'}</p>
                 </div>
               </div>
-              
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-1">
+              <div className="grid gap-1 sm:grid-cols-2">
+                <div>
                   <Label className="text-xs text-muted-foreground">Title</Label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <BriefcaseIcon className="w-4 h-4 text-primary" />
-                    <p className="text-sm font-medium">{formData.title || '-'}</p>
-                  </div>
+                  <p className="text-sm mt-1">{formData.title || '-'}</p>
                 </div>
-                <div className="space-y-1">
+                <div>
                   <Label className="text-xs text-muted-foreground">Role</Label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <BadgeIcon className="w-4 h-4 text-primary" />
-                    <p className="text-sm font-medium capitalize">{userRole}</p>
-                  </div>
+                  <p className="text-sm mt-1 capitalize">{userRole}</p>
                 </div>
               </div>
             </div>
           )}
 
-          <Separator className="my-8" />
+          <Separator className="my-6" />
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <KeyIcon className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-semibold">Security</h3>
+              <KeyIcon className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-lg font-medium">Password</h2>
             </div>
 
-            <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
-              <div className="space-y-2">
-                <Label htmlFor="newPassword" className="text-sm">New Password</Label>
-                <Input
-                  id="newPassword"
-                  name="newPassword"
-                  type="password"
-                  value={formData.newPassword}
-                  onChange={handleInputChange}
-                  className="bg-background"
-                />
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <div className="grid gap-4 max-w-md">
+                <div className="space-y-1.5">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <Input
+                    id="newPassword"
+                    name="newPassword"
+                    type="password"
+                    value={formData.newPassword}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm">Confirm New Password</Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  className="bg-background"
-                />
-              </div>
-              <Button type="submit" disabled={isSaving} className="mt-2">
-                Update Password
+              <Button type="submit" disabled={isSaving}>
+                Update password
               </Button>
             </form>
           </div>
