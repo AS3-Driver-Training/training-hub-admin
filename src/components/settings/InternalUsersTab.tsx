@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -181,61 +180,55 @@ export function InternalUsersTab() {
         </Button>
       </div>
 
-      <div className="grid gap-4">
+      <div className="space-y-4">
         {users?.map((user) => (
           <Card key={user.id} className="p-4">
-            <div className="flex justify-between items-start">
-              <div className="space-y-4 flex-grow">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <h4 className="font-medium">
-                        {user.first_name} {user.last_name}
-                      </h4>
-                      <Badge variant={user.role === 'superadmin' ? 'destructive' : user.role === 'admin' ? 'default' : 'secondary'}>
-                        {user.role}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
-                    <p className="text-sm mt-1">{user.title || 'No title'}</p>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(user)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit User
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => handleDelete(user)}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Deactivate User
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                <div className="flex gap-4 text-sm text-muted-foreground">
-                  <div>
-                    <span className="font-medium text-foreground">Status: </span>
-                    <Badge variant={user.status === 'active' ? 'default' : 'secondary'} className="ml-1">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3">
+                    <h4 className="font-medium">
+                      {user.first_name} {user.last_name}
+                    </h4>
+                    <Badge variant={user.role === 'superadmin' ? 'destructive' : user.role === 'admin' ? 'default' : 'secondary'}>
+                      {user.role}
+                    </Badge>
+                    <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
                       {user.status}
                     </Badge>
                   </div>
-                  <div>
-                    <span className="font-medium text-foreground">Created: </span>
-                    {new Date(user.created_at).toLocaleDateString()}
-                  </div>
-                  <div>
-                    <span className="font-medium text-foreground">Last Login: </span>
-                    {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>{user.email}</span>
+                    <span>•</span>
+                    <span>{user.title || 'No title'}</span>
                   </div>
                 </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-muted-foreground">
+                  <span>Last login: </span>
+                  {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleEdit(user)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit User
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleDelete(user)}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Deactivate User
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </Card>
