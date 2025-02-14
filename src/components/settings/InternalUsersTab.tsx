@@ -1,9 +1,9 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { 
   DropdownMenu,
@@ -72,6 +72,7 @@ export function InternalUsersTab() {
 
       if (error) throw error;
 
+      // Use Promise.all to wait for all email fetching operations
       const usersWithEmails = await Promise.all(
         profiles.map(async (profile) => {
           try {
@@ -86,16 +87,20 @@ export function InternalUsersTab() {
 
             if (userError) throw userError;
 
+            // Make sure we have the user data before proceeding
+            if (!userData?.user) {
+              console.error('No user data found for profile:', profile.id);
+              throw new Error('User data not found');
+            }
+
             return {
               ...profile,
-              email: userData?.user?.email || 'No email found',
+              email: userData.user.email,
             };
           } catch (error) {
             console.error('Error fetching user email:', error);
-            return {
-              ...profile,
-              email: 'Error loading email',
-            };
+            // Instead of returning a placeholder, throw the error
+            throw new Error(`Failed to fetch email for user ${profile.id}`);
           }
         })
       );
@@ -121,6 +126,21 @@ export function InternalUsersTab() {
     }
 
     try {
+      // First verify we can get the user's email
+      const { data: userData, error: userError } = await supabase.functions.invoke(
+        'get-user-by-id',
+        { 
+          body: { 
+            userId: user.id 
+          } 
+        }
+      );
+
+      if (userError || !userData?.user?.email) {
+        throw new Error('Could not verify user email before deactivation');
+      }
+
+      // Proceed with deactivation
       const { error } = await supabase
         .from('profiles')
         .update({ status: 'inactive' })
@@ -130,9 +150,9 @@ export function InternalUsersTab() {
 
       toast.success('User deactivated successfully');
       refetch();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deactivating user:', error);
-      toast.error('Failed to deactivate user');
+      toast.error(error.message || 'Failed to deactivate user');
     }
   };
 
@@ -155,9 +175,9 @@ export function InternalUsersTab() {
       toast.success('User updated successfully');
       setIsEditDialogOpen(false);
       refetch();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating user:', error);
-      toast.error('Failed to update user');
+      toast.error(error.message || 'Failed to update user');
     }
   };
 
