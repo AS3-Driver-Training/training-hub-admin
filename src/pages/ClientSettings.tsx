@@ -19,23 +19,29 @@ export default function ClientSettings() {
   const { data: client, isLoading } = useQuery({
     queryKey: ['client', clientId],
     queryFn: async () => {
+      console.log('Fetching client details for:', clientId);
       const { data, error } = await supabase
         .from('clients')
         .select('*')
         .eq('id', clientId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching client:', error);
+        throw error;
+      }
+      
+      console.log('Fetched client:', data);
       return data;
     },
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <DashboardLayout><div>Loading...</div></DashboardLayout>;
   }
 
   if (!client) {
-    return <div>Client not found</div>;
+    return <DashboardLayout><div>Client not found</div></DashboardLayout>;
   }
 
   return (

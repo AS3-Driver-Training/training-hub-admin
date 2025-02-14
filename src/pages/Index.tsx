@@ -70,6 +70,7 @@ const Index = () => {
   console.log('Render state:', { isSuperAdmin, clients, isLoading, error });
 
   const handleClientClick = (clientId: string) => {
+    console.log('Navigating to:', `/client-settings/${clientId}`);
     navigate(`/client-settings/${clientId}`);
   };
 
