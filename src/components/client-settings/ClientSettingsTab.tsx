@@ -38,6 +38,17 @@ function BrandingPreview({ logoUrl, primaryColor, secondaryColor }: BrandingPrev
   );
 }
 
+const colorOptions = [
+  // Purple variants
+  '#9b87f5', '#7E69AB', '#6E59A5', '#1A1F2C', '#D6BCFA',
+  // Soft pastels
+  '#F2FCE2', '#FEF7CD', '#FEC6A1', '#E5DEFF', '#FFDEE2',
+  // Vibrant colors
+  '#8B5CF6', '#D946EF', '#F97316', '#0EA5E9', '#403E43',
+  // Cool grays
+  '#8E9196', '#75869600', '#aaadb0', '#3336', '#222'
+];
+
 export function ClientSettingsTab() {
   const { clientId } = useParams();
   const queryClient = useQueryClient();
@@ -384,44 +395,78 @@ export function ClientSettingsTab() {
               <div className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="primaryColor">Primary Color</Label>
-                  <div className="flex gap-2">
-                    <div 
-                      className="w-10 h-10 rounded border"
-                      style={{ backgroundColor: formData.primaryColor }}
-                    />
-                    <Input
-                      id="primaryColor"
-                      type="text"
-                      value={formData.primaryColor}
-                      onChange={handleInputChange('primaryColor')}
-                      placeholder="#000000"
-                    />
+                  <div className="space-y-3">
+                    <div className="flex gap-2 items-center">
+                      <div 
+                        className="w-10 h-10 rounded border"
+                        style={{ backgroundColor: formData.primaryColor }}
+                      />
+                      <Input
+                        id="primaryColor"
+                        type="text"
+                        value={formData.primaryColor}
+                        onChange={handleInputChange('primaryColor')}
+                        placeholder="#000000"
+                      />
+                    </div>
+                    <div className="grid grid-cols-10 gap-2">
+                      {colorOptions.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          className={cn(
+                            "w-6 h-6 rounded border border-border transition-all",
+                            "hover:scale-110 hover:border-primary",
+                            formData.primaryColor === color && "ring-2 ring-primary ring-offset-2"
+                          )}
+                          style={{ backgroundColor: color }}
+                          onClick={() => setFormData(prev => ({ ...prev, primaryColor: color }))}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
 
                 <div className="grid gap-2">
                   <Label htmlFor="secondaryColor">Secondary Color</Label>
-                  <div className="flex gap-2">
-                    <div 
-                      className="w-10 h-10 rounded border"
-                      style={{ backgroundColor: formData.secondaryColor }}
-                    />
-                    <Input
-                      id="secondaryColor"
-                      type="text"
-                      value={formData.secondaryColor}
-                      onChange={handleInputChange('secondaryColor')}
-                      placeholder="#000000"
-                    />
+                  <div className="space-y-3">
+                    <div className="flex gap-2 items-center">
+                      <div 
+                        className="w-10 h-10 rounded border"
+                        style={{ backgroundColor: formData.secondaryColor }}
+                      />
+                      <Input
+                        id="secondaryColor"
+                        type="text"
+                        value={formData.secondaryColor}
+                        onChange={handleInputChange('secondaryColor')}
+                        placeholder="#000000"
+                      />
+                    </div>
+                    <div className="grid grid-cols-10 gap-2">
+                      {colorOptions.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          className={cn(
+                            "w-6 h-6 rounded border border-border transition-all",
+                            "hover:scale-110 hover:border-primary",
+                            formData.secondaryColor === color && "ring-2 ring-primary ring-offset-2"
+                          )}
+                          style={{ backgroundColor: color }}
+                          onClick={() => setFormData(prev => ({ ...prev, secondaryColor: color }))}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <BrandingPreview
-                logoUrl={client?.logo_url}
-                primaryColor={formData.primaryColor}
-                secondaryColor={formData.secondaryColor}
-              />
+                <BrandingPreview
+                  logoUrl={client?.logo_url}
+                  primaryColor={formData.primaryColor}
+                  secondaryColor={formData.secondaryColor}
+                />
+              </div>
             </div>
           </Card>
         </TabsContent>
