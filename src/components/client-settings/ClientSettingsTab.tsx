@@ -377,6 +377,7 @@ export function ClientSettingsTab() {
                   className={cn(
                     "border-2 border-dashed rounded-lg p-8 transition-colors",
                     "hover:border-primary/50 hover:bg-primary/5",
+                    "flex flex-col items-center justify-center gap-4",
                     isUploading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
                   )}
                   onDragOver={handleDragOver}
