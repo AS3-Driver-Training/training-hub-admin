@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Upload, Image as ImageIcon, Palette } from "lucide-react";
+import { Upload, Image as ImageIcon, Palette, Info } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface BrandingPreviewProps {
   logoUrl: string | null;
@@ -116,6 +116,85 @@ export function ClientSettingsTab() {
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    
+    await handleFileUpload(file);
+  };
+
+  const handleFileUpload = async (file: File) => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file (PNG, JPG, or SVG)');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('File size must be less than 2MB');
+      return;
+    }
+
+    // Create an image object to check dimensions
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    
+    img.onload = async () => {
+      // Validate dimensions (min 200x200, max 1000x1000)
+      if (img.width < 200 || img.height < 200) {
+        toast.error('Image dimensions must be at least 200x200 pixels');
+        return;
+      }
+      if (img.width > 1000 || img.height > 1000) {
+        toast.error('Image dimensions must not exceed 1000x1000 pixels');
+        return;
+      }
+
+      setIsUploading(true);
+      try {
+        const fileExt = file.name.split('.').pop();
+        const filePath = `${clientId}/logo.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('client-assets')
+          .upload(filePath, file, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('client-assets')
+          .getPublicUrl(filePath);
+
+        const { error: updateError } = await supabase
+          .from('clients')
+          .update({ logo_url: publicUrl })
+          .eq('id', clientId);
+
+        if (updateError) throw updateError;
+
+        queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+        toast.success('Logo updated successfully');
+      } catch (error: any) {
+        toast.error('Failed to upload logo: ' + error.message);
+      } finally {
+        setIsUploading(false);
+      }
+    };
+
+    img.onerror = () => {
+      toast.error('Invalid image file');
+    };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -150,10 +229,26 @@ export function ClientSettingsTab() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="profile">Profile Information</TabsTrigger>
-          <TabsTrigger value="branding">Branding</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full bg-background border-b rounded-none p-0 h-auto">
+          <div className="flex space-x-4 px-4">
+            <TabsTrigger 
+              value="profile" 
+              className={cn(
+                "data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-1 py-3"
+              )}
+            >
+              Profile Information
+            </TabsTrigger>
+            <TabsTrigger 
+              value="branding"
+              className={cn(
+                "data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-1 py-3"
+              )}
+            >
+              Branding
+            </TabsTrigger>
+          </div>
         </TabsList>
 
         <TabsContent value="profile">
@@ -239,34 +334,49 @@ export function ClientSettingsTab() {
           <Card className="p-6">
             <div className="grid gap-6">
               <div className="space-y-4">
-                <Label>Logo</Label>
-                <div className="flex items-center gap-4">
+                <div className="flex justify-between items-center">
+                  <Label>Logo</Label>
+                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Info className="h-3 w-3" />
+                    Recommended: 200x200px to 1000x1000px (max 2MB)
+                  </div>
+                </div>
+                
+                <div
+                  className={cn(
+                    "border-2 border-dashed rounded-lg p-8 transition-colors",
+                    "hover:border-primary/50 hover:bg-primary/5",
+                    "flex flex-col items-center justify-center gap-4 cursor-pointer"
+                  )}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onClick={() => document.getElementById('logo-upload')?.click()}
+                >
                   {client?.logo_url ? (
                     <img 
                       src={client.logo_url} 
                       alt="Current logo" 
-                      className="h-12 w-12 object-contain rounded bg-muted"
+                      className="h-24 w-auto object-contain"
                     />
                   ) : (
-                    <div className="h-12 w-12 rounded bg-muted flex items-center justify-center">
-                      <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                    <div className="h-24 w-24 rounded bg-muted flex items-center justify-center">
+                      <ImageIcon className="h-12 w-12 text-muted-foreground" />
                     </div>
                   )}
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    disabled={isUploading}
-                    onClick={() => document.getElementById('logo-upload')?.click()}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    {isUploading ? 'Uploading...' : 'Upload Logo'}
-                  </Button>
+                  <div className="text-center">
+                    <p className="text-sm font-medium">
+                      {isUploading ? 'Uploading...' : 'Drag and drop your logo here or click to browse'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Supports PNG, JPG, SVG (max 2MB)
+                    </p>
+                  </div>
                   <input
                     id="logo-upload"
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/jpeg,image/svg+xml"
                     className="hidden"
-                    onChange={handleLogoUpload}
+                    onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
                   />
                 </div>
               </div>
