@@ -68,31 +68,31 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
     <TooltipProvider>
       <div className="space-y-4">
         {groups?.map((group) => (
-          <Card key={group.id} className="overflow-hidden">
+          <Card key={group.id} className="overflow-hidden border border-gray-200">
             <Collapsible
               open={expandedGroups.has(group.id)}
               onOpenChange={() => toggleGroup(group.id)}
             >
-              <div className="p-4 flex items-center justify-between bg-muted/50">
-                <div className="flex items-center gap-2">
+              <div className="p-4 flex items-center justify-between bg-gray-50/80 border-b">
+                <div className="flex items-center gap-3">
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="p-0 hover:bg-transparent">
+                    <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
                       {expandedGroups.has(group.id) ? (
-                        <ChevronDown className="h-4 w-4" />
+                        <ChevronDown className="h-4 w-4 text-gray-500" />
                       ) : (
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-4 w-4 text-gray-500" />
                       )}
                     </Button>
                   </CollapsibleTrigger>
                   <div>
-                    <div className="font-medium flex items-center gap-2">
+                    <div className="font-medium flex items-center gap-2 text-gray-900">
                       {group.name}
                       {group.is_default && (
-                        <Badge variant="secondary">Default</Badge>
+                        <Badge variant="secondary" className="ml-2">Default</Badge>
                       )}
                     </div>
                     {group.description && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-gray-500 mt-0.5">
                         {group.description}
                       </p>
                     )}
@@ -101,13 +101,14 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedGroup(group);
                         setIsTeamDialogOpen(true);
                       }}
+                      className="ml-4"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Team
@@ -120,24 +121,24 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
               </div>
 
               <CollapsibleContent>
-                <div className="p-4 pt-0 mt-4">
+                <div className="p-4">
                   {group.teams && group.teams.length > 0 ? (
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead>Team Name</TableHead>
-                          <TableHead className="w-[100px]">Members</TableHead>
-                          <TableHead className="w-[100px]">Actions</TableHead>
+                        <TableRow className="hover:bg-gray-50/50">
+                          <TableHead className="w-[60%]">Team Name</TableHead>
+                          <TableHead className="w-[20%] text-center">Members</TableHead>
+                          <TableHead className="w-[20%]">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {group.teams.map((team) => (
-                          <TableRow key={team.id}>
-                            <TableCell>{team.name}</TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">0</Badge>
+                          <TableRow key={team.id} className="hover:bg-gray-50/50">
+                            <TableCell className="font-medium">{team.name}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="secondary" className="mx-auto">0</Badge>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="text-right">
                               {/* Future actions like edit, delete, etc. */}
                             </TableCell>
                           </TableRow>
@@ -145,7 +146,7 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
                       </TableBody>
                     </Table>
                   ) : (
-                    <div className="text-center py-4 text-muted-foreground">
+                    <div className="text-center py-8 text-gray-500 bg-gray-50/50 rounded-lg">
                       No teams yet. Click "Add Team" to create one.
                     </div>
                   )}
@@ -170,3 +171,4 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
     </TooltipProvider>
   );
 }
+
