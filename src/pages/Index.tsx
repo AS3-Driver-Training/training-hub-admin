@@ -47,6 +47,8 @@ const Index = () => {
   const { data: clients, isLoading, error } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
+      console.log('Fetching clients, user role:', userRole); // Debug log
+      
       const { data, error } = await supabase
         .from('clients')
         .select('*')
@@ -57,12 +59,15 @@ const Index = () => {
         toast.error('Failed to load clients');
         throw error;
       }
+
+      console.log('Fetched clients:', data); // Debug log
       
       return data || [];
     },
     enabled: isSuperAdmin, // Only fetch if user is superadmin
-    retry: 1
   });
+
+  console.log('Render state:', { isSuperAdmin, clients, isLoading, error }); // Debug log
 
   return (
     <DashboardLayout>
@@ -126,14 +131,14 @@ const Index = () => {
                         Failed to load clients. Please try again later.
                       </TableCell>
                     </TableRow>
-                  ) : clients?.length === 0 ? (
+                  ) : !clients || clients.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={3} className="text-center">
                         No clients found. Invite your first client to get started.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    clients?.map((client) => (
+                    clients.map((client) => (
                       <TableRow 
                         key={client.id}
                         className="cursor-pointer hover:bg-muted/50"
