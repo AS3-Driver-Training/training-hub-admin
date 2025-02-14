@@ -159,53 +159,40 @@ export function ClientSettingsTab() {
       return;
     }
 
-    const img = new Image();
-    img.src = URL.createObjectURL(file);
+    setIsUploading(true);
     
-    img.onload = async () => {
-      if (img.width < 200 || img.height < 200) {
-        toast.error('Image dimensions must be at least 200x200 pixels');
-        return;
-      }
-      if (img.width > 1000 || img.height > 1000) {
-        toast.error('Image dimensions must not exceed 1000x1000 pixels');
-        return;
-      }
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${clientId}/logo.${fileExt}`;
 
-      setIsUploading(true);
-      try {
-        const fileExt = file.name.split('.').pop();
-        const filePath = `${clientId}/logo.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('client-assets')
+        .upload(filePath, file, { 
+          upsert: true,
+          contentType: file.type
+        });
 
-        const { error: uploadError } = await supabase.storage
-          .from('client-assets')
-          .upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
 
-        if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage
+        .from('client-assets')
+        .getPublicUrl(filePath);
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('client-assets')
-          .getPublicUrl(filePath);
+      const { error: updateError } = await supabase
+        .from('clients')
+        .update({ logo_url: publicUrl })
+        .eq('id', clientId);
 
-        const { error: updateError } = await supabase
-          .from('clients')
-          .update({ logo_url: publicUrl })
-          .eq('id', clientId);
+      if (updateError) throw updateError;
 
-        if (updateError) throw updateError;
-
-        queryClient.invalidateQueries({ queryKey: ['client', clientId] });
-        toast.success('Logo updated successfully');
-      } catch (error: any) {
-        toast.error('Failed to upload logo: ' + error.message);
-      } finally {
-        setIsUploading(false);
-      }
-    };
-
-    img.onerror = () => {
-      toast.error('Invalid image file');
-    };
+      await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+      toast.success('Logo updated successfully');
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload logo: ' + error.message);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -356,7 +343,7 @@ export function ClientSettingsTab() {
                   <Label>Logo</Label>
                   <div className="text-xs text-muted-foreground flex items-center gap-1">
                     <Info className="h-3 w-3" />
-                    Recommended: 200x200px to 1000x1000px (max 2MB)
+                    Max file size: 2MB
                   </div>
                 </div>
                 
@@ -386,7 +373,7 @@ export function ClientSettingsTab() {
                       {isUploading ? 'Uploading...' : 'Drag and drop your logo here or click to browse'}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Supports PNG, JPG, SVG (max 2MB)
+                      Supports PNG, JPG, SVG
                     </p>
                   </div>
                   <input
