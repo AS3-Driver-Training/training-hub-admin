@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,35 @@ const Auth = () => {
   const [lastName, setLastName] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+
+  // Handle password reset flow
+  useEffect(() => {
+    const handlePasswordReset = async () => {
+      const token = searchParams.get('token');
+      if (token) {
+        try {
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash: token,
+            type: 'recovery'
+          });
+          if (error) throw error;
+          toast({
+            title: "Success!",
+            description: "Your password has been reset. Please sign in with your new password.",
+          });
+        } catch (error: any) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: error.message,
+          });
+        }
+      }
+    };
+
+    handlePasswordReset();
+  }, [searchParams, toast]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +54,12 @@ const Auth = () => {
 
     try {
       if (isForgotPassword) {
+        // Get the current origin (domain) of the application
+        const origin = window.location.origin;
+        const redirectTo = `${origin}/auth`;
+
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth?reset=true`,
+          redirectTo,
         });
         if (error) throw error;
         
