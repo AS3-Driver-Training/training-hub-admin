@@ -25,7 +25,8 @@ export function useProfile() {
         if (error) throw error;
         
         if (profile) {
-          setUserName(`${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User');
+          const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+          setUserName(fullName || 'User');
           setUserRole(profile.role);
           setUserTitle(profile.title || '');
           setUserStatus(profile.status);
