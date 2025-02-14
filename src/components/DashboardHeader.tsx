@@ -1,6 +1,6 @@
 
 import { Button } from "./ui/button";
-import { Menu, LogOut } from "lucide-react";
+import { Menu, LogOut, User, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { UserProfileDialog } from "./UserProfileDialog";
+import { Link } from "react-router-dom";
 
 interface DashboardHeaderProps {
   userName: string;
@@ -35,14 +35,28 @@ export function DashboardHeader({ userName, userRole, onLogout }: DashboardHeade
           </span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <UserProfileDialog />
+              <Button variant="ghost" size="icon">
+                <User className="h-5 w-5 text-[#C10230]" />
+              </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Welcome {userName}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <span>{userRole}</span>
+              <DropdownMenuItem asChild>
+                <Link to="/profile" className="w-full flex items-center">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile Settings</span>
+                </Link>
               </DropdownMenuItem>
+              {["superadmin", "admin", "staff"].includes(userRole) && (
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="w-full flex items-center">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>System Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
