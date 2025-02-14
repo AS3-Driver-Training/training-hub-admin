@@ -6,6 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,6 +20,8 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [title, setTitle] = useState("");
+  const [status, setStatus] = useState<"active" | "inactive">("active");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -25,13 +34,15 @@ const Settings = () => {
         if (user) {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('first_name, last_name')
+            .select('first_name, last_name, title, status')
             .eq('id', user.id)
             .single();
           
           if (profile) {
             setFirstName(profile.first_name || "");
             setLastName(profile.last_name || "");
+            setTitle(profile.title || "");
+            setStatus(profile.status as "active" | "inactive");
           }
         }
       } catch (error) {
@@ -55,6 +66,8 @@ const Settings = () => {
         .update({
           first_name: firstName,
           last_name: lastName,
+          title: title,
+          status: status,
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
@@ -129,6 +142,27 @@ const Settings = () => {
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="Enter your last name"
                 />
+              </div>
+              <div>
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter your job title"
+                />
+              </div>
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <Select value={status} onValueChange={(value: "active" | "inactive") => setStatus(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <Button type="submit" disabled={loading}>
