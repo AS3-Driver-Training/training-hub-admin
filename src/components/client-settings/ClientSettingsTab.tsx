@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -73,27 +72,7 @@ export function ClientSettingsTab() {
   };
 
   const handleColorChange = async (color: string, field: 'primaryColor' | 'secondaryColor') => {
-    try {
-      console.log('Updating color:', field, color);
-      const { error } = await supabase
-        .from('clients')
-        .update({
-          [field === 'primaryColor' ? 'primary_color' : 'secondary_color']: color
-        })
-        .eq('id', clientId);
-
-      if (error) {
-        console.error('Color update error:', error);
-        throw error;
-      }
-
-      setFormData(prev => ({ ...prev, [field]: color }));
-      await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
-      toast.success(`${field === 'primaryColor' ? 'Primary' : 'Secondary'} color updated`);
-    } catch (error: any) {
-      console.error('Failed to update color:', error);
-      toast.error('Failed to save color change');
-    }
+    setFormData(prev => ({ ...prev, [field]: color }));
   };
 
   const handleLogoUploadSuccess = async (logoUrl: string) => {
@@ -134,6 +113,8 @@ export function ClientSettingsTab() {
           zip_code: formData.zipCode,
           phone: formData.phone,
           contact_email: formData.contactEmail,
+          primary_color: formData.primaryColor,
+          secondary_color: formData.secondaryColor
         })
         .eq('id', clientId);
 
