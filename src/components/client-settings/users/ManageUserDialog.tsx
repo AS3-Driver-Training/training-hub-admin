@@ -11,21 +11,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserData } from "./types";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 interface ManageUserDialogProps {
   isOpen: boolean;
@@ -44,12 +34,10 @@ export function ManageUserDialog({
   onOpenChange, 
   user, 
   clientId,
-  groups 
+  groups = []
 }: ManageUserDialogProps) {
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
-  const [openGroups, setOpenGroups] = useState(false);
-  const [openTeams, setOpenTeams] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -59,9 +47,13 @@ export function ManageUserDialog({
     }
   }, [user]);
 
-  const allTeams = groups.reduce<Array<{ id: string; name: string }>>((acc, group) => {
+  // Get all teams for the selected groups
+  const allTeams = groups.reduce<Array<{ id: string; name: string; groupName: string }>>((acc, group) => {
     if (group.teams && Array.isArray(group.teams)) {
-      acc.push(...group.teams);
+      acc.push(...group.teams.map(team => ({
+        ...team,
+        groupName: group.name
+      })));
     }
     return acc;
   }, []);
@@ -116,108 +108,99 @@ export function ManageUserDialog({
     }
   };
 
+  const toggleGroup = (groupId: string) => {
+    setSelectedGroups(current => 
+      current.includes(groupId)
+        ? current.filter(id => id !== groupId)
+        : [...current, groupId]
+    );
+  };
+
+  const toggleTeam = (teamId: string) => {
+    setSelectedTeams(current => 
+      current.includes(teamId)
+        ? current.filter(id => id !== teamId)
+        : [...current, teamId]
+    );
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Manage User Groups & Teams</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
-            <Label>Groups</Label>
-            <Popover open={openGroups} onOpenChange={setOpenGroups}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={openGroups}
-                  className="w-full justify-between"
-                >
-                  {selectedGroups.length === 0
-                    ? "Select groups..."
-                    : `${selectedGroups.length} group(s) selected`}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[400px] p-0">
-                <Command>
-                  <CommandInput placeholder="Search groups..." />
-                  <CommandEmpty>No groups found.</CommandEmpty>
-                  <CommandGroup>
-                    {groups.map((group) => (
-                      <CommandItem
-                        key={group.id}
-                        value={group.name}
-                        onSelect={() => {
-                          setSelectedGroups(
-                            selectedGroups.includes(group.id)
-                              ? selectedGroups.filter(id => id !== group.id)
-                              : [...selectedGroups, group.id]
-                          );
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            selectedGroups.includes(group.id) ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {group.name}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <Label className="mb-2 inline-block">Groups</Label>
+            <ScrollArea className="h-[200px] rounded-md border">
+              <div className="p-4 space-y-2">
+                {groups.map((group) => (
+                  <div
+                    key={group.id}
+                    className={cn(
+                      "flex items-center justify-between rounded-lg px-4 py-2 cursor-pointer hover:bg-accent",
+                      selectedGroups.includes(group.id) && "bg-accent"
+                    )}
+                    onClick={() => toggleGroup(group.id)}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Check
+                        className={cn(
+                          "h-4 w-4",
+                          selectedGroups.includes(group.id) ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <span>{group.name}</span>
+                    </div>
+                    {group.teams?.length ? (
+                      <Badge variant="outline">{group.teams.length} teams</Badge>
+                    ) : null}
+                  </div>
+                ))}
+                {groups.length === 0 && (
+                  <div className="text-center text-sm text-muted-foreground py-4">
+                    No groups available
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
           </div>
+
           <div>
-            <Label>Teams</Label>
-            <Popover open={openTeams} onOpenChange={setOpenTeams}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={openTeams}
-                  className="w-full justify-between"
-                  disabled={allTeams.length === 0}
-                >
-                  {selectedTeams.length === 0
-                    ? "Select teams..."
-                    : `${selectedTeams.length} team(s) selected`}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[400px] p-0">
-                <Command>
-                  <CommandInput placeholder="Search teams..." />
-                  <CommandEmpty>No teams found.</CommandEmpty>
-                  <CommandGroup>
-                    {allTeams.map((team) => (
-                      <CommandItem
-                        key={team.id}
-                        value={team.name}
-                        onSelect={() => {
-                          setSelectedTeams(
-                            selectedTeams.includes(team.id)
-                              ? selectedTeams.filter(id => id !== team.id)
-                              : [...selectedTeams, team.id]
-                          );
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            selectedTeams.includes(team.id) ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {team.name}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <Label className="mb-2 inline-block">Teams</Label>
+            <ScrollArea className="h-[200px] rounded-md border">
+              <div className="p-4 space-y-2">
+                {allTeams.map((team) => (
+                  <div
+                    key={team.id}
+                    className={cn(
+                      "flex items-center justify-between rounded-lg px-4 py-2 cursor-pointer hover:bg-accent",
+                      selectedTeams.includes(team.id) && "bg-accent"
+                    )}
+                    onClick={() => toggleTeam(team.id)}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Check
+                        className={cn(
+                          "h-4 w-4",
+                          selectedTeams.includes(team.id) ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <span>{team.name}</span>
+                    </div>
+                    <Badge variant="secondary">{team.groupName}</Badge>
+                  </div>
+                ))}
+                {allTeams.length === 0 && (
+                  <div className="text-center text-sm text-muted-foreground py-4">
+                    No teams available
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
           </div>
+
           <Button 
             className="w-full" 
             onClick={handleUpdateUserAssignments}
