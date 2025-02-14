@@ -5,7 +5,9 @@ import { toast } from "sonner";
 
 export function useProfile() {
   const [userName, setUserName] = useState("User");
-  const [userRole, setUserRole] = useState("");
+  const [userRole, setUserRole] = useState<"superadmin" | "admin" | "staff">("staff");
+  const [userTitle, setUserTitle] = useState("");
+  const [userStatus, setUserStatus] = useState("active");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -16,7 +18,7 @@ export function useProfile() {
 
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('first_name, last_name, role')
+          .select('first_name, last_name, role, title, status')
           .eq('id', user.id)
           .single();
         
@@ -24,7 +26,9 @@ export function useProfile() {
         
         if (profile) {
           setUserName(`${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User');
-          setUserRole(profile.role || '');
+          setUserRole(profile.role);
+          setUserTitle(profile.title || '');
+          setUserStatus(profile.status);
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -43,5 +47,5 @@ export function useProfile() {
     return () => subscription.unsubscribe();
   }, []);
 
-  return { userName, userRole, isLoading };
+  return { userName, userRole, userTitle, userStatus, isLoading };
 }
