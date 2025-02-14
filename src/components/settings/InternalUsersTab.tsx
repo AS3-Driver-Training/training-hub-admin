@@ -88,10 +88,12 @@ export function InternalUsersTab() {
 
             if (userError) throw userError;
 
+            const user = userData?.user?.user;
+            
             return {
               ...profile,
-              email: userData?.user?.user?.email || 'Email not found',
-              last_login: userData?.user?.user?.last_sign_in_at || null
+              email: user?.email || 'Email not found',
+              last_login: user?.last_sign_in_at || null
             };
           } catch (error) {
             console.error('Error processing user:', profile.id, error);
@@ -104,6 +106,7 @@ export function InternalUsersTab() {
         })
       );
 
+      console.log('Final users data:', usersWithEmails);
       return usersWithEmails;
     },
   });
