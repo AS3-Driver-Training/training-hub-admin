@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { AddTeamDialog } from "./AddTeamDialog";
 import { useState } from "react";
 import { 
@@ -24,6 +24,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Team {
   id: string;
@@ -47,6 +50,7 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const queryClient = useQueryClient();
 
   const handleAddTeam = (name: string) => {
     if (selectedGroup) {
@@ -62,6 +66,25 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
       newExpanded.add(groupId);
     }
     setExpandedGroups(newExpanded);
+  };
+
+  const handleDeleteTeam = async (teamId: string) => {
+    if (!confirm("Are you sure you want to delete this team?")) return;
+
+    try {
+      const { error } = await supabase
+        .from('teams')
+        .delete()
+        .eq('id', teamId);
+
+      if (error) throw error;
+
+      toast.success("Team deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ['client_groups'] });
+    } catch (error: any) {
+      console.error("Error deleting team:", error);
+      toast.error(error.message || "Failed to delete team");
+    }
   };
 
   return (
@@ -126,20 +149,53 @@ export function GroupsTable({ groups, onAddTeam }: GroupsTableProps) {
                     <Table>
                       <TableHeader>
                         <TableRow className="hover:bg-gray-50/50">
-                          <TableHead className="w-[60%]">Team Name</TableHead>
-                          <TableHead className="w-[20%] text-center">Members</TableHead>
-                          <TableHead className="w-[20%]">Actions</TableHead>
+                          <TableHead>Team Name</TableHead>
+                          <TableHead className="text-center">Members</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {group.teams.map((team) => (
                           <TableRow key={team.id} className="hover:bg-gray-50/50">
-                            <TableCell className="font-medium">{team.name}</TableCell>
+                            <TableCell>{team.name}</TableCell>
                             <TableCell className="text-center">
                               <Badge variant="secondary" className="mx-auto">0</Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                              {/* Future actions like edit, delete, etc. */}
+                              <div className="flex justify-end gap-2">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8"
+                                      onClick={() => {
+                                        toast.info("Edit team feature coming soon");
+                                      }}
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    Edit team
+                                  </TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                      onClick={() => handleDeleteTeam(team.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    Delete team
+                                  </TooltipContent>
+                                </Tooltip>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
