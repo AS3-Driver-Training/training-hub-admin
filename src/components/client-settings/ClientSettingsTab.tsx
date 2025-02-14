@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -40,22 +40,12 @@ function BrandingPreview({ logoUrl, primaryColor, secondaryColor }: BrandingPrev
   );
 }
 
-const colorOptions = [
-  // Purple variants
-  '#9b87f5', '#7E69AB', '#6E59A5', '#1A1F2C', '#D6BCFA',
-  // Soft pastels
-  '#F2FCE2', '#FEF7CD', '#FEC6A1', '#E5DEFF', '#FFDEE2',
-  // Vibrant colors
-  '#8B5CF6', '#D946EF', '#F97316', '#0EA5E9', '#403E43',
-  // Cool grays
-  '#8E9196', '#75869600', '#aaadb0', '#3336', '#222'
-];
-
 export function ClientSettingsTab() {
   const { clientId } = useParams();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("profile");
   const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: client, isLoading } = useQuery({
     queryKey: ['client', clientId],
@@ -72,16 +62,32 @@ export function ClientSettingsTab() {
   });
 
   const [formData, setFormData] = useState({
-    name: client?.name || '',
-    address: client?.address || '',
-    city: client?.city || '',
-    state: client?.state || '',
-    zipCode: client?.zip_code || '',
-    phone: client?.phone || '',
-    contactEmail: client?.contact_email || '',
-    primaryColor: client?.primary_color || '#9b87f5',
-    secondaryColor: client?.secondary_color || '#8E9196',
+    name: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    phone: '',
+    contactEmail: '',
+    primaryColor: '#9b87f5',
+    secondaryColor: '#8E9196',
   });
+
+  useEffect(() => {
+    if (client) {
+      setFormData({
+        name: client.name || '',
+        address: client.address || '',
+        city: client.city || '',
+        state: client.state || '',
+        zipCode: client.zip_code || '',
+        phone: client.phone || '',
+        contactEmail: client.contact_email || '',
+        primaryColor: client.primary_color || '#9b87f5',
+        secondaryColor: client.secondary_color || '#8E9196',
+      });
+    }
+  }, [client]);
 
   const handleInputChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }));
@@ -91,7 +97,6 @@ export function ClientSettingsTab() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error('Please upload an image file');
       return;
@@ -112,7 +117,6 @@ export function ClientSettingsTab() {
         .from('client-assets')
         .getPublicUrl(filePath);
 
-      // Update client with new logo URL
       const { error: updateError } = await supabase
         .from('clients')
         .update({ logo_url: publicUrl })
@@ -145,24 +149,20 @@ export function ClientSettingsTab() {
   };
 
   const handleFileUpload = async (file: File) => {
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error('Please upload an image file (PNG, JPG, or SVG)');
       return;
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast.error('File size must be less than 2MB');
       return;
     }
 
-    // Create an image object to check dimensions
     const img = new Image();
     img.src = URL.createObjectURL(file);
     
     img.onload = async () => {
-      // Validate dimensions (min 200x200, max 1000x1000)
       if (img.width < 200 || img.height < 200) {
         toast.error('Image dimensions must be at least 200x200 pixels');
         return;
@@ -210,7 +210,9 @@ export function ClientSettingsTab() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!clientId) return;
     
+    setIsSubmitting(true);
     try {
       const { error } = await supabase
         .from('clients')
@@ -229,10 +231,13 @@ export function ClientSettingsTab() {
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+      await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
       toast.success('Client settings updated successfully');
     } catch (error: any) {
-      toast.error('Failed to update client settings: ' + error.message);
+      console.error('Failed to update client:', error);
+      toast.error(error.message || 'Failed to update client settings');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -463,9 +468,9 @@ export function ClientSettingsTab() {
       </Tabs>
 
       <div className="flex justify-end">
-        <Button type="submit">
+        <Button type="submit" disabled={isSubmitting}>
           <Palette className="h-4 w-4 mr-2" />
-          Save Changes
+          {isSubmitting ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
     </form>
