@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { Upload, Image as ImageIcon, Palette, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HexColorPicker } from "react-colorful";
 
 interface BrandingPreviewProps {
   logoUrl: string | null;
@@ -395,69 +397,57 @@ export function ClientSettingsTab() {
               <div className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="primaryColor">Primary Color</Label>
-                  <div className="space-y-3">
-                    <div className="flex gap-2 items-center">
-                      <div 
-                        className="w-10 h-10 rounded border"
-                        style={{ backgroundColor: formData.primaryColor }}
-                      />
-                      <Input
-                        id="primaryColor"
-                        type="text"
-                        value={formData.primaryColor}
-                        onChange={handleInputChange('primaryColor')}
-                        placeholder="#000000"
-                      />
-                    </div>
-                    <div className="grid grid-cols-10 gap-2">
-                      {colorOptions.map((color) => (
+                  <div className="flex gap-2 items-center">
+                    <Popover>
+                      <PopoverTrigger asChild>
                         <button
-                          key={color}
                           type="button"
-                          className={cn(
-                            "w-6 h-6 rounded border border-border transition-all",
-                            "hover:scale-110 hover:border-primary",
-                            formData.primaryColor === color && "ring-2 ring-primary ring-offset-2"
-                          )}
-                          style={{ backgroundColor: color }}
-                          onClick={() => setFormData(prev => ({ ...prev, primaryColor: color }))}
+                          className="w-10 h-10 rounded border shadow-sm"
+                          style={{ backgroundColor: formData.primaryColor }}
                         />
-                      ))}
-                    </div>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-3">
+                        <HexColorPicker
+                          color={formData.primaryColor}
+                          onChange={(color) => setFormData(prev => ({ ...prev, primaryColor: color }))}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Input
+                      id="primaryColor"
+                      value={formData.primaryColor}
+                      onChange={handleInputChange('primaryColor')}
+                      placeholder="#000000"
+                      className="font-mono"
+                    />
                   </div>
                 </div>
 
                 <div className="grid gap-2">
                   <Label htmlFor="secondaryColor">Secondary Color</Label>
-                  <div className="space-y-3">
-                    <div className="flex gap-2 items-center">
-                      <div 
-                        className="w-10 h-10 rounded border"
-                        style={{ backgroundColor: formData.secondaryColor }}
-                      />
-                      <Input
-                        id="secondaryColor"
-                        type="text"
-                        value={formData.secondaryColor}
-                        onChange={handleInputChange('secondaryColor')}
-                        placeholder="#000000"
-                      />
-                    </div>
-                    <div className="grid grid-cols-10 gap-2">
-                      {colorOptions.map((color) => (
+                  <div className="flex gap-2 items-center">
+                    <Popover>
+                      <PopoverTrigger asChild>
                         <button
-                          key={color}
                           type="button"
-                          className={cn(
-                            "w-6 h-6 rounded border border-border transition-all",
-                            "hover:scale-110 hover:border-primary",
-                            formData.secondaryColor === color && "ring-2 ring-primary ring-offset-2"
-                          )}
-                          style={{ backgroundColor: color }}
-                          onClick={() => setFormData(prev => ({ ...prev, secondaryColor: color }))}
+                          className="w-10 h-10 rounded border shadow-sm"
+                          style={{ backgroundColor: formData.secondaryColor }}
                         />
-                      ))}
-                    </div>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-3">
+                        <HexColorPicker
+                          color={formData.secondaryColor}
+                          onChange={(color) => setFormData(prev => ({ ...prev, secondaryColor: color }))}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Input
+                      id="secondaryColor"
+                      value={formData.secondaryColor}
+                      onChange={handleInputChange('secondaryColor')}
+                      placeholder="#000000"
+                      className="font-mono"
+                    />
                   </div>
                 </div>
 
