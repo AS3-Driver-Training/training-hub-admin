@@ -108,10 +108,10 @@ const Profile = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Profile Settings</h1>
-          <p className="text-muted-foreground">
+      <div className="max-w-3xl mx-auto space-y-8">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Profile Settings</h1>
+          <p className="text-sm text-muted-foreground">
             View and manage your personal information and account settings
           </p>
         </div>
@@ -136,8 +136,8 @@ const Profile = () => {
           </div>
 
           {isEditing ? (
-            <form onSubmit={handleProfileUpdate} className="space-y-4">
-              <div className="grid gap-6 md:grid-cols-2">
+            <form onSubmit={handleProfileUpdate} className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name</Label>
                   <Input
@@ -169,7 +169,7 @@ const Profile = () => {
                   className="bg-background"
                 />
               </div>
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-2 pt-2">
                 <Button type="submit" disabled={isSaving}>
                   Save Changes
                 </Button>
@@ -187,23 +187,29 @@ const Profile = () => {
             <div className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-1">
-                  <Label className="text-muted-foreground text-sm">First Name</Label>
-                  <p className="font-medium">{formData.firstName || '-'}</p>
+                  <Label className="text-xs text-muted-foreground">First Name</Label>
+                  <p className="text-sm font-medium">{formData.firstName || '-'}</p>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-muted-foreground text-sm">Last Name</Label>
-                  <p className="font-medium">{formData.lastName || '-'}</p>
+                  <Label className="text-xs text-muted-foreground">Last Name</Label>
+                  <p className="text-sm font-medium">{formData.lastName || '-'}</p>
                 </div>
               </div>
-              <div className="space-y-1">
-                <Label className="text-muted-foreground text-sm">Title</Label>
-                <p className="font-medium">{formData.title || '-'}</p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-muted-foreground text-sm">Role</Label>
-                <div className="flex items-center gap-2">
-                  <BadgeIcon className="w-4 h-4 text-primary" />
-                  <p className="font-medium capitalize">{userRole}</p>
+              
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Title</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <BriefcaseIcon className="w-4 h-4 text-primary" />
+                    <p className="text-sm font-medium">{formData.title || '-'}</p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Role</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <BadgeIcon className="w-4 h-4 text-primary" />
+                    <p className="text-sm font-medium capitalize">{userRole}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -219,7 +225,7 @@ const Profile = () => {
 
             <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
               <div className="space-y-2">
-                <Label htmlFor="newPassword">New Password</Label>
+                <Label htmlFor="newPassword" className="text-sm">New Password</Label>
                 <Input
                   id="newPassword"
                   name="newPassword"
@@ -230,7 +236,7 @@ const Profile = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Label htmlFor="confirmPassword" className="text-sm">Confirm New Password</Label>
                 <Input
                   id="confirmPassword"
                   name="confirmPassword"
