@@ -204,8 +204,8 @@ export function InternalUsersTab() {
         {users?.map((user) => (
           <Card key={user.id} className="p-4">
             <div className="flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <div className="space-y-1">
+              <div className="flex items-center gap-6 w-full">
+                <div className="flex-1">
                   <div className="flex items-center gap-3">
                     <h4 className="font-medium">
                       {user.first_name} {user.last_name}
@@ -216,39 +216,42 @@ export function InternalUsersTab() {
                     <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
                       {user.status}
                     </Badge>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>{user.email}</span>
-                    <span>•</span>
-                    <span>{user.title || 'No title'}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {user.email}
+                    </span>
+                    {user.title && (
+                      <>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-sm text-muted-foreground">{user.title}</span>
+                      </>
+                    )}
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="text-sm text-muted-foreground">
-                  <span>Last login: </span>
-                  {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+                <div className="flex items-center gap-4 shrink-0">
+                  <div className="text-sm text-muted-foreground">
+                    Last login: {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEdit(user)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit User
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleDelete(user)}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Deactivate User
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleEdit(user)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Edit User
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleDelete(user)}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Deactivate User
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
             </div>
           </Card>
