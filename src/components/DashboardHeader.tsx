@@ -1,5 +1,6 @@
+
 import { Button } from "./ui/button";
-import { Menu, User, LogOut } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,9 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { UserProfileDialog } from "./UserProfileDialog";
 
 interface DashboardHeaderProps {
   userName: string;
@@ -36,15 +35,12 @@ export function DashboardHeader({ userName, userRole, onLogout }: DashboardHeade
           </span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5 text-[#C10230]" />
-              </Button>
+              <UserProfileDialog />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Welcome {userName}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
                 <span>{userRole}</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onLogout}>
