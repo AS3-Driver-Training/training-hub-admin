@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,7 +63,6 @@ export function InternalUsersTab() {
   const { data: users, isLoading, refetch } = useQuery({
     queryKey: ['internal_users'],
     queryFn: async () => {
-      // First get all profiles
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
@@ -76,9 +74,6 @@ export function InternalUsersTab() {
         throw error;
       }
 
-      console.log('Fetched profiles:', profiles); // Debug log
-
-      // Then fetch emails for each profile
       const usersWithEmails = await Promise.all(
         profiles.map(async (profile) => {
           try {
@@ -91,31 +86,24 @@ export function InternalUsersTab() {
               }
             );
 
-            console.log('User data from edge function:', userData); // Debug log
+            if (userError) throw userError;
 
-            if (userError) {
-              console.error('Error fetching user data:', userError);
-              throw userError;
-            }
-
-            // The edge function returns { user: { email, ... } }
             return {
               ...profile,
-              email: userData?.user?.email || 'Email not found',
-              last_login: userData?.user?.last_sign_in_at || profile.last_login || null
+              email: userData?.user?.user?.email || 'Email not found',
+              last_login: userData?.user?.user?.last_sign_in_at || null
             };
           } catch (error) {
             console.error('Error processing user:', profile.id, error);
             return {
               ...profile,
               email: 'Error loading email',
-              last_login: profile.last_login || null
+              last_login: null
             };
           }
         })
       );
 
-      console.log('Final users data:', usersWithEmails); // Debug log
       return usersWithEmails;
     },
   });
@@ -137,21 +125,6 @@ export function InternalUsersTab() {
     }
 
     try {
-      // First verify we can get the user's email
-      const { data: userData, error: userError } = await supabase.functions.invoke(
-        'get-user-by-id',
-        { 
-          body: { 
-            userId: user.id 
-          } 
-        }
-      );
-
-      if (userError || !userData?.user?.email) {
-        throw new Error('Could not verify user email before deactivation');
-      }
-
-      // Proceed with deactivation
       const { error } = await supabase
         .from('profiles')
         .update({ status: 'inactive' })
@@ -215,7 +188,6 @@ export function InternalUsersTab() {
         {users?.map((user) => (
           <Card key={user.id} className="p-4">
             <div className="flex flex-col gap-3">
-              {/* First row: Name, Title and Actions */}
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
                   <div className="flex items-center gap-3">
@@ -228,9 +200,6 @@ export function InternalUsersTab() {
                         <span className="text-sm text-muted-foreground">{user.title}</span>
                       </>
                     )}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {user.email || 'No email available'}
                   </div>
                 </div>
                 <DropdownMenu>
@@ -255,7 +224,6 @@ export function InternalUsersTab() {
                 </DropdownMenu>
               </div>
 
-              {/* Second row: Badges and Last Login */}
               <div className="flex items-center gap-3">
                 <Badge variant={user.role === 'superadmin' ? 'destructive' : user.role === 'admin' ? 'default' : 'secondary'}>
                   {user.role}
@@ -263,9 +231,11 @@ export function InternalUsersTab() {
                 <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
                   {user.status}
                 </Badge>
-                <span className="text-sm text-muted-foreground ml-auto">
-                  Last login: {user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}
-                </span>
+                <div className="text-sm text-muted-foreground ml-auto flex items-center gap-3">
+                  <span>{user.email}</span>
+                  <span>•</span>
+                  <span>Last login: {user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}</span>
+                </div>
               </div>
             </div>
           </Card>
