@@ -47,7 +47,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 'get-user-by-id',
                 { 
                   body: { 
-                    userId: user.user_id 
+                    userId: user.user_id,
+                    debug: true // Add debug flag to get more information
                   } 
                 }
               );
@@ -56,6 +57,10 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 console.error('Error fetching user:', userError);
                 throw userError;
               }
+
+              // Add more detailed logging
+              console.log('User data response:', userData);
+              console.log('User ID being queried:', user.user_id);
 
               // Get group count
               const { count: groupCount } = await supabase
@@ -72,7 +77,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
               return {
                 ...user,
                 profiles: user.profiles || { first_name: 'Unknown', last_name: 'User' },
-                email: userData?.user?.email || 'No email found',
+                email: userData?.user?.email || 
+                       (userData?.error ? `Error: ${userData.error}` : 'No email found'),
                 groups: Array(groupCount || 0),
                 teams: Array(teamCount || 0)
               };
