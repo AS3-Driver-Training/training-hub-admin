@@ -343,16 +343,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
-      has_client_access: {
-        Args: {
-          client_id: string
-        }
-        Returns: boolean
-      }
-      is_superadmin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
     }
     Enums: {
       app_role: "superadmin" | "admin" | "staff"
