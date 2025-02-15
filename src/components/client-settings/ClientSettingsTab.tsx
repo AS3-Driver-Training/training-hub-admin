@@ -105,26 +105,37 @@ export function ClientSettingsTab() {
         secondaryColor
       });
       
-      const { data, error } = await supabase
+      // First, verify the client exists and we have access to it
+      const { data: existingClient, error: verifyError } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('id', clientId)
+        .maybeSingle();
+
+      if (verifyError) {
+        console.error('Error verifying client access:', verifyError);
+        throw verifyError;
+      }
+
+      if (!existingClient) {
+        throw new Error('Client not found or you do not have permission to update it');
+      }
+
+      // Proceed with the update
+      const { error: updateError } = await supabase
         .from('clients')
         .update({
           primary_color: primaryColor,
           secondary_color: secondaryColor
         })
-        .eq('id', clientId)
-        .select()
-        .maybeSingle();
+        .eq('id', clientId);
 
-      if (error) {
-        console.error('Error updating colors:', error);
-        throw error;
+      if (updateError) {
+        console.error('Error updating colors:', updateError);
+        throw updateError;
       }
 
-      if (!data) {
-        throw new Error('Failed to update client colors - no matching client found');
-      }
-
-      console.log('Colors updated successfully:', data);
+      console.log('Colors updated successfully');
 
       // Force a refetch of the client data
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
