@@ -72,7 +72,16 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
           </TableHeader>
           <TableBody>
             {users?.map((user) => (
-              <TableRow key={user.id} className="hover:bg-muted/50">
+              <TableRow 
+                key={user.id} 
+                className="hover:bg-muted/50 cursor-pointer"
+                onClick={(e) => {
+                  // Don't trigger if clicking on the actions menu
+                  if (!(e.target as HTMLElement).closest('.actions-menu')) {
+                    handleManageUser(user);
+                  }
+                }}
+              >
                 <TableCell className="font-medium">
                   {user.profiles.first_name} {user.profiles.last_name}
                 </TableCell>
@@ -102,11 +111,13 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
                   )}
                 </TableCell>
                 <TableCell>
-                  <UserActions
-                    user={user}
-                    clientId={clientId}
-                    onManageUser={handleManageUser}
-                  />
+                  <div className="actions-menu">
+                    <UserActions
+                      user={user}
+                      clientId={clientId}
+                      onManageUser={handleManageUser}
+                    />
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
