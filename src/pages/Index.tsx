@@ -17,7 +17,7 @@ import { InviteClientDialog } from "@/components/InviteClientDialog";
 import { useProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { createBucketIfNotExists } from "@/integrations/supabase/storage";
 
 const stats = [
@@ -42,36 +42,17 @@ const stats = [
 ];
 
 const Index = () => {
-  const { userRole } = useProfile();
+  const { userRole, isLoading: profileLoading } = useProfile();
   const navigate = useNavigate();
   const isSuperAdmin = userRole === 'superadmin';
-  const [user, setUser] = useState(null);
   
   useEffect(() => {
-    // Check authentication status
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/auth');
-        return;
-      }
-      setUser(session.user);
-    };
-    checkAuth();
-  }, [navigate]);
-
-  useEffect(() => {
-    // Ensure storage bucket exists when component mounts
-    if (user) {
-      createBucketIfNotExists();
-    }
-  }, [user]);
+    createBucketIfNotExists();
+  }, []);
   
-  const { data: clients, isLoading, error } = useQuery({
-    queryKey: ['clients', user?.id],
+  const { data: clients, isLoading: clientsLoading, error } = useQuery({
+    queryKey: ['clients'],
     queryFn: async () => {
-      if (!user) return [];
-      
       try {
         console.log('Fetching clients...');
         const { data, error } = await supabase
@@ -86,32 +67,24 @@ const Index = () => {
         }
 
         console.log('Fetched clients:', data);
-
-        // Process logo URLs to ensure HTTPS
-        const processedData = data?.map(client => ({
+        return data?.map(client => ({
           ...client,
           logo_url: client.logo_url ? ensureHttps(client.logo_url) : null
-        }));
-
-        return processedData || [];
+        })) || [];
       } catch (error) {
         console.error('Error in queryFn:', error);
         throw error;
       }
     },
-    enabled: !!user, // Only run query if user is authenticated
   });
 
-  // Helper function to ensure HTTPS URLs
   const ensureHttps = (url: string) => {
     if (!url) return url;
     if (url.startsWith('/') || url.startsWith('https://')) return url;
     return url.replace(/^http:\/\//i, 'https://');
   };
 
-  if (!user) {
-    return null; // Don't render anything while checking auth
-  }
+  const isLoading = profileLoading || clientsLoading;
 
   if (isLoading) {
     return (
