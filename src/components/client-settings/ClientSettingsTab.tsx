@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -46,9 +45,9 @@ export function ClientSettingsTab() {
 
       const { data, error } = await supabase
         .from('clients')
-        .select('*')
+        .select()
         .eq('id', clientId)
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error('Error fetching client:', error);
@@ -75,8 +74,7 @@ export function ClientSettingsTab() {
       const { error } = await supabase
         .from('clients')
         .update({ logo_url: logoUrl })
-        .eq('id', clientId)
-        .select();
+        .eq('id', clientId);
 
       if (error) throw error;
 
@@ -98,22 +96,18 @@ export function ClientSettingsTab() {
         secondaryColor
       });
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('clients')
         .update({
           primary_color: primaryColor,
           secondary_color: secondaryColor
         })
-        .eq('id', clientId)
-        .select();
+        .eq('id', clientId);
 
       if (error) {
         console.error('Error updating colors:', error);
         throw error;
       }
-
-      // Log the response to see what we got back
-      console.log('Update response:', data);
 
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
       
