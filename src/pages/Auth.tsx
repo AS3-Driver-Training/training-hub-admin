@@ -34,7 +34,7 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -48,7 +48,7 @@ const Auth = () => {
 
         if (signUpError) throw signUpError;
 
-        if (signUpData?.user) {
+        if (authData?.user) {
           toast.success("Please check your email to verify your account");
           setIsSignUp(false); // Switch to login view
         }
@@ -59,11 +59,7 @@ const Auth = () => {
         });
 
         if (signInError) {
-          if (signInError.message === "Invalid login credentials") {
-            toast.error("Invalid email or password");
-          } else {
-            throw signInError;
-          }
+          toast.error("Invalid email or password");
           return;
         }
 
