@@ -47,8 +47,6 @@ const Index = () => {
   const { data: clients, isLoading, error } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
-      console.log('Fetching clients, user role:', userRole);
-      
       const { data, error } = await supabase
         .from('clients')
         .select('*')
@@ -60,17 +58,13 @@ const Index = () => {
         throw error;
       }
 
-      console.log('Fetched clients:', data);
-      
       return data || [];
-    },
-    enabled: isSuperAdmin,
+    }
   });
 
-  console.log('Render state:', { isSuperAdmin, clients, isLoading, error });
+  console.log('Render state:', { userRole, clients, isLoading, error });
 
   const handleClientClick = (clientId: string) => {
-    console.log('Navigating to:', `/clients/${clientId}/settings`);
     navigate(`/clients/${clientId}/settings`);
   };
 
