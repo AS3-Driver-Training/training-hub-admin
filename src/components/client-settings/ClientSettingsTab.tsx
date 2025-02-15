@@ -1,6 +1,6 @@
 
 import { useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -19,23 +19,36 @@ export function ClientSettingsTab() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("branding");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [primaryColor, setPrimaryColor] = useState('#9b87f5');
+  const [secondaryColor, setSecondaryColor] = useState('#8E9196');
   
   const { data: client, isLoading } = useQuery({
     queryKey: ['client', clientId],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No authenticated user');
+
       const { data, error } = await supabase
         .from('clients')
         .select('*')
         .eq('id', clientId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching client:', error);
+        throw error;
+      }
       return data;
     },
   });
 
-  const [primaryColor, setPrimaryColor] = useState(client?.primary_color || '#9b87f5');
-  const [secondaryColor, setSecondaryColor] = useState(client?.secondary_color || '#8E9196');
+  // Update color states when client data is loaded
+  useEffect(() => {
+    if (client) {
+      setPrimaryColor(client.primary_color || '#9b87f5');
+      setSecondaryColor(client.secondary_color || '#8E9196');
+    }
+  }, [client]);
   
   const handleLogoUploadSuccess = async (logoUrl: string) => {
     try {
@@ -49,6 +62,7 @@ export function ClientSettingsTab() {
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
       toast.success('Logo updated successfully');
     } catch (error: any) {
+      console.error('Error updating logo:', error);
       toast.error('Failed to save logo');
     }
   };
@@ -62,7 +76,8 @@ export function ClientSettingsTab() {
         .from('clients')
         .update({
           primary_color: primaryColor,
-          secondary_color: secondaryColor
+          secondary_color: secondaryColor,
+          updated_at: new Date().toISOString()
         })
         .eq('id', clientId);
 
@@ -74,6 +89,7 @@ export function ClientSettingsTab() {
         icon: <CheckCircle className="h-4 w-4 text-green-500" />,
       });
     } catch (error: any) {
+      console.error('Error updating colors:', error);
       toast.error('Failed to save colors', {
         description: error.message,
       });
@@ -86,9 +102,13 @@ export function ClientSettingsTab() {
     return <div>Loading...</div>;
   }
 
+  if (!client) {
+    return <div>Client not found</div>;
+  }
+
   const hasColorChanges = 
-    primaryColor !== client?.primary_color || 
-    secondaryColor !== client?.secondary_color;
+    primaryColor !== client.primary_color || 
+    secondaryColor !== client.secondary_color;
 
   return (
     <div className="space-y-6">
@@ -118,13 +138,13 @@ export function ClientSettingsTab() {
           <Card className="p-6">
             <ProfileForm 
               data={{
-                name: client?.name || '',
-                address: client?.address || '',
-                city: client?.city || '',
-                state: client?.state || '',
-                zipCode: client?.zip_code || '',
-                phone: client?.phone || '',
-                contactEmail: client?.contact_email || '',
+                name: client.name || '',
+                address: client.address || '',
+                city: client.city || '',
+                state: client.state || '',
+                zipCode: client.zip_code || '',
+                phone: client.phone || '',
+                contactEmail: client.contact_email || '',
               }}
               onChange={() => {}}
             />
@@ -135,8 +155,8 @@ export function ClientSettingsTab() {
           <Card className="p-6">
             <div className="grid gap-6">
               <LogoUpload
-                clientId={clientId || ''}
-                currentLogo={client?.logo_url}
+                clientId={clientId}
+                currentLogo={client.logo_url}
                 onUploadSuccess={handleLogoUploadSuccess}
               />
 
@@ -154,7 +174,7 @@ export function ClientSettingsTab() {
                 />
 
                 <BrandingPreview
-                  logoUrl={client?.logo_url}
+                  logoUrl={client.logo_url}
                   primaryColor={primaryColor}
                   secondaryColor={secondaryColor}
                 />
