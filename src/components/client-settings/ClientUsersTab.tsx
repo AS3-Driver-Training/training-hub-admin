@@ -15,7 +15,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
     queryKey: ['client_users', clientId],
     queryFn: async () => {
       try {
-        // Get all client users with their profile information and groups/teams
+        // Get all client users with their profile information
         const { data: clientUsers, error: clientUsersError } = await supabase
           .from('client_users')
           .select(`
@@ -29,20 +29,6 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
             profiles!client_users_user_id_fkey (
               first_name,
               last_name
-            ),
-            groups:user_groups(
-              id,
-              group:groups(
-                id,
-                name
-              )
-            ),
-            teams:user_teams(
-              id,
-              team:teams(
-                id,
-                name
-              )
             )
           `)
           .eq('client_id', clientId);
@@ -52,7 +38,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           throw clientUsersError;
         }
 
-        // Then fetch email addresses for each user
+        // Fetch user details, groups, and teams in parallel for each user
         const usersWithDetails = await Promise.all(
           (clientUsers || []).map(async (user) => {
             try {
@@ -67,20 +53,41 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 }
               );
 
-              if (userError) {
-                console.error('Error fetching user:', userError);
-                throw userError;
-              }
+              // Get user's groups
+              const { data: userGroups, error: groupsError } = await supabase
+                .from('user_groups')
+                .select(`
+                  group:groups (
+                    id,
+                    name
+                  )
+                `)
+                .eq('user_id', user.user_id);
+
+              // Get user's teams
+              const { data: userTeams, error: teamsError } = await supabase
+                .from('user_teams')
+                .select(`
+                  team:teams (
+                    id,
+                    name
+                  )
+                `)
+                .eq('user_id', user.user_id);
+
+              if (userError) throw userError;
+              if (groupsError) throw groupsError;
+              if (teamsError) throw teamsError;
 
               return {
                 ...user,
                 email: userData?.user?.email || 'No email found',
-                groups: user.groups
+                groups: (userGroups || [])
                   .map(g => g.group)
-                  .filter(Boolean) || [],
-                teams: user.teams
+                  .filter(Boolean),
+                teams: (userTeams || [])
                   .map(t => t.team)
-                  .filter(Boolean) || []
+                  .filter(Boolean)
               };
             } catch (error) {
               console.error('Error processing user:', user.user_id, error);
