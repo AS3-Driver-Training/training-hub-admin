@@ -16,11 +16,12 @@ export function useProfile() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        // Fetch profile without using any functions that might cause recursion
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('first_name, last_name, role, title, status')
+          .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
         
         if (error) throw error;
         
