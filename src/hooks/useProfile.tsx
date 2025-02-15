@@ -20,7 +20,7 @@ export function useProfile() {
           .from('profiles')
           .select('first_name, last_name, role, title, status')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
         
         if (error) throw error;
         
@@ -50,3 +50,4 @@ export function useProfile() {
 
   return { userName, userRole, userTitle, userStatus, isLoading };
 }
+
