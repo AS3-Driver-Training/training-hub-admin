@@ -64,8 +64,21 @@ const Auth = () => {
         }
 
         if (signInData?.user) {
+          // After successful login, fetch the user's profile to get their role
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', signInData.user.id)
+            .single();
+
           toast.success("Successfully logged in");
-          navigate("/");
+
+          // Navigate based on role
+          if (profile?.role === 'superadmin') {
+            navigate("/clients");
+          } else {
+            navigate("/");
+          }
         }
       }
     } catch (error: any) {

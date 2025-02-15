@@ -14,7 +14,10 @@ export function useProfile() {
     const getProfile = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
 
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -41,8 +44,15 @@ export function useProfile() {
 
     getProfile();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      getProfile();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        getProfile();
+      } else if (event === 'SIGNED_OUT') {
+        setUserName('User');
+        setUserRole('staff');
+        setUserTitle('');
+        setUserStatus('active');
+      }
     });
 
     return () => subscription.unsubscribe();
