@@ -47,26 +47,27 @@ const Index = () => {
   const { data: clients, isLoading, error } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching clients:', error);
-        toast.error('Failed to load clients');
+        if (error) {
+          console.error('Error fetching clients:', error);
+          toast.error('Failed to load clients');
+          throw error;
+        }
+
+        return data || [];
+      } catch (error) {
+        console.error('Error in queryFn:', error);
         throw error;
       }
-
-      return data || [];
     }
   });
 
   console.log('Render state:', { userRole, clients, isLoading, error });
-
-  const handleClientClick = (clientId: string) => {
-    navigate(`/clients/${clientId}/settings`);
-  };
 
   return (
     <DashboardLayout>
@@ -144,7 +145,7 @@ const Index = () => {
                     <TableRow 
                       key={client.id}
                       className="hover:bg-muted/50 cursor-pointer"
-                      onClick={() => handleClientClick(client.id)}
+                      onClick={() => navigate(`/clients/${client.id}/settings`)}
                     >
                       <TableCell className="font-medium">
                         {client.name}
