@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -20,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserData } from "../types";
+import { UserData, Group } from "../types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,11 +32,7 @@ interface ManageUserDialogProps {
   onOpenChange: (open: boolean) => void;
   user: UserData | null;
   clientId: string;
-  groups: Array<{
-    id: string;
-    name: string;
-    teams?: Array<{ id: string; name: string; }>;
-  }>;
+  groups: Group[];
 }
 
 export function ManageUserDialog({ 
@@ -45,36 +42,40 @@ export function ManageUserDialog({
   clientId,
   groups = []
 }: ManageUserDialogProps) {
+  const [selectedRole, setSelectedRole] = useState(user?.role || 'supervisor');
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
-  // Find the default group
-  const defaultGroup = groups.find(g => g.id === selectedGroup) || groups[0];
-
   useEffect(() => {
-    if (user && groups.length > 0) {
-      // If user has groups, select the first one, otherwise select the first available group
-      const userGroup = user.groups?.[0]?.id || groups[0]?.id;
-      setSelectedGroup(userGroup || null);
-      setSelectedTeams(user.teams?.map(t => t.id) || []);
+    if (user) {
+      setSelectedRole(user.role);
+      // Set initial group and teams based on user's current assignments
+      if (user.groups?.[0]) {
+        setSelectedGroup(user.groups[0].id);
+        setSelectedTeams(user.teams?.map(t => t.id) || []);
+      } else if (groups.length > 0) {
+        setSelectedGroup(groups[0].id);
+        setSelectedTeams([]);
+      }
     }
   }, [user, groups]);
 
-  const availableTeams = defaultGroup?.teams || [];
-
-  const handleUpdateUserAssignments = async () => {
+  const handleUpdateUser = async () => {
     if (!user || !selectedGroup) return;
 
     try {
-      // Remove existing assignments
+      // Update user role
+      const { error: roleError } = await supabase
+        .from('client_users')
+        .update({ role: selectedRole })
+        .eq('id', user.id);
+
+      if (roleError) throw roleError;
+
+      // Remove existing group assignments
       await supabase
         .from('user_groups')
-        .delete()
-        .eq('user_id', user.user_id);
-
-      await supabase
-        .from('user_teams')
         .delete()
         .eq('user_id', user.user_id);
 
@@ -87,6 +88,12 @@ export function ManageUserDialog({
         });
 
       if (groupError) throw groupError;
+
+      // Remove existing team assignments
+      await supabase
+        .from('user_teams')
+        .delete()
+        .eq('user_id', user.user_id);
 
       // Add new team assignments
       if (selectedTeams.length > 0) {
@@ -101,14 +108,19 @@ export function ManageUserDialog({
         if (teamError) throw teamError;
       }
 
-      toast.success("User assignments updated successfully");
+      toast.success("User updated successfully");
       queryClient.invalidateQueries({ queryKey: ['client_users', clientId] });
       onOpenChange(false);
     } catch (error: any) {
-      console.error("Error updating user assignments:", error);
-      toast.error(error.message || "Failed to update user assignments");
+      console.error('Error updating user:', error);
+      toast.error(error.message || "Failed to update user");
     }
   };
+
+  // Get available teams for selected group
+  const availableTeams = selectedGroup 
+    ? (groups.find(g => g.id === selectedGroup)?.teams || [])
+    : [];
 
   const toggleTeam = (teamId: string) => {
     setSelectedTeams(current => 
@@ -122,13 +134,27 @@ export function ManageUserDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Manage User Groups & Teams</DialogTitle>
+          <DialogTitle>Edit User</DialogTitle>
         </DialogHeader>
-        <div className="space-y-6">
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label>Role</Label>
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="manager">Manager</SelectItem>
+                <SelectItem value="supervisor">Supervisor (View Only)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <Label>Group</Label>
-            <Select
-              value={selectedGroup || undefined}
+            <Select 
+              value={selectedGroup || undefined} 
               onValueChange={setSelectedGroup}
             >
               <SelectTrigger>
@@ -147,7 +173,7 @@ export function ManageUserDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Teams in {defaultGroup?.name}</Label>
+            <Label>Teams</Label>
             <ScrollArea className="h-[200px] rounded-md border">
               <div className="p-4 space-y-2">
                 {availableTeams.map((team) => (
@@ -176,15 +202,15 @@ export function ManageUserDialog({
               </div>
             </ScrollArea>
           </div>
-
-          <Button 
-            className="w-full" 
-            onClick={handleUpdateUserAssignments}
-            disabled={!selectedGroup}
-          >
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleUpdateUser}>
             Save Changes
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
