@@ -17,7 +17,7 @@ import { InviteClientDialog } from "@/components/InviteClientDialog";
 import { useProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createBucketIfNotExists } from "@/integrations/supabase/storage";
 
 const stats = [
@@ -45,15 +45,33 @@ const Index = () => {
   const { userRole } = useProfile();
   const navigate = useNavigate();
   const isSuperAdmin = userRole === 'superadmin';
+  const [user, setUser] = useState(null);
   
   useEffect(() => {
+    // Check authentication status
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
+      setUser(session.user);
+    };
+    checkAuth();
+  }, [navigate]);
+
+  useEffect(() => {
     // Ensure storage bucket exists when component mounts
-    createBucketIfNotExists();
-  }, []);
+    if (user) {
+      createBucketIfNotExists();
+    }
+  }, [user]);
   
   const { data: clients, isLoading, error } = useQuery({
-    queryKey: ['clients'],
+    queryKey: ['clients', user?.id],
     queryFn: async () => {
+      if (!user) return [];
+      
       try {
         console.log('Fetching clients...');
         const { data, error } = await supabase
@@ -81,16 +99,19 @@ const Index = () => {
         throw error;
       }
     },
+    enabled: !!user, // Only run query if user is authenticated
   });
 
   // Helper function to ensure HTTPS URLs
   const ensureHttps = (url: string) => {
     if (!url) return url;
-    // If it's a relative URL or already HTTPS, return as is
     if (url.startsWith('/') || url.startsWith('https://')) return url;
-    // Convert HTTP to HTTPS
     return url.replace(/^http:\/\//i, 'https://');
   };
+
+  if (!user) {
+    return null; // Don't render anything while checking auth
+  }
 
   if (isLoading) {
     return (
