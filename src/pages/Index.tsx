@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Users, Calendar, CheckCircle } from "lucide-react";
@@ -17,6 +16,8 @@ import { InviteClientDialog } from "@/components/InviteClientDialog";
 import { useProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useEffect } from "react";
+import { createBucketIfNotExists } from "@/integrations/supabase/storage";
 
 const stats = [
   {
@@ -44,6 +45,11 @@ const Index = () => {
   const navigate = useNavigate();
   const isSuperAdmin = userRole === 'superadmin';
   
+  useEffect(() => {
+    // Ensure storage bucket exists when component mounts
+    createBucketIfNotExists();
+  }, []);
+  
   const { data: clients, isLoading, error } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
@@ -59,15 +65,48 @@ const Index = () => {
           throw error;
         }
 
-        return data || [];
+        // Process logo URLs to ensure HTTPS
+        const processedData = data?.map(client => ({
+          ...client,
+          logo_url: client.logo_url ? ensureHttps(client.logo_url) : null
+        }));
+
+        return processedData || [];
       } catch (error) {
         console.error('Error in queryFn:', error);
         throw error;
       }
-    }
+    },
   });
 
-  console.log('Render state:', { userRole, clients, isLoading, error });
+  // Helper function to ensure HTTPS URLs
+  const ensureHttps = (url: string) => {
+    if (!url) return url;
+    // If it's a relative URL or already HTTPS, return as is
+    if (url.startsWith('/') || url.startsWith('https://')) return url;
+    // Convert HTTP to HTTPS
+    return url.replace(/^http:\/\//i, 'https://');
+  };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-24">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="text-destructive">
+          Error loading clients. Please try again later.
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -120,19 +159,7 @@ const Index = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center">
-                      Loading...
-                    </TableCell>
-                  </TableRow>
-                ) : error ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center text-destructive">
-                      Failed to load clients. Please try again later.
-                    </TableCell>
-                  </TableRow>
-                ) : !clients || clients.length === 0 ? (
+                {!clients || clients.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">
                       {isSuperAdmin 

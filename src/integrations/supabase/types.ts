@@ -332,6 +332,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_superadmin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       create_client_with_invitation: {
         Args: {
           client_name: string
