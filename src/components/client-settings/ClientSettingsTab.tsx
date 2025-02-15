@@ -75,7 +75,8 @@ export function ClientSettingsTab() {
       const { error } = await supabase
         .from('clients')
         .update({ logo_url: logoUrl })
-        .eq('id', clientId);
+        .eq('id', clientId)
+        .select();
 
       if (error) throw error;
 
@@ -97,18 +98,22 @@ export function ClientSettingsTab() {
         secondaryColor
       });
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('clients')
         .update({
           primary_color: primaryColor,
           secondary_color: secondaryColor
         })
-        .eq('id', clientId);
+        .eq('id', clientId)
+        .select();
 
       if (error) {
         console.error('Error updating colors:', error);
         throw error;
       }
+
+      // Log the response to see what we got back
+      console.log('Update response:', data);
 
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
       
