@@ -1,11 +1,17 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, {
+      headers: corsHeaders
+    })
   }
 
   try {
@@ -20,6 +26,7 @@ Deno.serve(async (req) => {
       }
     )
 
+    // Parse request body
     const { userId, debug } = await req.json()
 
     if (!userId) {
@@ -27,7 +34,7 @@ Deno.serve(async (req) => {
     }
 
     if (debug) {
-      console.log('Fetching user with ID:', userId);
+      console.log('Fetching user with ID:', userId)
     }
 
     // Get user data
@@ -40,14 +47,15 @@ Deno.serve(async (req) => {
     })
 
     if (error) {
-      console.error('Error fetching user:', error);
-      throw error;
+      console.error('Error fetching user:', error)
+      throw error
     }
 
     if (debug) {
-      console.log('User data:', users?.[0] || null);
+      console.log('User data:', users?.[0] || null)
     }
 
+    // Return response with CORS headers
     return new Response(
       JSON.stringify({ 
         user: users?.[0] || null,
@@ -59,7 +67,7 @@ Deno.serve(async (req) => {
       },
     )
   } catch (error) {
-    console.error('Function error:', error);
+    console.error('Function error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       {
