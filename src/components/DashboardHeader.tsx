@@ -20,7 +20,7 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ userName, userRole, onLogout }: DashboardHeaderProps) {
   return (
-    <div className="border-b w-full">
+    <div className="border-b w-full fixed top-0 left-0 right-0 bg-background z-50">
       <div className="flex h-20 items-center px-4 gap-4">
         <SidebarTrigger>
           <Button variant="ghost" size="icon">

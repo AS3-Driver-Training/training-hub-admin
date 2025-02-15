@@ -26,15 +26,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex flex-col w-full bg-background">
+      <div className="min-h-screen bg-background">
         <DashboardHeader 
           userName={userName} 
           userRole={userRole} 
           onLogout={handleLogout}
         />
-        <div className="flex flex-1">
+        <div className="flex pt-20 fixed inset-0">
           <DashboardSidebar userRole={userRole} />
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto pl-[240px]">
             <div className="container py-6">{children}</div>
           </main>
         </div>
