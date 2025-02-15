@@ -23,6 +23,7 @@ export default function Clients() {
     queryKey: ['clients'],
     queryFn: async () => {
       try {
+        console.log('Fetching clients...');
         const { data, error } = await supabase
           .from('clients')
           .select('*')
@@ -34,6 +35,7 @@ export default function Clients() {
           throw error;
         }
 
+        console.log('Fetched clients:', data);
         return data || [];
       } catch (error) {
         console.error('Error in queryFn:', error);

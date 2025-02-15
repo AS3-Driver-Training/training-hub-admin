@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Users, Calendar, CheckCircle } from "lucide-react";
@@ -54,6 +55,7 @@ const Index = () => {
     queryKey: ['clients'],
     queryFn: async () => {
       try {
+        console.log('Fetching clients...');
         const { data, error } = await supabase
           .from('clients')
           .select('*')
@@ -64,6 +66,8 @@ const Index = () => {
           toast.error('Failed to load clients');
           throw error;
         }
+
+        console.log('Fetched clients:', data);
 
         // Process logo URLs to ensure HTTPS
         const processedData = data?.map(client => ({
