@@ -28,8 +28,6 @@ export function ClientSettingsTab() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user');
 
-      console.log('Fetching client with ID:', clientId);
-      
       const { data: clientUser, error: clientUserError } = await supabase
         .from('client_users')
         .select('*')
@@ -61,18 +59,12 @@ export function ClientSettingsTab() {
         throw new Error('Client not found');
       }
       
-      console.log('Fetched client:', data);
       return data;
     },
   });
 
-  // Update color states when client data is loaded
   useEffect(() => {
     if (client) {
-      console.log('Setting initial colors:', {
-        primary: client.primary_color,
-        secondary: client.secondary_color
-      });
       setPrimaryColor(client.primary_color || '#9b87f5');
       setSecondaryColor(client.secondary_color || '#8E9196');
     }
@@ -100,29 +92,12 @@ export function ClientSettingsTab() {
     
     setIsSubmitting(true);
     try {
-      console.log('Attempting to update colors for client:', clientId, {
+      console.log('Updating colors for client:', clientId, {
         primaryColor,
         secondaryColor
       });
       
-      // First, verify the client exists and we have access to it
-      const { data: existingClient, error: verifyError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('id', clientId)
-        .maybeSingle();
-
-      if (verifyError) {
-        console.error('Error verifying client access:', verifyError);
-        throw verifyError;
-      }
-
-      if (!existingClient) {
-        throw new Error('Client not found or you do not have permission to update it');
-      }
-
-      // Proceed with the update
-      const { error: updateError } = await supabase
+      const { error } = await supabase
         .from('clients')
         .update({
           primary_color: primaryColor,
@@ -130,14 +105,11 @@ export function ClientSettingsTab() {
         })
         .eq('id', clientId);
 
-      if (updateError) {
-        console.error('Error updating colors:', updateError);
-        throw updateError;
+      if (error) {
+        console.error('Error updating colors:', error);
+        throw error;
       }
 
-      console.log('Colors updated successfully');
-
-      // Force a refetch of the client data
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
       
       toast.success('Colors saved successfully', {
@@ -146,20 +118,8 @@ export function ClientSettingsTab() {
       });
     } catch (error: any) {
       console.error('Failed to update colors:', error);
-      
-      // Extract the error message from the response if available
-      let errorMessage = error.message;
-      try {
-        if (error.body) {
-          const bodyError = JSON.parse(error.body);
-          errorMessage = bodyError.message || errorMessage;
-        }
-      } catch (e) {
-        // If we can't parse the error body, use the original error message
-      }
-      
       toast.error('Failed to save colors', {
-        description: errorMessage || 'An unexpected error occurred while saving colors',
+        description: error.message || 'An unexpected error occurred while saving colors',
       });
     } finally {
       setIsSubmitting(false);
