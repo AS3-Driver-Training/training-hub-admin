@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { UserActions } from "./users/UserActions";
 import { ManageUserDialog } from "./users/ManageUserDialog";
-import { UserData } from "./users/types";
+import { UserData } from "./types";
 
 interface UsersTableProps {
   users: UserData[] | undefined;
