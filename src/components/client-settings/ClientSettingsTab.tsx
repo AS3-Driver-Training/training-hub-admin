@@ -100,24 +100,31 @@ export function ClientSettingsTab() {
     
     setIsSubmitting(true);
     try {
-      console.log('Updating colors for client:', clientId, {
+      console.log('Attempting to update colors for client:', clientId, {
         primaryColor,
-        secondaryColor,
-        clientId
+        secondaryColor
       });
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('clients')
         .update({
           primary_color: primaryColor,
           secondary_color: secondaryColor
         })
-        .eq('id', clientId);
+        .eq('id', clientId)
+        .select()
+        .single();
 
       if (error) {
-        console.error('Update error:', error);
+        console.error('Error updating colors:', error);
         throw error;
       }
+
+      if (!data) {
+        throw new Error('No data returned after update');
+      }
+
+      console.log('Colors updated successfully:', data);
 
       // Force a refetch of the client data
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
@@ -127,9 +134,9 @@ export function ClientSettingsTab() {
         icon: <CheckCircle className="h-4 w-4 text-green-500" />,
       });
     } catch (error: any) {
-      console.error('Error updating colors:', error);
+      console.error('Failed to update colors:', error);
       toast.error('Failed to save colors', {
-        description: error.message,
+        description: error.message || 'An unexpected error occurred while saving colors',
       });
     } finally {
       setIsSubmitting(false);
