@@ -50,7 +50,6 @@ export function ManageUserDialog({
   useEffect(() => {
     if (user) {
       setSelectedRole(user.role);
-      // Set initial group and teams based on user's current assignments
       if (user.groups?.[0]) {
         setSelectedGroup(user.groups[0].id);
         setSelectedTeams(user.teams?.map(t => t.id) || []);
@@ -65,19 +64,34 @@ export function ManageUserDialog({
     if (!user || !selectedGroup) return;
 
     try {
+      console.log('Starting user update:', { userId: user.id, role: selectedRole });
+      
       // Update user role
-      const { error: roleError } = await supabase
+      const { data: updateData, error: roleError } = await supabase
         .from('client_users')
         .update({ role: selectedRole })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select();
 
-      if (roleError) throw roleError;
+      if (roleError) {
+        console.error('Error updating role:', roleError);
+        throw roleError;
+      }
+
+      console.log('Role updated successfully:', updateData);
 
       // Remove existing group assignments
-      await supabase
+      const { error: deleteGroupError } = await supabase
         .from('user_groups')
         .delete()
         .eq('user_id', user.user_id);
+
+      if (deleteGroupError) {
+        console.error('Error removing groups:', deleteGroupError);
+        throw deleteGroupError;
+      }
+
+      console.log('Existing groups removed');
 
       // Add new group assignment
       const { error: groupError } = await supabase
@@ -87,13 +101,25 @@ export function ManageUserDialog({
           group_id: selectedGroup
         });
 
-      if (groupError) throw groupError;
+      if (groupError) {
+        console.error('Error adding group:', groupError);
+        throw groupError;
+      }
+
+      console.log('New group assigned');
 
       // Remove existing team assignments
-      await supabase
+      const { error: deleteTeamError } = await supabase
         .from('user_teams')
         .delete()
         .eq('user_id', user.user_id);
+
+      if (deleteTeamError) {
+        console.error('Error removing teams:', deleteTeamError);
+        throw deleteTeamError;
+      }
+
+      console.log('Existing teams removed');
 
       // Add new team assignments
       if (selectedTeams.length > 0) {
@@ -105,7 +131,13 @@ export function ManageUserDialog({
               team_id: teamId
             }))
           );
-        if (teamError) throw teamError;
+
+        if (teamError) {
+          console.error('Error adding teams:', teamError);
+          throw teamError;
+        }
+
+        console.log('New teams assigned');
       }
 
       toast.success("User updated successfully");
