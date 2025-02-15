@@ -15,6 +15,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
     queryKey: ['client_users', clientId],
     queryFn: async () => {
       try {
+        console.log('Fetching client users for client:', clientId);
+        
         // Get all client users with their profile information
         const { data: clientUsers, error: clientUsersError } = await supabase
           .from('client_users')
@@ -38,10 +40,14 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           throw clientUsersError;
         }
 
+        console.log('Successfully fetched client users:', clientUsers);
+
         // Fetch user details, groups, and teams in parallel for each user
         const usersWithDetails = await Promise.all(
           (clientUsers || []).map(async (user) => {
             try {
+              console.log('Processing user:', user.user_id);
+              
               // Get user email from auth
               const { data: userData, error: userError } = await supabase.functions.invoke(
                 'get-user-by-id',
@@ -64,6 +70,11 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 `)
                 .eq('user_id', user.user_id);
 
+              if (groupsError) {
+                console.error('Error fetching user groups:', groupsError);
+                throw groupsError;
+              }
+
               // Get user's teams using profiles table relationship
               const { data: userTeams, error: teamsError } = await supabase
                 .from('user_teams')
@@ -75,11 +86,17 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 `)
                 .eq('user_id', user.user_id);
 
-              if (userError) throw userError;
-              if (groupsError) throw groupsError;
-              if (teamsError) throw teamsError;
+              if (teamsError) {
+                console.error('Error fetching user teams:', teamsError);
+                throw teamsError;
+              }
 
-              return {
+              if (userError) {
+                console.error('Error fetching user data:', userError);
+                throw userError;
+              }
+
+              const processedUser = {
                 ...user,
                 email: userData?.user?.email || 'No email found',
                 groups: (userGroups || [])
@@ -89,6 +106,9 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                   .map(t => t.team)
                   .filter(Boolean)
               };
+
+              console.log('Processed user details:', processedUser);
+              return processedUser;
             } catch (error) {
               console.error('Error processing user:', user.user_id, error);
               return {
@@ -101,7 +121,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           })
         );
 
-        console.log('Fetched users with details:', usersWithDetails);
+        console.log('Final users with details:', usersWithDetails);
         return usersWithDetails;
       } catch (error) {
         console.error('Error in queryFn:', error);
