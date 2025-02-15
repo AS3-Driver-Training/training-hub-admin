@@ -53,7 +53,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 }
               );
 
-              // Get user's groups
+              // Get user's groups using profiles table relationship
               const { data: userGroups, error: groupsError } = await supabase
                 .from('user_groups')
                 .select(`
@@ -64,7 +64,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 `)
                 .eq('user_id', user.user_id);
 
-              // Get user's teams
+              // Get user's teams using profiles table relationship
               const { data: userTeams, error: teamsError } = await supabase
                 .from('user_teams')
                 .select(`
