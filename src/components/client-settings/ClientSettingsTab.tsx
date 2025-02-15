@@ -28,6 +28,19 @@ export function ClientSettingsTab() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user');
 
+      console.log('Fetching client with ID:', clientId);
+      
+      const { data: clientUser } = await supabase
+        .from('client_users')
+        .select('*')
+        .eq('client_id', clientId)
+        .eq('user_id', user.id)
+        .single();
+        
+      if (!clientUser) {
+        throw new Error('Unauthorized access');
+      }
+
       const { data, error } = await supabase
         .from('clients')
         .select('*')
@@ -88,7 +101,7 @@ export function ClientSettingsTab() {
         clientId
       });
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('clients')
         .update({
           primary_color: primaryColor,
@@ -100,8 +113,6 @@ export function ClientSettingsTab() {
         console.error('Update error:', error);
         throw error;
       }
-
-      console.log('Update response:', data);
 
       // Force a refetch of the client data
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
