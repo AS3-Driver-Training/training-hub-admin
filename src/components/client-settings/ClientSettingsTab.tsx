@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Palette, Loader2, CheckCircle } from "lucide-react";
+import { Palette, Loader2, CheckCircle, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoUpload } from "./branding/LogoUpload";
 import { ColorPicker } from "./branding/ColorPicker";
@@ -120,7 +120,7 @@ export function ClientSettingsTab() {
     
     setIsSubmitting(true);
     try {
-      console.log('Submitting colors:', formData.primaryColor, formData.secondaryColor); // Debug log
+      console.log('Submitting colors:', formData.primaryColor, formData.secondaryColor);
       const { error } = await supabase
         .from('clients')
         .update({
@@ -142,6 +142,7 @@ export function ClientSettingsTab() {
       toast.success('Changes saved successfully', {
         description: 'Your settings have been updated',
         icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+        duration: 3000, // Show for 3 seconds
       });
     } catch (error: any) {
       toast.error('Failed to save changes', {
@@ -222,7 +223,13 @@ export function ClientSettingsTab() {
         </TabsContent>
       </Tabs>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2 items-center">
+        {!hasChanges && !isSubmitting && (
+          <span className="text-sm text-muted-foreground flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-green-500" />
+            All changes saved
+          </span>
+        )}
         <Button 
           type="submit" 
           disabled={isSubmitting || !hasChanges}
@@ -232,10 +239,15 @@ export function ClientSettingsTab() {
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Saving...
             </>
+          ) : hasChanges ? (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </>
           ) : (
             <>
-              <Palette className="h-4 w-4 mr-2" />
-              {hasChanges ? 'Save Changes' : 'No Changes'}
+              <CheckCircle className="h-4 w-4 mr-2" />
+              No Changes
             </>
           )}
         </Button>
