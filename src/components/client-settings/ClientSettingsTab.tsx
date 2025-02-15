@@ -72,6 +72,8 @@ export function ClientSettingsTab() {
     
     setIsSubmitting(true);
     try {
+      console.log('Updating colors for client:', clientId, { primaryColor, secondaryColor });
+      
       const { error } = await supabase
         .from('clients')
         .update({
@@ -81,7 +83,10 @@ export function ClientSettingsTab() {
         })
         .eq('id', clientId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Update error:', error);
+        throw error;
+      }
 
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
       toast.success('Colors saved successfully', {
