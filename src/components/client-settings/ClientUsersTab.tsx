@@ -15,7 +15,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
     queryKey: ['client_users', clientId],
     queryFn: async () => {
       try {
-        // Get all client users with their profile information
+        // First fetch client users
         const { data: clientUsers, error: clientUsersError } = await supabase
           .from('client_users')
           .select(`
@@ -25,23 +25,25 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
             user_id,
             client_id,
             created_at,
-            updated_at,
-            profiles!client_users_user_id_fkey (
-              first_name,
-              last_name
-            )
+            updated_at
           `)
           .eq('client_id', clientId);
 
-        if (clientUsersError) {
-          console.error('Error fetching client users:', clientUsersError);
-          throw clientUsersError;
-        }
+        if (clientUsersError) throw clientUsersError;
 
-        // Then fetch email addresses and additional details for each user
+        // Then fetch profiles separately to avoid recursion
         const usersWithDetails = await Promise.all(
           (clientUsers || []).map(async (user) => {
             try {
+              // Get profile data
+              const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('first_name, last_name')
+                .eq('id', user.user_id)
+                .single();
+
+              if (profileError) throw profileError;
+
               // Get user email from auth
               const { data: userData, error: userError } = await supabase.functions.invoke(
                 'get-user-by-id',
@@ -52,10 +54,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 }
               );
 
-              if (userError) {
-                console.error('Error fetching user:', userError);
-                throw userError;
-              }
+              if (userError) throw userError;
 
               // Get group count
               const { count: groupCount } = await supabase
@@ -71,7 +70,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
               return {
                 ...user,
-                profiles: user.profiles || { first_name: 'Unknown', last_name: 'User' },
+                profiles: profile || { first_name: 'Unknown', last_name: 'User' },
                 email: userData?.user?.email || 'No email found',
                 groups: Array(groupCount || 0),
                 teams: Array(teamCount || 0)
@@ -80,7 +79,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
               console.error('Error processing user:', user.user_id, error);
               return {
                 ...user,
-                profiles: user.profiles || { first_name: 'Unknown', last_name: 'User' },
+                profiles: { first_name: 'Unknown', last_name: 'User' },
                 email: 'Error loading email',
                 groups: [],
                 teams: []
@@ -89,7 +88,6 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           })
         );
 
-        console.log('Fetched users:', usersWithDetails);
         return usersWithDetails;
       } catch (error) {
         console.error('Error in queryFn:', error);
