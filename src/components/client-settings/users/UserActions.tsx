@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { useState } from "react";
 import {
@@ -11,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { MoreVertical, Mail, Trash2, UserCog } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { UserData } from "./types";
+import { UserData } from "../types";
 
 interface UserActionsProps {
   user: UserData;

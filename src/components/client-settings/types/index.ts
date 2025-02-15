@@ -15,3 +15,9 @@ export interface UserData {
   groups: Array<{ id: string; name: string }>;
   teams: Array<{ id: string; name: string }>;
 }
+
+export interface Group {
+  id: string;
+  name: string;
+  teams?: Array<{ id: string; name: string }>;
+}

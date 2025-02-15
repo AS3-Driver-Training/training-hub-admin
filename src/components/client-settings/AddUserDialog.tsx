@@ -9,19 +9,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { EmailInput } from "./add-user/EmailInput";
+import { RoleSelect } from "./add-user/RoleSelect";
+import { GroupSelect } from "./add-user/GroupSelect";
+import { TeamSelect } from "./add-user/TeamSelect";
+import { Group } from "./types";
 
 interface AddUserDialogProps {
   clientId: string;
@@ -158,82 +153,19 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
           <DialogTitle>Add User</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleAddUser} className="space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={setRole}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="supervisor">Supervisor (View Only)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Group</Label>
-            <Select 
-              value={selectedGroup || undefined} 
-              onValueChange={(value) => {
-                setSelectedGroup(value);
-                setSelectedTeam(null); // Reset team selection when group changes
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a group" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {groups.map((group) => (
-                    <SelectItem key={group.id} value={group.id}>
-                      {group.name} {group.teams?.length ? `(${group.teams.length} teams)` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Team</Label>
-            <Select 
-              value={selectedTeam || undefined}
-              onValueChange={setSelectedTeam}
-              disabled={!selectedGroup || availableTeams.length === 0}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={
-                  !selectedGroup 
-                    ? "Select a group first" 
-                    : availableTeams.length === 0 
-                      ? "No teams available" 
-                      : "Select a team"
-                } />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {availableTeams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-
+          <EmailInput email={email} onEmailChange={setEmail} />
+          <RoleSelect role={role} onRoleChange={setRole} />
+          <GroupSelect 
+            groups={groups} 
+            selectedGroup={selectedGroup} 
+            onGroupChange={setSelectedGroup} 
+          />
+          <TeamSelect
+            selectedGroup={selectedGroup}
+            selectedTeam={selectedTeam}
+            onTeamChange={setSelectedTeam}
+            availableTeams={availableTeams}
+          />
           <Button type="submit" className="w-full">
             Add User
           </Button>
