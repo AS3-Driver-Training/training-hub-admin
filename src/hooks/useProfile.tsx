@@ -13,26 +13,46 @@ export function useProfile() {
   useEffect(() => {
     const getProfile = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        // First check if we have a user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) {
+          console.error('Auth error:', userError);
+          return;
+        }
 
-        const { data: profile, error } = await supabase
+        if (!user) {
+          console.log('No user found');
+          return;
+        }
+
+        console.log('Fetching profile for user:', user.id);
+        
+        // Then fetch the profile
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('first_name, last_name, role, title, status')
           .eq('id', user.id)
           .maybeSingle();
         
-        if (error) throw error;
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+          throw profileError;
+        }
         
+        console.log('Profile data:', profile);
+
         if (profile) {
           const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
           setUserName(fullName || 'User');
           setUserRole(profile.role);
           setUserTitle(profile.title || '');
           setUserStatus(profile.status);
+        } else {
+          console.log('No profile found for user');
         }
       } catch (error) {
-        console.error('Error fetching profile:', error);
+        console.error('Error in getProfile:', error);
         toast.error('Error loading user profile');
       } finally {
         setIsLoading(false);
@@ -41,7 +61,8 @@ export function useProfile() {
 
     getProfile();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
       getProfile();
     });
 
@@ -50,4 +71,3 @@ export function useProfile() {
 
   return { userName, userRole, userTitle, userStatus, isLoading };
 }
-
