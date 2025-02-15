@@ -18,57 +18,81 @@ export function ClientSettingsTab() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("branding");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [primaryColor, setPrimaryColor] = useState('#9b87f5');
-  const [secondaryColor, setSecondaryColor] = useState('#8E9196');
-  
+  const [hasChanges, setHasChanges] = useState(false);
+
   const { data: client, isLoading } = useQuery({
     queryKey: ['client', clientId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No authenticated user');
-
-      const { data: clientUser, error: clientUserError } = await supabase
-        .from('client_users')
-        .select('*')
-        .eq('client_id', clientId)
-        .eq('user_id', user.id)
-        .maybeSingle();
-        
-      if (clientUserError) {
-        console.error('Error fetching client user:', clientUserError);
-        throw clientUserError;
-      }
-
-      if (!clientUser) {
-        throw new Error('Unauthorized access: You do not have permission to view this client');
-      }
-
       const { data, error } = await supabase
         .from('clients')
-        .select()
+        .select('*')
         .eq('id', clientId)
         .single();
 
-      if (error) {
-        console.error('Error fetching client:', error);
-        throw error;
-      }
-      
-      if (!data) {
-        throw new Error('Client not found');
-      }
-      
+      if (error) throw error;
       return data;
     },
   });
 
+  const [formData, setFormData] = useState({
+    name: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    phone: '',
+    contactEmail: '',
+    primaryColor: '#9b87f5',
+    secondaryColor: '#8E9196',
+  });
+
   useEffect(() => {
     if (client) {
-      setPrimaryColor(client.primary_color || '#9b87f5');
-      setSecondaryColor(client.secondary_color || '#8E9196');
+      const originalData = {
+        name: client.name || '',
+        address: client.address || '',
+        city: client.city || '',
+        state: client.state || '',
+        zipCode: client.zip_code || '',
+        phone: client.phone || '',
+        contactEmail: client.contact_email || '',
+        primaryColor: client.primary_color || '#9b87f5',
+        secondaryColor: client.secondary_color || '#8E9196',
+      };
+
+      const hasChanges = Object.keys(formData).some(key => {
+        return formData[key as keyof typeof formData] !== originalData[key as keyof typeof originalData];
+      });
+
+      setHasChanges(hasChanges);
+    }
+  }, [formData, client]);
+
+  useEffect(() => {
+    if (client) {
+      setFormData({
+        name: client.name || '',
+        address: client.address || '',
+        city: client.city || '',
+        state: client.state || '',
+        zipCode: client.zip_code || '',
+        phone: client.phone || '',
+        contactEmail: client.contact_email || '',
+        primaryColor: client.primary_color || '#9b87f5',
+        secondaryColor: client.secondary_color || '#8E9196',
+      });
     }
   }, [client]);
-  
+
+  const handleProfileChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleColorChange = (color: string, field: 'primaryColor' | 'secondaryColor') => {
+    console.log('Color changed:', field, color); // Debug log
+    setFormData(prev => ({ ...prev, [field]: color }));
+  };
+
   const handleLogoUploadSuccess = async (logoUrl: string) => {
     try {
       const { error } = await supabase
@@ -79,46 +103,49 @@ export function ClientSettingsTab() {
       if (error) throw error;
 
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
-      toast.success('Logo updated successfully');
-    } catch (error: any) {
-      console.error('Error updating logo:', error);
-      toast.error('Failed to save logo');
-    }
-  };
-
-  const updateColors = async () => {
-    if (!clientId) return;
-    
-    setIsSubmitting(true);
-    try {
-      console.log('Updating colors for client:', clientId, {
-        primaryColor,
-        secondaryColor
-      });
-      
-      const { error } = await supabase
-        .from('clients')
-        .update({
-          primary_color: primaryColor,
-          secondary_color: secondaryColor
-        })
-        .eq('id', clientId);
-
-      if (error) {
-        console.error('Error updating colors:', error);
-        throw error;
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
-      
-      toast.success('Colors saved successfully', {
-        description: 'Your brand colors have been updated',
+      toast.success('Logo updated successfully', {
+        description: 'Your logo has been saved',
         icon: <CheckCircle className="h-4 w-4 text-green-500" />,
       });
     } catch (error: any) {
-      console.error('Failed to update colors:', error);
-      toast.error('Failed to save colors', {
-        description: error.message || 'An unexpected error occurred while saving colors',
+      toast.error('Failed to save logo', {
+        description: error.message,
+      });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!clientId || !hasChanges) return;
+    
+    setIsSubmitting(true);
+    try {
+      console.log('Submitting colors:', formData.primaryColor, formData.secondaryColor); // Debug log
+      const { error } = await supabase
+        .from('clients')
+        .update({
+          name: formData.name,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zip_code: formData.zipCode,
+          phone: formData.phone,
+          contact_email: formData.contactEmail,
+          primary_color: formData.primaryColor,
+          secondary_color: formData.secondaryColor
+        })
+        .eq('id', clientId);
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+      toast.success('Changes saved successfully', {
+        description: 'Your settings have been updated',
+        icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+      });
+    } catch (error: any) {
+      toast.error('Failed to save changes', {
+        description: error.message,
       });
     } finally {
       setIsSubmitting(false);
@@ -129,16 +156,8 @@ export function ClientSettingsTab() {
     return <div>Loading...</div>;
   }
 
-  if (!client) {
-    return <div>Client not found</div>;
-  }
-
-  const hasColorChanges = 
-    primaryColor !== client.primary_color || 
-    secondaryColor !== client.secondary_color;
-
   return (
-    <div className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full bg-background border-b rounded-none p-0 h-auto">
           <div className="flex space-x-4 px-4">
@@ -164,16 +183,8 @@ export function ClientSettingsTab() {
         <TabsContent value="profile">
           <Card className="p-6">
             <ProfileForm 
-              data={{
-                name: client.name || '',
-                address: client.address || '',
-                city: client.city || '',
-                state: client.state || '',
-                zipCode: client.zip_code || '',
-                phone: client.phone || '',
-                contactEmail: client.contact_email || '',
-              }}
-              onChange={() => {}}
+              data={formData}
+              onChange={handleProfileChange}
             />
           </Card>
         </TabsContent>
@@ -182,28 +193,28 @@ export function ClientSettingsTab() {
           <Card className="p-6">
             <div className="grid gap-6">
               <LogoUpload
-                clientId={clientId}
-                currentLogo={client.logo_url}
+                clientId={clientId || ''}
+                currentLogo={client?.logo_url}
                 onUploadSuccess={handleLogoUploadSuccess}
               />
 
               <div className="grid gap-4">
                 <ColorPicker
                   label="Primary Color"
-                  color={primaryColor}
-                  onChange={setPrimaryColor}
+                  color={formData.primaryColor}
+                  onChange={(color) => handleColorChange(color, 'primaryColor')}
                 />
 
                 <ColorPicker
                   label="Secondary Color"
-                  color={secondaryColor}
-                  onChange={setSecondaryColor}
+                  color={formData.secondaryColor}
+                  onChange={(color) => handleColorChange(color, 'secondaryColor')}
                 />
 
                 <BrandingPreview
-                  logoUrl={client.logo_url}
-                  primaryColor={primaryColor}
-                  secondaryColor={secondaryColor}
+                  logoUrl={client?.logo_url}
+                  primaryColor={formData.primaryColor}
+                  secondaryColor={formData.secondaryColor}
                 />
               </div>
             </div>
@@ -213,8 +224,8 @@ export function ClientSettingsTab() {
 
       <div className="flex justify-end">
         <Button 
-          onClick={updateColors}
-          disabled={isSubmitting || !hasColorChanges}
+          type="submit" 
+          disabled={isSubmitting || !hasChanges}
         >
           {isSubmitting ? (
             <>
@@ -224,11 +235,11 @@ export function ClientSettingsTab() {
           ) : (
             <>
               <Palette className="h-4 w-4 mr-2" />
-              {hasColorChanges ? 'Save Colors' : 'No Changes'}
+              {hasChanges ? 'Save Changes' : 'No Changes'}
             </>
           )}
         </Button>
       </div>
-    </div>
+    </form>
   );
 }

@@ -8,8 +8,6 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-type AppRole = 'superadmin' | 'admin' | 'staff';
-
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
@@ -21,17 +19,6 @@ const Auth = () => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!email || !password) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    if (isSignUp && (!firstName || !lastName)) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
     setIsLoading(true);
 
     try {
@@ -44,48 +31,22 @@ const Auth = () => {
               first_name: firstName,
               last_name: lastName,
             },
-            emailRedirectTo: window.location.origin,
           },
         });
 
         if (signUpError) throw signUpError;
 
-        if (authData?.user) {
-          toast.success("Please check your email to verify your account");
-          setIsSignUp(false); // Switch to login view
-        }
+        toast.success("Please check your email to verify your account.");
       } else {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-
-        if (signInError) {
-          toast.error("Invalid email or password");
-          return;
-        }
-
-        if (signInData?.user) {
-          // After successful login, fetch the user's profile to get their role
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', signInData.user.id)
-            .single();
-
-          toast.success("Successfully logged in");
-
-          // Navigate based on role
-          if (profile?.role === 'superadmin') {
-            navigate("/clients");
-          } else {
-            navigate("/");
-          }
-        }
+        if (error) throw error;
+        navigate("/");
       }
     } catch (error: any) {
-      console.error("Auth error:", error);
-      toast.error(error.message || "An error occurred during authentication");
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -143,7 +104,6 @@ const Auth = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
             />
           </div>
           <div>

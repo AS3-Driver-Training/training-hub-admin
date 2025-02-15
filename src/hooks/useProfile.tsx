@@ -3,11 +3,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type AppRole = 'superadmin' | 'admin' | 'staff';
-
 export function useProfile() {
   const [userName, setUserName] = useState("User");
-  const [userRole, setUserRole] = useState<AppRole>("staff");
+  const [userRole, setUserRole] = useState<"superadmin" | "admin" | "staff">("staff");
   const [userTitle, setUserTitle] = useState("");
   const [userStatus, setUserStatus] = useState("active");
   const [isLoading, setIsLoading] = useState(true);
@@ -16,10 +14,7 @@ export function useProfile() {
     const getProfile = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          setIsLoading(false);
-          return;
-        }
+        if (!user) return;
 
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -32,7 +27,7 @@ export function useProfile() {
         if (profile) {
           const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
           setUserName(fullName || 'User');
-          setUserRole(profile.role as AppRole);
+          setUserRole(profile.role);
           setUserTitle(profile.title || '');
           setUserStatus(profile.status);
         }
@@ -46,15 +41,8 @@ export function useProfile() {
 
     getProfile();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-        getProfile();
-      } else if (event === 'SIGNED_OUT') {
-        setUserName('User');
-        setUserRole('staff');
-        setUserTitle('');
-        setUserStatus('active');
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      getProfile();
     });
 
     return () => subscription.unsubscribe();
