@@ -19,11 +19,22 @@ const Auth = () => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    if (isSignUp && (!firstName || !lastName)) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       if (isSignUp) {
-        const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -31,22 +42,39 @@ const Auth = () => {
               first_name: firstName,
               last_name: lastName,
             },
+            emailRedirectTo: window.location.origin,
           },
         });
 
         if (signUpError) throw signUpError;
 
-        toast.success("Please check your email to verify your account.");
+        if (signUpData?.user) {
+          toast.success("Please check your email to verify your account");
+          setIsSignUp(false); // Switch to login view
+        }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (error) throw error;
-        navigate("/");
+
+        if (signInError) {
+          if (signInError.message === "Invalid login credentials") {
+            toast.error("Invalid email or password");
+          } else {
+            throw signInError;
+          }
+          return;
+        }
+
+        if (signInData?.user) {
+          toast.success("Successfully logged in");
+          navigate("/");
+        }
       }
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Auth error:", error);
+      toast.error(error.message || "An error occurred during authentication");
     } finally {
       setIsLoading(false);
     }
@@ -104,6 +132,7 @@ const Auth = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={6}
             />
           </div>
           <div>
