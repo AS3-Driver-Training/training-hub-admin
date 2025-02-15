@@ -332,12 +332,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      check_client_access: {
-        Args: {
-          client_id: string
-        }
-        Returns: boolean
-      }
       create_client_with_invitation: {
         Args: {
           client_name: string
