@@ -38,6 +38,7 @@ export function ClientSettingsTab() {
         console.error('Error fetching client:', error);
         throw error;
       }
+      console.log('Fetched client:', data);
       return data;
     },
   });
@@ -45,6 +46,10 @@ export function ClientSettingsTab() {
   // Update color states when client data is loaded
   useEffect(() => {
     if (client) {
+      console.log('Setting initial colors:', {
+        primary: client.primary_color,
+        secondary: client.secondary_color
+      });
       setPrimaryColor(client.primary_color || '#9b87f5');
       setSecondaryColor(client.secondary_color || '#8E9196');
     }
@@ -72,23 +77,32 @@ export function ClientSettingsTab() {
     
     setIsSubmitting(true);
     try {
-      console.log('Updating colors for client:', clientId, { primaryColor, secondaryColor });
+      console.log('Updating colors for client:', clientId, {
+        primaryColor,
+        secondaryColor,
+        clientId
+      });
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('clients')
         .update({
           primary_color: primaryColor,
-          secondary_color: secondaryColor,
-          updated_at: new Date().toISOString()
+          secondary_color: secondaryColor
         })
-        .eq('id', clientId);
+        .eq('id', clientId)
+        .select()
+        .single();
 
       if (error) {
         console.error('Update error:', error);
         throw error;
       }
 
+      console.log('Update response:', data);
+
+      // Force a refetch of the client data
       await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+      
       toast.success('Colors saved successfully', {
         description: 'Your brand colors have been updated',
         icon: <CheckCircle className="h-4 w-4 text-green-500" />,
