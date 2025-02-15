@@ -30,15 +30,20 @@ export function ClientSettingsTab() {
 
       console.log('Fetching client with ID:', clientId);
       
-      const { data: clientUser } = await supabase
+      const { data: clientUser, error: clientUserError } = await supabase
         .from('client_users')
         .select('*')
         .eq('client_id', clientId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
         
+      if (clientUserError) {
+        console.error('Error fetching client user:', clientUserError);
+        throw clientUserError;
+      }
+
       if (!clientUser) {
-        throw new Error('Unauthorized access');
+        throw new Error('Unauthorized access: You do not have permission to view this client');
       }
 
       const { data, error } = await supabase
