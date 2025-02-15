@@ -34,8 +34,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         />
         <div className="flex pt-20 fixed inset-0">
           <DashboardSidebar userRole={userRole} />
-          <main className="flex-1 overflow-y-auto pl-[240px]">
-            <div className="container py-6">{children}</div>
+          <main className="flex-1 overflow-y-auto">
+            <div className="container max-w-[1400px] px-8 py-6">{children}</div>
           </main>
         </div>
       </div>

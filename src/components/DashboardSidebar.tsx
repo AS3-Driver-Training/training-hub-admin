@@ -55,7 +55,7 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
 
   return (
     <Sidebar className="h-[calc(100%-5rem)] top-20">
-      <SidebarContent>
+      <SidebarContent className="px-4">
         <SidebarGroup>
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
