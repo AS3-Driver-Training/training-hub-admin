@@ -32,12 +32,17 @@ export function ClientSettingsTab() {
         .from('clients')
         .select('*')
         .eq('id', clientId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching client:', error);
         throw error;
       }
+      
+      if (!data) {
+        throw new Error('Client not found');
+      }
+      
       console.log('Fetched client:', data);
       return data;
     },
@@ -89,9 +94,7 @@ export function ClientSettingsTab() {
           primary_color: primaryColor,
           secondary_color: secondaryColor
         })
-        .eq('id', clientId)
-        .select()
-        .single();
+        .eq('id', clientId);
 
       if (error) {
         console.error('Update error:', error);
