@@ -1,6 +1,7 @@
 
 import { Button } from "./ui/button";
 import { Menu, LogOut, User, Settings } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,11 +20,13 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ userName, userRole, onLogout }: DashboardHeaderProps) {
   return (
-    <div className="border-b">
+    <div className="border-b w-full">
       <div className="flex h-20 items-center px-4 gap-4">
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <Menu className="h-6 w-6 text-[#C10230]" />
-        </Button>
+        <SidebarTrigger>
+          <Button variant="ghost" size="icon">
+            <Menu className="h-6 w-6 text-[#C10230]" />
+          </Button>
+        </SidebarTrigger>
         <img
           src="http://as3driving.com/wp-content/uploads/2020/07/AS3-Driver-Training-Logo-HiRes.png"
           alt="AS3 Driver Training"

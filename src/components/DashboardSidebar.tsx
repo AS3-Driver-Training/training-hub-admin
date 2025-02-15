@@ -1,9 +1,9 @@
+
 import {
   Users,
   LayoutDashboard,
   Calendar,
   Settings,
-  ChevronLeft,
 } from "lucide-react";
 import {
   Sidebar,
@@ -14,7 +14,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Link } from "react-router-dom";
 
@@ -56,11 +55,6 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
 
   return (
     <Sidebar>
-      <div className="flex items-center justify-end p-4">
-        <SidebarTrigger>
-          <ChevronLeft className="h-4 w-4 text-primary" />
-        </SidebarTrigger>
-      </div>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Menu</SidebarGroupLabel>

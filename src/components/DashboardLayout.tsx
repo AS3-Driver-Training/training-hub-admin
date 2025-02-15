@@ -1,3 +1,4 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
@@ -25,16 +26,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <DashboardSidebar userRole={userRole} />
-        <main className="flex-1 overflow-y-auto">
-          <DashboardHeader 
-            userName={userName} 
-            userRole={userRole} 
-            onLogout={handleLogout}
-          />
-          <div className="container py-6">{children}</div>
-        </main>
+      <div className="min-h-screen flex flex-col w-full bg-background">
+        <DashboardHeader 
+          userName={userName} 
+          userRole={userRole} 
+          onLogout={handleLogout}
+        />
+        <div className="flex flex-1">
+          <DashboardSidebar userRole={userRole} />
+          <main className="flex-1 overflow-y-auto">
+            <div className="container py-6">{children}</div>
+          </main>
+        </div>
       </div>
     </SidebarProvider>
   );
