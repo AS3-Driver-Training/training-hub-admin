@@ -63,13 +63,13 @@ export function LogoUpload({ clientId, currentLogo, onUploadSuccess }: LogoUploa
       setTempLogo(previewUrl);
 
       const fileExt = file.name.split('.').pop();
-      const filePath = `${clientId}/logo-${Date.now()}.${fileExt}`;
-      console.log('Uploading to path:', filePath);
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${clientId}/${fileName}`;
 
-      // First upload the file
+      // Upload the file
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('client-assets')
-        .upload(filePath, file, { 
+        .from('client-logos')
+        .upload(filePath, file, {
           upsert: true,
           contentType: file.type
         });
@@ -83,7 +83,7 @@ export function LogoUpload({ clientId, currentLogo, onUploadSuccess }: LogoUploa
 
       // Get the public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('client-assets')
+        .from('client-logos')
         .getPublicUrl(filePath);
 
       console.log('Generated public URL:', publicUrl);
