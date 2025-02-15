@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -165,7 +166,7 @@ export function ClientSettingsTab() {
             <TabsTrigger 
               value="profile" 
               className={cn(
-                "data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-1 py-3"
+                "data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-1 py-3 text-left"
               )}
             >
               Profile Information
@@ -173,7 +174,7 @@ export function ClientSettingsTab() {
             <TabsTrigger 
               value="branding"
               className={cn(
-                "data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-1 py-3"
+                "data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-1 py-3 text-left"
               )}
             >
               Branding
