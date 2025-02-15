@@ -113,7 +113,7 @@ export function ClientSettingsTab() {
         })
         .eq('id', clientId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error updating colors:', error);
@@ -121,7 +121,7 @@ export function ClientSettingsTab() {
       }
 
       if (!data) {
-        throw new Error('No data returned after update');
+        throw new Error('Failed to update client colors - no matching client found');
       }
 
       console.log('Colors updated successfully:', data);
@@ -135,8 +135,20 @@ export function ClientSettingsTab() {
       });
     } catch (error: any) {
       console.error('Failed to update colors:', error);
+      
+      // Extract the error message from the response if available
+      let errorMessage = error.message;
+      try {
+        if (error.body) {
+          const bodyError = JSON.parse(error.body);
+          errorMessage = bodyError.message || errorMessage;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the original error message
+      }
+      
       toast.error('Failed to save colors', {
-        description: error.message || 'An unexpected error occurred while saving colors',
+        description: errorMessage || 'An unexpected error occurred while saving colors',
       });
     } finally {
       setIsSubmitting(false);
