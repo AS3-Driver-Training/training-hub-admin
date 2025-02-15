@@ -96,78 +96,80 @@ const Index = () => {
           ))}
         </div>
 
-        {isSuperAdmin && (
-          <Card className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h3 className="text-lg font-semibold">Client Organizations</h3>
-                <p className="text-sm text-muted-foreground">
-                  Manage your client organizations and invitations
-                </p>
-              </div>
-              <InviteClientDialog />
+        <Card className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-lg font-semibold">Client Organizations</h3>
+              <p className="text-sm text-muted-foreground">
+                {isSuperAdmin 
+                  ? "Manage your client organizations and invitations"
+                  : "View your associated organizations"}
+              </p>
             </div>
+            {isSuperAdmin && <InviteClientDialog />}
+          </div>
 
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Client Name</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created At</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
                   <TableRow>
-                    <TableHead>Client Name</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created At</TableHead>
+                    <TableCell colSpan={3} className="text-center">
+                      Loading...
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center">
-                        Loading...
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-destructive">
+                      Failed to load clients. Please try again later.
+                    </TableCell>
+                  </TableRow>
+                ) : !clients || clients.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center">
+                      {isSuperAdmin 
+                        ? "No clients found. Invite your first client to get started."
+                        : "You don't have access to any organizations yet."}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  clients.map((client) => (
+                    <TableRow 
+                      key={client.id}
+                      className="hover:bg-muted/50 cursor-pointer"
+                      onClick={() => handleClientClick(client.id)}
+                    >
+                      <TableCell className="font-medium">
+                        {client.name}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            client.status === "pending"
+                              ? "secondary"
+                              : "default"
+                          }
+                        >
+                          {client.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(client.created_at).toLocaleDateString()}
                       </TableCell>
                     </TableRow>
-                  ) : error ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center text-destructive">
-                        Failed to load clients. Please try again later.
-                      </TableCell>
-                    </TableRow>
-                  ) : !clients || clients.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center">
-                        No clients found. Invite your first client to get started.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    clients.map((client) => (
-                      <TableRow 
-                        key={client.id}
-                        className="hover:bg-muted/50 cursor-pointer"
-                        onClick={() => handleClientClick(client.id)}
-                      >
-                        <TableCell className="font-medium">
-                          {client.name}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              client.status === "pending"
-                                ? "secondary"
-                                : "default"
-                            }
-                          >
-                            {client.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(client.created_at).toLocaleDateString()}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
-        )}
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
       </div>
     </DashboardLayout>
   );
