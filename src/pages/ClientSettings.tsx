@@ -47,7 +47,7 @@ export default function ClientSettings() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
+        <div className="flex items-start gap-4">
           <Button
             variant="ghost"
             size="icon"
@@ -55,8 +55,8 @@ export default function ClientSettings() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold">{client.name}</h1>
+          <div className="text-left">
+            <h1 className="text-3xl font-bold text-left">{client.name}</h1>
             <p className="text-muted-foreground">
               Manage client settings, users, and groups
             </p>
