@@ -17,7 +17,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
       try {
         console.log('Fetching client users for client:', clientId);
         
-        // Get all client users with their profile information
+        // Get all client users with their profile information and exact client match
         const { data: clientUsers, error: clientUsersError } = await supabase
           .from('client_users')
           .select(`
@@ -33,7 +33,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
               last_name
             )
           `)
-          .eq('client_id', clientId);
+          .eq('client_id', clientId)
+          .eq('status', 'active'); // Only get active users
 
         if (clientUsersError) {
           console.error('Error fetching client users:', clientUsersError);
@@ -59,7 +60,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 }
               );
 
-              // Get user's groups using profiles table relationship
+              // Get user's groups for this specific client
               const { data: userGroups, error: groupsError } = await supabase
                 .from('user_groups')
                 .select(`
@@ -68,14 +69,15 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                     name
                   )
                 `)
-                .eq('user_id', user.user_id);
+                .eq('user_id', user.user_id)
+                .eq('group:groups.client_id', clientId); // Only get groups from this client
 
               if (groupsError) {
                 console.error('Error fetching user groups:', groupsError);
                 throw groupsError;
               }
 
-              // Get user's teams using profiles table relationship
+              // Get user's teams for this specific client's groups
               const { data: userTeams, error: teamsError } = await supabase
                 .from('user_teams')
                 .select(`
@@ -84,7 +86,12 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                     name
                   )
                 `)
-                .eq('user_id', user.user_id);
+                .eq('user_id', user.user_id)
+                .in('team:teams.group_id', 
+                  userGroups
+                    ?.map(g => g.group?.id)
+                    .filter(Boolean) || []
+                );
 
               if (teamsError) {
                 console.error('Error fetching user teams:', teamsError);
