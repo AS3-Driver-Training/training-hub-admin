@@ -3,6 +3,13 @@ import { supabase } from './client';
 
 export async function createBucketIfNotExists() {
   try {
+    // First check authentication
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      console.log('User not authenticated, skipping bucket creation');
+      return;
+    }
+
     // First check if we can access the bucket
     const { data: buckets, error: listError } = await supabase.storage.listBuckets();
     
@@ -35,5 +42,9 @@ export async function createBucketIfNotExists() {
   }
 }
 
-// Initialize the storage system
-createBucketIfNotExists();
+// Initialize the storage system only if we have an authenticated session
+supabase.auth.getSession().then(({ data: { session }}) => {
+  if (session) {
+    createBucketIfNotExists();
+  }
+});
