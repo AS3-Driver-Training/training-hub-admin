@@ -60,38 +60,37 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 }
               );
 
-              // Get user's groups for this specific client
+              // First get user's groups
               const { data: userGroups, error: groupsError } = await supabase
                 .from('user_groups')
                 .select(`
-                  group:groups (
+                  groups (
                     id,
                     name
                   )
                 `)
                 .eq('user_id', user.user_id)
-                .eq('group:groups.client_id', clientId); // Only get groups from this client
+                .eq('groups.client_id', clientId); // Filter groups by client
 
               if (groupsError) {
                 console.error('Error fetching user groups:', groupsError);
                 throw groupsError;
               }
 
-              // Get user's teams for this specific client's groups
+              // Get group IDs for team filtering
+              const groupIds = userGroups?.map(ug => ug.groups?.id).filter(Boolean) || [];
+
+              // Then get teams for those groups
               const { data: userTeams, error: teamsError } = await supabase
                 .from('user_teams')
                 .select(`
-                  team:teams (
+                  teams (
                     id,
                     name
                   )
                 `)
                 .eq('user_id', user.user_id)
-                .in('team:teams.group_id', 
-                  userGroups
-                    ?.map(g => g.group?.id)
-                    .filter(Boolean) || []
-                );
+                .in('teams.group_id', groupIds);
 
               if (teamsError) {
                 console.error('Error fetching user teams:', teamsError);
@@ -107,10 +106,10 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 ...user,
                 email: userData?.user?.email || 'No email found',
                 groups: (userGroups || [])
-                  .map(g => g.group)
+                  .map(g => g.groups)
                   .filter(Boolean),
                 teams: (userTeams || [])
-                  .map(t => t.team)
+                  .map(t => t.teams)
                   .filter(Boolean)
               };
 
