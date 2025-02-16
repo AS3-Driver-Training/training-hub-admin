@@ -33,7 +33,7 @@ export function useProfile() {
         console.log('Attempting to fetch profile for user:', user.id);
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('first_name, last_name, role, title, status')
+          .select('first_name, last_name, role, title, status, organization_name')
           .eq('id', user.id)
           .maybeSingle();
         
@@ -50,7 +50,8 @@ export function useProfile() {
             last_name: profile.last_name,
             role: profile.role,
             title: profile.title,
-            status: profile.status
+            status: profile.status,
+            organization_name: profile.organization_name
           });
 
           const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
@@ -63,7 +64,8 @@ export function useProfile() {
             fullName,
             role: profile.role,
             title: profile.title,
-            status: profile.status
+            status: profile.status,
+            organization_name: profile.organization_name
           });
         } else {
           console.log('No profile data found for user');

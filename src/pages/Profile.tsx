@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -8,12 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { KeyIcon, PenIcon } from "lucide-react";
+import { KeyIcon, PenIcon, Building2Icon, AtSignIcon } from "lucide-react";
 
 const Profile = () => {
   const { userName, userRole, userTitle, isLoading } = useProfile();
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const [organization, setOrganization] = useState("");
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -21,6 +24,24 @@ const Profile = () => {
     newPassword: '',
     confirmPassword: '',
   });
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserEmail(user.email || "");
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('organization_name')
+          .eq('id', user.id)
+          .single();
+        if (profile) {
+          setOrganization(profile.organization_name || "AS3 Driver Training");
+        }
+      }
+    };
+    loadUserData();
+  }, []);
 
   // Update form data when profile information changes
   useEffect(() => {
@@ -215,12 +236,36 @@ const Profile = () => {
 
           <div className="space-y-4">
             <div className="flex items-center gap-2">
+              <Building2Icon className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-lg font-medium">Organization</h2>
+            </div>
+            <div className="pl-6">
+              <p className="text-sm">{organization}</p>
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <AtSignIcon className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-lg font-medium">Email Address</h2>
+            </div>
+            <div className="pl-6">
+              <p className="text-sm">{userEmail}</p>
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
               <KeyIcon className="w-4 h-4 text-muted-foreground" />
               <h2 className="text-lg font-medium">Password</h2>
             </div>
 
-            <form onSubmit={handlePasswordChange} className="space-y-4">
-              <div className="grid gap-4 max-w-md">
+            <form onSubmit={handlePasswordChange} className="space-y-4 max-w-lg mx-auto">
+              <div className="space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="newPassword">New Password</Label>
                   <Input
@@ -242,7 +287,7 @@ const Profile = () => {
                   />
                 </div>
               </div>
-              <Button type="submit" disabled={isSaving}>
+              <Button type="submit" disabled={isSaving} className="w-full">
                 Update password
               </Button>
             </form>
