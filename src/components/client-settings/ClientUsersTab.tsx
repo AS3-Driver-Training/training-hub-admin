@@ -33,8 +33,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
               last_name
             )
           `)
-          .eq('client_id', clientId)
-          .eq('status', 'active'); // Only get active users
+          .eq('client_id', clientId);
 
         if (clientUsersError) {
           console.error('Error fetching client users:', clientUsersError);
