@@ -13,19 +13,33 @@ export function useProfile() {
   useEffect(() => {
     const getProfile = async () => {
       try {
+        console.log('Fetching user session...');
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         
-        if (userError) throw userError;
-        if (!user) return;
+        if (userError) {
+          console.error('Auth error:', userError);
+          throw userError;
+        }
+        
+        if (!user) {
+          console.log('No authenticated user found');
+          return;
+        }
 
+        console.log('Fetching profile for user:', user.id);
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('first_name, last_name, role, title, status, organization_name')
           .eq('id', user.id)
           .single();
         
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+          throw profileError;
+        }
 
+        console.log('Profile data received:', profile);
+        
         if (profile) {
           const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
           setUserName(fullName || 'User');
@@ -44,7 +58,11 @@ export function useProfile() {
     getProfile();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) getProfile();
+      console.log('Auth state changed:', event);
+      if (session) {
+        console.log('Session detected, refreshing profile...');
+        getProfile();
+      }
     });
 
     return () => subscription.unsubscribe();
