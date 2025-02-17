@@ -41,11 +41,15 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           throw clientUsersError;
         }
 
+        if (!clientUsers) {
+          return [];
+        }
+
         console.log('Successfully fetched client users:', clientUsers);
 
         // Fetch user details, groups, and teams in parallel for each user
         const usersWithDetails = await Promise.all(
-          (clientUsers || []).map(async (user) => {
+          clientUsers.map(async (user) => {
             try {
               console.log('Processing user:', user.user_id);
               
@@ -60,7 +64,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 }
               );
 
-              // First get user's groups
+              // Get user's groups for this specific client
               const { data: userGroups, error: groupsError } = await supabase
                 .from('user_groups')
                 .select(`
@@ -70,7 +74,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                   )
                 `)
                 .eq('user_id', user.user_id)
-                .eq('groups.client_id', clientId); // Filter groups by client
+                .eq('groups.client_id', clientId); // Important: Only get groups for this client
 
               if (groupsError) {
                 console.error('Error fetching user groups:', groupsError);
@@ -80,7 +84,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
               // Get group IDs for team filtering
               const groupIds = userGroups?.map(ug => ug.groups?.id).filter(Boolean) || [];
 
-              // Then get teams for those groups
+              // Get teams for those groups (which are already filtered by client)
               const { data: userTeams, error: teamsError } = await supabase
                 .from('user_teams')
                 .select(`
@@ -102,7 +106,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 throw userError;
               }
 
-              const processedUser = {
+              return {
                 ...user,
                 email: userData?.user?.email || 'No email found',
                 groups: (userGroups || [])
@@ -112,9 +116,6 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                   .map(t => t.teams)
                   .filter(Boolean)
               };
-
-              console.log('Processed user details:', processedUser);
-              return processedUser;
             } catch (error) {
               console.error('Error processing user:', user.user_id, error);
               return {

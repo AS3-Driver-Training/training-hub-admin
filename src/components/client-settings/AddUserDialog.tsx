@@ -25,7 +25,7 @@ interface AddUserDialogProps {
 export function AddUserDialog({ clientId }: AddUserDialogProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("supervisor");
+  const [role, setRole] = useState<'client_admin' | 'manager' | 'supervisor'>('supervisor');
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -66,7 +66,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
   const addUserMutation = useMutation({
     mutationFn: async ({ email, role, groupId, teamId }: { 
       email: string; 
-      role: string;
+      role: 'client_admin' | 'manager' | 'supervisor';
       groupId: string | null;
       teamId: string | null;
     }) => {
@@ -116,7 +116,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       queryClient.invalidateQueries({ queryKey: ['client_users', clientId] });
       setIsDialogOpen(false);
       setEmail("");
-      setRole("supervisor");
+      setRole('supervisor');
       setSelectedGroup(groups[0]?.id || null);
       setSelectedTeam(null);
       toast.success("User added successfully");
@@ -154,7 +154,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
         </DialogHeader>
         <form onSubmit={handleAddUser} className="space-y-4">
           <EmailInput email={email} onEmailChange={setEmail} />
-          <RoleSelect role={role} onRoleChange={setRole} />
+          <RoleSelect role={role} onRoleChange={(value: 'client_admin' | 'manager' | 'supervisor') => setRole(value)} />
           <GroupSelect 
             groups={groups} 
             selectedGroup={selectedGroup} 
