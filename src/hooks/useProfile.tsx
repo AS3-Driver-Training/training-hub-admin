@@ -35,7 +35,7 @@ export function useProfile() {
           .from('profiles')
           .select('first_name, last_name, role, title, status, organization_name')
           .eq('id', user.id)
-          .maybeSingle();
+          .single();
         
         if (profileError) {
           console.error('Profile fetch error:', profileError);
