@@ -34,7 +34,7 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
           )
         `)
         .eq('client_id', clientId)
-        .order('is_default', { ascending: false }) // Default group first
+        .order('is_default', { ascending: true })
         .order('name');
 
       if (fetchError) {
@@ -69,7 +69,7 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
             )
           `)
           .eq('client_id', clientId)
-          .order('is_default', { ascending: false })
+          .order('is_default', { ascending: true })
           .order('name');
 
         if (refetchError) {
