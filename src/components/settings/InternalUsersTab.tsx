@@ -74,8 +74,7 @@ export function InternalUsersTab() {
           first_name,
           last_name,
           title,
-          created_at,
-          updated_at
+          created_at
         `)
         .in('role', ['superadmin', 'admin', 'staff'])
         .order('created_at', { ascending: false });
@@ -85,9 +84,13 @@ export function InternalUsersTab() {
         throw error;
       }
 
+      console.log('Fetched profiles:', profiles);
+
       const usersWithLoginInfo = await Promise.all(
         profiles.map(async (profile) => {
+          // Skip fetching login info if no email
           if (!profile.email) {
+            console.log('No email for profile:', profile.id);
             return {
               ...profile,
               last_login: null
@@ -95,6 +98,7 @@ export function InternalUsersTab() {
           }
 
           try {
+            console.log('Fetching login info for email:', profile.email);
             const { data: userData, error: userError } = await supabase.functions.invoke(
               'get-user-by-email',
               { 
@@ -106,9 +110,13 @@ export function InternalUsersTab() {
 
             if (userError) {
               console.error('Error fetching user data:', userError);
-              throw userError;
+              return {
+                ...profile,
+                last_login: null
+              };
             }
 
+            console.log('User data received:', userData);
             return {
               ...profile,
               last_login: userData?.user?.last_sign_in_at || null

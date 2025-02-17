@@ -11,8 +11,8 @@ Deno.serve(async (req) => {
   try {
     const { email } = await req.json()
 
-    if (!email) {
-      throw new Error('Email is required')
+    if (!email || typeof email !== 'string') {
+      throw new Error('Valid email is required')
     }
 
     console.log('Searching for user with email:', email)
