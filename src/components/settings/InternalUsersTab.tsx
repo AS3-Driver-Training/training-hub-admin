@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,17 +79,17 @@ export function InternalUsersTab() {
         profiles.map(async (profile) => {
           try {
             const { data: userData, error: userError } = await supabase.functions.invoke(
-              'get-user-by-id',
+              'get-user-by-email',
               { 
                 body: { 
-                  userId: profile.id 
+                  email: profile.email || '' 
                 } 
               }
             );
 
             if (userError) throw userError;
 
-            const user = userData?.user?.user;
+            const user = userData?.user;
             
             return {
               ...profile,
