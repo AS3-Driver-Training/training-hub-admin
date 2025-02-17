@@ -23,18 +23,22 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
   const { data: groups, isLoading } = useQuery({
     queryKey: ['client_groups', clientId],
     queryFn: async () => {
-      // First, ensure we have a default group
+      console.log('Fetching groups for client:', clientId);
+      
       const { data: existingGroups, error: fetchError } = await supabase
         .from('groups')
         .select(`
-          *,
+          id,
+          name,
+          description,
+          is_default,
           teams (
             id,
             name
           )
         `)
         .eq('client_id', clientId)
-        .order('is_default', { ascending: true })
+        .order('is_default', { ascending: false })
         .order('name');
 
       if (fetchError) {
@@ -42,50 +46,14 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
         throw fetchError;
       }
 
-      // If no default group exists, create one
-      if (!existingGroups?.some(group => group.is_default)) {
-        const { error: insertError } = await supabase
-          .from('groups')
-          .insert({
-            client_id: clientId,
-            name: 'Default Group',
-            description: 'Default group for teams without explicit group assignment',
-            is_default: true
-          });
-
-        if (insertError) {
-          console.error('Error creating default group:', insertError);
-          throw insertError;
-        }
-
-        // Fetch again to get the updated list including the new default group
-        const { data: updatedGroups, error: refetchError } = await supabase
-          .from('groups')
-          .select(`
-            *,
-            teams (
-              id,
-              name
-            )
-          `)
-          .eq('client_id', clientId)
-          .order('is_default', { ascending: true })
-          .order('name');
-
-        if (refetchError) {
-          console.error('Error refetching groups:', refetchError);
-          throw refetchError;
-        }
-
-        return updatedGroups;
-      }
-
-      return existingGroups;
+      console.log('Fetched groups:', existingGroups);
+      return existingGroups || [];
     },
   });
 
   const addGroupMutation = useMutation({
     mutationFn: async ({ name, description }: { name: string; description: string }) => {
+      console.log('Creating new group:', { name, description, clientId });
       const { error } = await supabase
         .from('groups')
         .insert({
@@ -103,12 +71,14 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
       toast.success("Group created successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      console.error('Error creating group:', error);
+      toast.error("Failed to create group");
     },
   });
 
   const addTeamMutation = useMutation({
     mutationFn: async ({ groupId, name }: { groupId: string; name: string }) => {
+      console.log('Creating new team:', { groupId, name });
       const { error } = await supabase
         .from('teams')
         .insert({
@@ -124,7 +94,8 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
       toast.success("Team created successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      console.error('Error creating team:', error);
+      toast.error("Failed to create team");
     },
   });
 
@@ -138,7 +109,7 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
 
   const handleCreateTeam = async (name: string) => {
     if (!groups || groups.length === 0) {
-      toast.error("Unable to create team. Please try again.");
+      toast.error("Unable to create team. Please create a group first.");
       return;
     }
 
@@ -151,7 +122,15 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
     handleAddTeam(defaultGroup.id, name);
   };
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-center h-24">
+          <p className="text-muted-foreground">Loading groups...</p>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -201,7 +180,7 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
             </h4>
             <p className="text-sm text-muted-foreground">
               {groups?.length === 0
-                ? "No groups created yet. A default group will be used for all teams."
+                ? "No groups created yet. Create a group to get started."
                 : `${groups?.length} ${
                     groups?.length === 1 ? "group" : "groups"
                   } created`}

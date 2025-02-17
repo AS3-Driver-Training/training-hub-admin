@@ -438,6 +438,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_client_admin_direct: {
+        Args: {
+          client_id_param: string
+        }
+        Returns: boolean
+      }
       is_client_admin_secure: {
         Args: {
           client_id: string
@@ -445,6 +451,10 @@ export type Database = {
         Returns: boolean
       }
       is_superadmin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_superadmin_direct: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
