@@ -34,7 +34,7 @@ type AppRole = 'superadmin' | 'admin' | 'staff';
 
 interface InternalUser {
   id: string;
-  email: string;
+  email: string | null;
   role: AppRole;
   status: string;
   first_name: string;
@@ -66,7 +66,17 @@ export function InternalUsersTab() {
     queryFn: async () => {
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          id,
+          email,
+          role,
+          status,
+          first_name,
+          last_name,
+          title,
+          created_at,
+          updated_at
+        `)
         .in('role', ['superadmin', 'admin', 'staff'])
         .order('created_at', { ascending: false });
 
@@ -75,40 +85,46 @@ export function InternalUsersTab() {
         throw error;
       }
 
-      const usersWithEmails = await Promise.all(
+      const usersWithLoginInfo = await Promise.all(
         profiles.map(async (profile) => {
+          if (!profile.email) {
+            return {
+              ...profile,
+              last_login: null
+            };
+          }
+
           try {
             const { data: userData, error: userError } = await supabase.functions.invoke(
               'get-user-by-email',
               { 
                 body: { 
-                  email: profile.email || '' 
+                  email: profile.email 
                 } 
               }
             );
 
-            if (userError) throw userError;
+            if (userError) {
+              console.error('Error fetching user data:', userError);
+              throw userError;
+            }
 
-            const user = userData?.user;
-            
             return {
               ...profile,
-              email: user?.email || 'Email not found',
-              last_login: user?.last_sign_in_at || null
+              last_login: userData?.user?.last_sign_in_at || null
             };
           } catch (error) {
             console.error('Error processing user:', profile.id, error);
             return {
               ...profile,
-              email: 'Error loading email',
               last_login: null
             };
           }
         })
       );
 
-      console.log('Final users data:', usersWithEmails);
-      return usersWithEmails;
+      console.log('Final users data:', usersWithLoginInfo);
+      return usersWithLoginInfo;
     },
   });
 
