@@ -15,9 +15,23 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
     queryKey: ['client_users', clientId],
     queryFn: async () => {
       try {
+        console.log('Checking client access...');
+        const { data: hasAccess, error: accessError } = await supabase.rpc(
+          'check_client_access_simple',
+          { client_id_param: clientId }
+        );
+
+        if (accessError) {
+          console.error('Access check error:', accessError);
+          throw new Error('Failed to verify access');
+        }
+
+        if (!hasAccess) {
+          throw new Error('No access to this client');
+        }
+
         console.log('Fetching client users for client:', clientId);
         
-        // Get all client users with their profile information and exact client match
         const { data: clientUsers, error: clientUsersError } = await supabase
           .from('client_users')
           .select(`
@@ -34,7 +48,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
             )
           `)
           .eq('client_id', clientId)
-          .eq('status', 'active'); // Only get active users
+          .eq('status', 'active');
 
         if (clientUsersError) {
           console.error('Error fetching client users:', clientUsersError);
@@ -74,7 +88,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                   )
                 `)
                 .eq('user_id', user.user_id)
-                .eq('groups.client_id', clientId); // Important: Only get groups for this client
+                .eq('groups.client_id', clientId);
 
               if (groupsError) {
                 console.error('Error fetching user groups:', groupsError);

@@ -444,6 +444,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_direct_client_access: {
+        Args: {
+          client_id_param: string
+        }
+        Returns: boolean
+      }
       is_client_admin_direct: {
         Args: {
           client_id_param: string
