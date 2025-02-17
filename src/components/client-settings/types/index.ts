@@ -19,7 +19,7 @@ export interface UserData {
 export interface Group {
   id: string;
   name: string;
-  description?: string;
-  is_default?: boolean;
-  teams?: Array<{ id: string; name: string }>;
+  description: string;  // Making this required to match existing usage
+  is_default: boolean;  // Making this required to match existing usage
+  teams: Array<{ id: string; name: string }>;  // Making this required to match existing usage
 }
