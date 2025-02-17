@@ -21,12 +21,21 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { AppRole } from "./types";
+
+interface FormData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  title: string;
+  role: AppRole;
+}
 
 export function AddInternalUserDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     email: '',
     firstName: '',
     lastName: '',
@@ -125,7 +134,7 @@ export function AddInternalUserDialog() {
             <Label htmlFor="role">Role</Label>
             <Select
               value={formData.role}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
+              onValueChange={(value: AppRole) => setFormData(prev => ({ ...prev, role: value }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a role" />
