@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
@@ -32,7 +31,6 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  // Reset error when dialog opens/closes
   useEffect(() => {
     setError(null);
   }, [isDialogOpen]);
@@ -64,14 +62,12 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
     },
   });
 
-  // Set default group when groups are loaded
   useEffect(() => {
     if (groups.length > 0 && !selectedGroup) {
       setSelectedGroup(groups[0].id);
     }
   }, [groups]);
 
-  // Get available teams for selected group
   const availableTeams = selectedGroup 
     ? groups.find(g => g.id === selectedGroup)?.teams || []
     : [];
@@ -86,7 +82,6 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       setError(null);
       console.log('Adding user with data:', { email, role, groupId, teamId });
       
-      // First check if user exists and get their profile
       const { data: userData, error: userError } = await supabase.functions.invoke(
         'get-user-by-email',
         { body: { email } }
@@ -100,7 +95,6 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
 
       console.log('User found:', userData.user);
 
-      // Check if user is already a member of this client
       const { data: existingUser, error: existingError } = await supabase
         .from('client_users')
         .select('*')
@@ -119,42 +113,32 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
         throw new Error(message);
       }
 
-      // Check if user is a superadmin
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userData.user.id)
-        .single();
-
-      if (profileError) {
-        console.error('Error checking profile:', profileError);
-        throw profileError;
-      }
-
-      if (profileData?.role === 'superadmin') {
-        const message = 'Superadmin users cannot be added as client users. Please use a different email address.';
-        setError(message);
-        throw new Error(message);
-      }
-
-      // Create client user
-      const { error: insertError } = await supabase
+      const { data: newClientUser, error: insertError } = await supabase
         .from('client_users')
         .insert({
           client_id: clientId,
           user_id: userData.user.id,
           role: role,
           status: 'active'
-        });
+        })
+        .select()
+        .single();
 
       if (insertError) {
         console.error('Error creating client user:', insertError);
-        throw insertError;
+        const message = insertError.message || 'Failed to add user to client';
+        setError(message);
+        throw new Error(message);
       }
 
-      console.log('Client user created successfully');
+      if (!newClientUser) {
+        const message = 'Failed to create client user - no data returned';
+        setError(message);
+        throw new Error(message);
+      }
 
-      // Insert group assignment if provided
+      console.log('Client user created successfully:', newClientUser);
+
       if (groupId) {
         const { error: groupError } = await supabase
           .from('user_groups')
@@ -170,7 +154,6 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
         console.log('Group assignment created successfully');
       }
 
-      // Insert team assignment if provided
       if (teamId) {
         const { error: teamError } = await supabase
           .from('user_teams')
@@ -200,8 +183,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
     },
     onError: (error: Error) => {
       console.error('Error in mutation:', error);
-      // Error is already set in mutationFn
-      toast.error("Failed to add user");
+      toast.error(error.message);
     },
   });
 
