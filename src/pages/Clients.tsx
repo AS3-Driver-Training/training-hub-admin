@@ -93,7 +93,7 @@ export default function Clients() {
                   <TableRow 
                     key={client.id}
                     className="cursor-pointer"
-                    onClick={() => navigate(`/clients/${client.id}`)}
+                    onClick={() => navigate(`/clients/${client.id}/settings`)}
                   >
                     <TableCell className="font-medium">{client.name}</TableCell>
                     <TableCell>
@@ -110,7 +110,7 @@ export default function Clients() {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/clients/${client.id}`);
+                          navigate(`/clients/${client.id}/settings`);
                         }}
                       >
                         View Details
