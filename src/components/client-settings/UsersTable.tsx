@@ -27,6 +27,7 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
   const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
     queryKey: ['client_groups', clientId],
     queryFn: async () => {
+      console.log('Fetching groups for client:', clientId);
       const { data, error } = await supabase
         .from('groups')
         .select(`
@@ -40,10 +41,14 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
         .eq('client_id', clientId)
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching groups:', error);
+        throw error;
+      }
+
+      console.log('Successfully fetched groups:', data);
       return data || [];
     },
-    initialData: [],
   });
 
   const handleManageUser = (user: UserData) => {
@@ -52,7 +57,11 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
   };
 
   if (isLoadingGroups) {
-    return <div>Loading groups...</div>;
+    return (
+      <div className="flex items-center justify-center h-24">
+        <p className="text-muted-foreground">Loading groups...</p>
+      </div>
+    );
   }
 
   return (

@@ -450,12 +450,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_client_member_or_admin: {
-        Args: {
-          client_id_param: string
-        }
-        Returns: boolean
-      }
       is_superadmin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
