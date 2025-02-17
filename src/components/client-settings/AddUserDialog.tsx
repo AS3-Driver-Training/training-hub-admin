@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,7 @@ import { EmailInput } from "./add-user/EmailInput";
 import { RoleSelect } from "./add-user/RoleSelect";
 import { GroupSelect } from "./add-user/GroupSelect";
 import { TeamSelect } from "./add-user/TeamSelect";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AddUserDialogProps {
   clientId: string;
@@ -27,7 +29,13 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
   const [role, setRole] = useState<'client_admin' | 'manager' | 'supervisor'>('supervisor');
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  // Reset error when dialog opens/closes
+  useEffect(() => {
+    setError(null);
+  }, [isDialogOpen]);
 
   const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
     queryKey: ['client_groups', clientId],
@@ -75,6 +83,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       groupId: string | null;
       teamId: string | null;
     }) => {
+      setError(null);
       console.log('Adding user with data:', { email, role, groupId, teamId });
       
       // First check if user exists and get their profile
@@ -84,8 +93,9 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       );
 
       if (userError || !userData?.user) {
-        console.error('Error finding user:', userError);
-        throw new Error('User not found');
+        const message = 'User not found. Please make sure the email is correct.';
+        setError(message);
+        throw new Error(message);
       }
 
       console.log('User found:', userData.user);
@@ -104,7 +114,9 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       }
 
       if (existingUser) {
-        throw new Error('User is already a member of this client');
+        const message = 'User is already a member of this client';
+        setError(message);
+        throw new Error(message);
       }
 
       // Check if user is a superadmin
@@ -120,7 +132,9 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       }
 
       if (profileData?.role === 'superadmin') {
-        throw new Error('Superadmin users cannot be added as client users');
+        const message = 'Superadmin users cannot be added as client users. Please use a different email address.';
+        setError(message);
+        throw new Error(message);
       }
 
       // Create client user
@@ -181,20 +195,28 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       setRole('supervisor');
       setSelectedGroup(groups[0]?.id || null);
       setSelectedTeam(null);
+      setError(null);
       toast.success("User added successfully");
     },
     onError: (error: Error) => {
       console.error('Error in mutation:', error);
-      toast.error(error.message || 'Failed to add user');
+      // Error is already set in mutationFn
+      toast.error("Failed to add user");
     },
   });
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     console.log('Form submitted with:', { email, role, selectedGroup, selectedTeam });
     
     if (!selectedGroup) {
-      toast.error("Please select a group");
+      setError("Please select a group");
+      return;
+    }
+
+    if (!email) {
+      setError("Please enter an email address");
       return;
     }
 
@@ -221,8 +243,16 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add User</DialogTitle>
+          <DialogDescription>
+            Add a user to this client. The user must already have an account in the system.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleAddUser} className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <EmailInput email={email} onEmailChange={setEmail} />
           <RoleSelect role={role} onRoleChange={(value: 'client_admin' | 'manager' | 'supervisor') => setRole(value)} />
           <GroupSelect 
