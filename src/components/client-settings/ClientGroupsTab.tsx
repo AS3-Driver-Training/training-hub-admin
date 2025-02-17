@@ -34,10 +34,13 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
           )
         `)
         .eq('client_id', clientId)
-        .order('is_default', { ascending: true })
+        .order('is_default', { ascending: false }) // Default group first
         .order('name');
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Error fetching groups:', fetchError);
+        throw fetchError;
+      }
 
       // If no default group exists, create one
       if (!existingGroups?.some(group => group.is_default)) {
@@ -50,7 +53,10 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
             is_default: true
           });
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Error creating default group:', insertError);
+          throw insertError;
+        }
 
         // Fetch again to get the updated list including the new default group
         const { data: updatedGroups, error: refetchError } = await supabase
@@ -63,10 +69,14 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
             )
           `)
           .eq('client_id', clientId)
-          .order('is_default', { ascending: true })
+          .order('is_default', { ascending: false })
           .order('name');
 
-        if (refetchError) throw refetchError;
+        if (refetchError) {
+          console.error('Error refetching groups:', refetchError);
+          throw refetchError;
+        }
+
         return updatedGroups;
       }
 
