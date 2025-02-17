@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,26 +15,59 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Check if user is already logged in
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session) {
-      navigate('/');
-    }
-  });
+  useEffect(() => {
+    // Check current session
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Session check error:', error);
+          return;
+        }
+        if (session) {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Session check failed:', error);
+      }
+    };
+
+    checkSession();
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', { event, session });
+      if (session) {
+        navigate('/');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
-      navigate('/');
+      if (error) {
+        console.error('Sign in error:', error);
+        throw error;
+      }
+
+      if (data?.user) {
+        console.log('Sign in successful:', data.user);
+        navigate('/');
+      }
     } catch (error: any) {
+      console.error('Sign in process failed:', error);
       toast.error(error.message || 'Error signing in');
     } finally {
       setIsLoading(false);
@@ -46,14 +79,25 @@ export default function Auth() {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
       });
 
-      if (error) throw error;
-      toast.success('Check your email for the confirmation link!');
+      if (error) {
+        console.error('Sign up error:', error);
+        throw error;
+      }
+
+      if (data) {
+        console.log('Sign up successful:', data);
+        toast.success('Check your email for the confirmation link!');
+      }
     } catch (error: any) {
+      console.error('Sign up process failed:', error);
       toast.error(error.message || 'Error signing up');
     } finally {
       setIsLoading(false);
