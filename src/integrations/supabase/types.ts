@@ -454,6 +454,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      is_superadmin_base: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_superadmin_direct: {
         Args: Record<PropertyKey, never>
         Returns: boolean

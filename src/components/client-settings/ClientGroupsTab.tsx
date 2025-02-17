@@ -25,18 +25,10 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
     queryFn: async () => {
       console.log('Fetching groups for client:', clientId);
       
+      // Simplified query to avoid complex joins
       const { data: existingGroups, error: fetchError } = await supabase
         .from('groups')
-        .select(`
-          id,
-          name,
-          description,
-          is_default,
-          teams (
-            id,
-            name
-          )
-        `)
+        .select('id, name, description, is_default')
         .eq('client_id', clientId)
         .order('is_default', { ascending: false })
         .order('name');
@@ -46,7 +38,26 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
         throw fetchError;
       }
 
-      console.log('Fetched groups:', existingGroups);
+      // Fetch teams in a separate query to avoid complex joins
+      if (existingGroups && existingGroups.length > 0) {
+        const groupIds = existingGroups.map(g => g.id);
+        const { data: teams, error: teamsError } = await supabase
+          .from('teams')
+          .select('id, name, group_id')
+          .in('group_id', groupIds);
+
+        if (teamsError) {
+          console.error('Error fetching teams:', teamsError);
+          throw teamsError;
+        }
+
+        // Merge teams with their respective groups
+        return existingGroups.map(group => ({
+          ...group,
+          teams: teams?.filter(team => team.group_id === group.id) || []
+        }));
+      }
+
       return existingGroups || [];
     },
   });
