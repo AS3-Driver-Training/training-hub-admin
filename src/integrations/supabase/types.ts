@@ -408,6 +408,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_client_user_access: {
+        Args: {
+          target_client_id: string
+        }
+        Returns: boolean
+      }
       is_client_admin_secure: {
         Args: {
           client_id: string
