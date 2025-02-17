@@ -35,7 +35,7 @@ export function useProfile() {
           .from('profiles')
           .select('first_name, last_name, role, title, status, organization_name')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
         
         if (profileError) {
           console.error('Profile fetch error:', profileError);
@@ -69,6 +69,7 @@ export function useProfile() {
           });
         } else {
           console.log('No profile data found for user');
+          toast.error('Profile not found');
         }
       } catch (error) {
         console.error('Error in getProfile:', error);
