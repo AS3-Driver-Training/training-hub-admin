@@ -10,38 +10,67 @@ import { useState } from "react";
 import { ClientUsersTab } from "@/components/client-settings/ClientUsersTab";
 import { ClientSettingsTab } from "@/components/client-settings/ClientSettingsTab";
 import { ClientGroupsTab } from "@/components/client-settings/ClientGroupsTab";
+import { toast } from "sonner";
 
 export default function ClientSettings() {
   const { clientId } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("users");
 
-  const { data: client, isLoading } = useQuery({
+  const { data: client, isLoading, error } = useQuery({
     queryKey: ['client', clientId],
     queryFn: async () => {
-      console.log('Fetching client details for:', clientId);
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('id', clientId)
-        .single();
+      try {
+        console.log('Fetching client details for:', clientId);
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('id', clientId)
+          .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching client:', error);
+        if (error) {
+          console.error('Error fetching client:', error);
+          throw error;
+        }
+        
+        if (!data) {
+          throw new Error('Client not found');
+        }
+        
+        console.log('Fetched client:', data);
+        return data;
+      } catch (error: any) {
+        console.error('Error in client query:', error);
+        toast.error('Error loading client data');
         throw error;
       }
-      
-      console.log('Fetched client:', data);
-      return data;
     },
+    retry: 1,
   });
 
   if (isLoading) {
-    return <DashboardLayout><div>Loading...</div></DashboardLayout>;
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-32">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      </DashboardLayout>
+    );
   }
 
-  if (!client) {
-    return <DashboardLayout><div>Client not found</div></DashboardLayout>;
+  if (error || !client) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-32 gap-4">
+          <div className="text-destructive">
+            {error ? 'Error loading client data' : 'Client not found'}
+          </div>
+          <Button variant="outline" onClick={() => navigate('/clients')}>
+            Return to Clients
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
   }
 
   return (
