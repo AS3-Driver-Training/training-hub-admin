@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
@@ -9,7 +10,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EmailInput } from "./add-user/EmailInput";
@@ -70,6 +70,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       groupId: string | null;
       teamId: string | null;
     }) => {
+      // First check if user exists and get their profile
       const { data: userData, error: userError } = await supabase.functions.invoke(
         'get-user-by-email',
         { body: { email } }
@@ -77,6 +78,19 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
 
       if (userError || !userData?.user) {
         throw new Error('User not found');
+      }
+
+      // Check if user is a superadmin
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (profileData?.role === 'superadmin') {
+        throw new Error('Superadmin users cannot be added as client users');
       }
 
       const { error: insertError } = await supabase
