@@ -349,6 +349,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_client_groups: {
+        Args: {
+          client_id: string
+        }
+        Returns: boolean
+      }
       check_client_access: {
         Args: {
           client_id: string
