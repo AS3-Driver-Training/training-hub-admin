@@ -16,7 +16,6 @@ import { EmailInput } from "./add-user/EmailInput";
 import { RoleSelect } from "./add-user/RoleSelect";
 import { GroupSelect } from "./add-user/GroupSelect";
 import { TeamSelect } from "./add-user/TeamSelect";
-import { Group } from "./types";
 
 interface AddUserDialogProps {
   clientId: string;
@@ -33,6 +32,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
   const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
     queryKey: ['client_groups', clientId],
     queryFn: async () => {
+      console.log('Fetching groups for client:', clientId);
       const { data, error } = await supabase
         .from('groups')
         .select(`
@@ -46,7 +46,12 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
         .eq('client_id', clientId)
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching groups:', error);
+        throw error;
+      }
+      
+      console.log('Fetched groups:', data);
       return data || [];
     },
   });
@@ -70,6 +75,8 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       groupId: string | null;
       teamId: string | null;
     }) => {
+      console.log('Adding user with data:', { email, role, groupId, teamId });
+      
       // First check if user exists and get their profile
       const { data: userData, error: userError } = await supabase.functions.invoke(
         'get-user-by-email',
@@ -77,7 +84,27 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       );
 
       if (userError || !userData?.user) {
+        console.error('Error finding user:', userError);
         throw new Error('User not found');
+      }
+
+      console.log('User found:', userData.user);
+
+      // Check if user is already a member of this client
+      const { data: existingUser, error: existingError } = await supabase
+        .from('client_users')
+        .select('*')
+        .eq('client_id', clientId)
+        .eq('user_id', userData.user.id)
+        .maybeSingle();
+
+      if (existingError) {
+        console.error('Error checking existing user:', existingError);
+        throw existingError;
+      }
+
+      if (existingUser) {
+        throw new Error('User is already a member of this client');
       }
 
       // Check if user is a superadmin
@@ -87,24 +114,33 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
         .eq('id', userData.user.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Error checking profile:', profileError);
+        throw profileError;
+      }
 
       if (profileData?.role === 'superadmin') {
         throw new Error('Superadmin users cannot be added as client users');
       }
 
+      // Create client user
       const { error: insertError } = await supabase
         .from('client_users')
         .insert({
           client_id: clientId,
           user_id: userData.user.id,
           role: role,
-          status: 'pending'
+          status: 'active'
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Error creating client user:', insertError);
+        throw insertError;
+      }
 
-      // Insert group assignment
+      console.log('Client user created successfully');
+
+      // Insert group assignment if provided
       if (groupId) {
         const { error: groupError } = await supabase
           .from('user_groups')
@@ -112,10 +148,15 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
             user_id: userData.user.id,
             group_id: groupId
           });
-        if (groupError) throw groupError;
+        
+        if (groupError) {
+          console.error('Error assigning group:', groupError);
+          throw groupError;
+        }
+        console.log('Group assignment created successfully');
       }
 
-      // Insert team assignment
+      // Insert team assignment if provided
       if (teamId) {
         const { error: teamError } = await supabase
           .from('user_teams')
@@ -123,8 +164,15 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
             user_id: userData.user.id,
             team_id: teamId
           });
-        if (teamError) throw teamError;
+        
+        if (teamError) {
+          console.error('Error assigning team:', teamError);
+          throw teamError;
+        }
+        console.log('Team assignment created successfully');
       }
+
+      return userData.user.id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['client_users', clientId] });
@@ -136,22 +184,30 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       toast.success("User added successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      console.error('Error in mutation:', error);
+      toast.error(error.message || 'Failed to add user');
     },
   });
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted with:', { email, role, selectedGroup, selectedTeam });
+    
     if (!selectedGroup) {
       toast.error("Please select a group");
       return;
     }
-    addUserMutation.mutate({ 
-      email, 
-      role, 
-      groupId: selectedGroup,
-      teamId: selectedTeam
-    });
+
+    try {
+      await addUserMutation.mutate({ 
+        email, 
+        role, 
+        groupId: selectedGroup,
+        teamId: selectedTeam
+      });
+    } catch (error) {
+      console.error('Error in handleAddUser:', error);
+    }
   };
 
   return (
@@ -180,8 +236,8 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
             onTeamChange={setSelectedTeam}
             availableTeams={availableTeams}
           />
-          <Button type="submit" className="w-full">
-            Add User
+          <Button type="submit" className="w-full" disabled={addUserMutation.isPending}>
+            {addUserMutation.isPending ? 'Adding...' : 'Add User'}
           </Button>
         </form>
       </DialogContent>
