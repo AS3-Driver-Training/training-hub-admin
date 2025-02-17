@@ -19,6 +19,7 @@ export interface UserData {
 export interface Group {
   id: string;
   name: string;
+  description?: string;
+  is_default?: boolean;
   teams?: Array<{ id: string; name: string }>;
 }
-

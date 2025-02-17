@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { useState } from "react";
 import { AddGroupDialog } from "./groups/AddGroupDialog";
 import { GroupsTable } from "./groups/GroupsTable";
 import { AddTeamDialog } from "./groups/AddTeamDialog";
+import { Group } from "./types";
 
 interface ClientGroupsTabProps {
   clientId: string;
@@ -38,6 +38,12 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
         throw fetchError;
       }
 
+      // Initialize groups with empty teams array
+      const groupsWithEmptyTeams: Group[] = (existingGroups || []).map(group => ({
+        ...group,
+        teams: []
+      }));
+
       // Fetch teams in a separate query to avoid complex joins
       if (existingGroups && existingGroups.length > 0) {
         const groupIds = existingGroups.map(g => g.id);
@@ -52,13 +58,13 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
         }
 
         // Merge teams with their respective groups
-        return existingGroups.map(group => ({
+        return groupsWithEmptyTeams.map(group => ({
           ...group,
           teams: teams?.filter(team => team.group_id === group.id) || []
         }));
       }
 
-      return existingGroups || [];
+      return groupsWithEmptyTeams;
     },
   });
 
