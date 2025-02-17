@@ -14,7 +14,7 @@ export type Database = {
           client_id: string
           created_at: string
           id: string
-          role: string
+          role: Database["public"]["Enums"]["client_role"]
           status: string
           updated_at: string
           user_id: string
@@ -23,7 +23,7 @@ export type Database = {
           client_id: string
           created_at?: string
           id?: string
-          role?: string
+          role?: Database["public"]["Enums"]["client_role"]
           status?: string
           updated_at?: string
           user_id: string
@@ -32,7 +32,7 @@ export type Database = {
           client_id?: string
           created_at?: string
           id?: string
-          role?: string
+          role?: Database["public"]["Enums"]["client_role"]
           status?: string
           updated_at?: string
           user_id?: string
@@ -427,6 +427,7 @@ export type Database = {
     }
     Enums: {
       app_role: "superadmin" | "admin" | "staff"
+      client_role: "client_admin" | "manager" | "supervisor"
     }
     CompositeTypes: {
       [_ in never]: never

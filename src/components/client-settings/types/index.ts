@@ -1,7 +1,7 @@
 
 export interface UserData {
   id: string;
-  role: string;
+  role: 'client_admin' | 'manager' | 'supervisor';
   status: string;
   user_id: string;
   client_id: string;
@@ -21,3 +21,4 @@ export interface Group {
   name: string;
   teams?: Array<{ id: string; name: string }>;
 }
+

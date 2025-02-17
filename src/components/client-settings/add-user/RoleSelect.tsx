@@ -22,7 +22,7 @@ export function RoleSelect({ role, onRoleChange }: RoleSelectProps) {
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="admin">Admin</SelectItem>
+          <SelectItem value="client_admin">Client Admin</SelectItem>
           <SelectItem value="manager">Manager</SelectItem>
           <SelectItem value="supervisor">Supervisor (View Only)</SelectItem>
         </SelectContent>
@@ -30,3 +30,4 @@ export function RoleSelect({ role, onRoleChange }: RoleSelectProps) {
     </div>
   );
 }
+

@@ -17,15 +17,14 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserData, Group } from "../types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { UserData, Group } from "../types";
 
 interface ManageUserDialogProps {
   isOpen: boolean;
@@ -42,7 +41,7 @@ export function ManageUserDialog({
   clientId,
   groups = []
 }: ManageUserDialogProps) {
-  const [selectedRole, setSelectedRole] = useState(user?.role || 'supervisor');
+  const [selectedRole, setSelectedRole] = useState<'client_admin' | 'manager' | 'supervisor'>(user?.role || 'supervisor');
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const queryClient = useQueryClient();
@@ -171,12 +170,12 @@ export function ManageUserDialog({
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label>Role</Label>
-            <Select value={selectedRole} onValueChange={setSelectedRole}>
+            <Select value={selectedRole} onValueChange={(value: 'client_admin' | 'manager' | 'supervisor') => setSelectedRole(value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="client_admin">Client Admin</SelectItem>
                 <SelectItem value="manager">Manager</SelectItem>
                 <SelectItem value="supervisor">Supervisor (View Only)</SelectItem>
               </SelectContent>
@@ -247,3 +246,4 @@ export function ManageUserDialog({
     </Dialog>
   );
 }
+
