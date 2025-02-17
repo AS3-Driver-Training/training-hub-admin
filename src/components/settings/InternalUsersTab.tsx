@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { UserPlus, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -29,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AddInternalUserDialog } from "./AddInternalUserDialog";
 
 type AppRole = 'superadmin' | 'admin' | 'staff';
 
@@ -88,7 +88,6 @@ export function InternalUsersTab() {
 
       const usersWithLoginInfo = await Promise.all(
         profiles.map(async (profile) => {
-          // Skip fetching login info if no email
           if (!profile.email) {
             console.log('No email for profile:', profile.id);
             return {
@@ -206,10 +205,7 @@ export function InternalUsersTab() {
             Manage system administrators and staff accounts
           </p>
         </div>
-        <Button>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Add User
-        </Button>
+        <AddInternalUserDialog />
       </div>
 
       <div className="space-y-4">

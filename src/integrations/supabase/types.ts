@@ -376,6 +376,16 @@ export type Database = {
         }
         Returns: Json
       }
+      create_internal_user: {
+        Args: {
+          p_email: string
+          p_first_name: string
+          p_last_name: string
+          p_title: string
+          p_role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: string
+      }
       generate_invitation_token: {
         Args: Record<PropertyKey, never>
         Returns: string
