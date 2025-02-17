@@ -28,7 +28,7 @@ export function DashboardHeader({ userName, userRole, onLogout }: DashboardHeade
           </Button>
         </SidebarTrigger>
         <img
-          src="http://as3driving.com/wp-content/uploads/2020/07/AS3-Driver-Training-Logo-HiRes.png"
+          src="https://as3driving.com/wp-content/uploads/2020/07/AS3-Driver-Training-Logo-HiRes.png"
           alt="AS3 Driver Training"
           className="h-16"
         />
@@ -71,3 +71,4 @@ export function DashboardHeader({ userName, userRole, onLogout }: DashboardHeade
     </div>
   );
 }
+
