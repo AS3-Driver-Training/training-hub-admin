@@ -383,6 +383,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_client_user_access: {
+        Args: {
+          client_id_param: string
+        }
+        Returns: boolean
+      }
       check_direct_client_access: {
         Args: {
           client_id: string
