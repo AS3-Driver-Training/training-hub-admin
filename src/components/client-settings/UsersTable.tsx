@@ -32,8 +32,6 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
         .select(`
           id,
           name,
-          description,
-          is_default,
           teams (
             id,
             name
