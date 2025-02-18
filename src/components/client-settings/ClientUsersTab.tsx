@@ -18,6 +18,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
       try {
         console.log('Fetching client users for client:', clientId);
         
+        // First get the client users
         const { data: clientUsers, error: clientUsersError } = await supabase
           .from('client_users')
           .select(`
@@ -41,85 +42,61 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           throw clientUsersError;
         }
 
-        if (!clientUsers) {
+        if (!clientUsers?.length) {
           return [];
         }
 
         console.log('Successfully fetched client users:', clientUsers);
 
-        // Fetch user details, groups, and teams in parallel for each user
+        // Get all user details in parallel
         const usersWithDetails = await Promise.all(
           clientUsers.map(async (user) => {
             try {
-              console.log('Processing user:', user.user_id);
-              
-              // Get user email from auth
+              // Get user email
               const { data: userData, error: userError } = await supabase.functions.invoke(
                 'get-user-by-id',
-                { 
-                  body: { 
-                    userId: user.user_id,
-                    debug: true
-                  } 
-                }
+                { body: { userId: user.user_id } }
               );
 
-              // Get user's groups for this specific client
-              const { data: userGroups, error: groupsError } = await supabase
+              if (userError) {
+                throw userError;
+              }
+
+              // Get user's groups in this client
+              const { data: userGroups } = await supabase
                 .from('user_groups')
                 .select(`
-                  groups (
+                  group_id,
+                  groups!inner (
                     id,
                     name,
                     description,
                     is_default
                   )
                 `)
-                .eq('user_id', user.user_id)
-                .eq('groups.client_id', clientId);
+                .eq('user_id', user.user_id);
 
-              if (groupsError) {
-                console.error('Error fetching user groups:', groupsError);
-                throw groupsError;
-              }
+              const groups = (userGroups || []).map(ug => ug.groups);
+              const groupIds = groups.map(g => g.id);
 
-              // Get group IDs for team filtering
-              const groupIds = userGroups?.map(ug => ug.groups?.id).filter(Boolean) || [];
-
-              // Get teams for those groups (which are already filtered by client)
-              const { data: userTeams, error: teamsError } = await supabase
+              // Get user's teams in those groups
+              const { data: userTeams } = await supabase
                 .from('user_teams')
                 .select(`
-                  teams (
+                  team_id,
+                  teams!inner (
                     id,
                     name,
                     group_id
                   )
                 `)
                 .eq('user_id', user.user_id)
-                .in('teams.group_id', groupIds.length > 0 ? groupIds : ['00000000-0000-0000-0000-000000000000']);
-
-              if (teamsError) {
-                console.error('Error fetching user teams:', teamsError);
-                throw teamsError;
-              }
-
-              if (userError) {
-                console.error('Error fetching user data:', userError);
-                throw userError;
-              }
-
-              // Process and organize the data
-              const groups = (userGroups || [])
-                .map(g => g.groups)
-                .filter(Boolean);
+                .in('teams.group_id', groupIds.length ? groupIds : ['00000000-0000-0000-0000-000000000000']);
 
               const teams = (userTeams || [])
-                .map(t => t.teams)
-                .filter(Boolean)
-                .map(team => ({
-                  ...team,
-                  group: groups.find(g => g.id === team.group_id)
+                .map(ut => ({
+                  ...ut.teams,
+                  group: groups.find(g => g.id === ut.teams.group_id)
                 }));
 
               return {
@@ -141,7 +118,6 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           })
         );
 
-        console.log('Final users with details:', usersWithDetails);
         return usersWithDetails;
       } catch (error) {
         console.error('Error in queryFn:', error);
