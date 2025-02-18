@@ -98,7 +98,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         return clientUsers.map(user => {
           const userEmail = usersData?.users?.find(u => u.id === user.user_id)?.email || 'No email found';
           
-          // Use the now-declared userGroups and userTeams
+          // Get group and team IDs for this user
           const userGroupIds = (userGroups || [])
             .filter(ug => ug.user_id === user.user_id)
             .map(ug => ug.group_id);
@@ -107,22 +107,23 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
             .filter(ut => ut.user_id === user.user_id)
             .map(ut => ut.team_id);
 
-          const userGroups = (groups || []).filter(group => 
+          // Filter groups and teams for this specific user
+          const assignedGroups = (groups || []).filter(group => 
             userGroupIds.includes(group.id) || 
             (group.is_default && userGroupIds.length === 0)
           );
 
-          const userTeams = userGroups.flatMap(group => 
+          const assignedTeams = assignedGroups.flatMap(group => 
             group.teams?.filter(team => userTeamIds.includes(team.id)) || []
           );
 
           return {
             ...user,
             email: userEmail,
-            groups: userGroups,
-            teams: userTeams.map(team => ({
+            groups: assignedGroups,
+            teams: assignedTeams.map(team => ({
               ...team,
-              group: userGroups.find(g => g.id === team.group_id)
+              group: assignedGroups.find(g => g.id === team.group_id)
             }))
           };
         });
