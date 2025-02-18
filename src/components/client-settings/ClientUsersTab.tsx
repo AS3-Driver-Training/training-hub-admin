@@ -17,8 +17,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
     queryFn: async () => {
       try {
         console.log('Fetching client users for client:', clientId);
-        
-        // First get the client users
+
+        // Get the client users with their profiles in a single query
         const { data: clientUsers, error: clientUsersError } = await supabase
           .from('client_users')
           .select(`
@@ -29,7 +29,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
             client_id,
             created_at,
             updated_at,
-            profiles!client_users_user_id_fkey (
+            profiles (
               first_name,
               last_name
             )
@@ -48,83 +48,75 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
         console.log('Successfully fetched client users:', clientUsers);
 
-        // Get all user details in parallel
-        const usersWithDetails = await Promise.all(
-          clientUsers.map(async (user) => {
-            try {
-              // Get user email
-              const { data: userData, error: userError } = await supabase.functions.invoke(
-                'get-user-by-id',
-                { body: { userId: user.user_id } }
-              );
+        // Process each user sequentially to avoid overloading
+        const usersWithDetails = [];
+        for (const user of clientUsers) {
+          try {
+            // Get user email
+            const { data: userData, error: userError } = await supabase.functions.invoke(
+              'get-user-by-id',
+              { body: { userId: user.user_id } }
+            );
 
-              if (userError) {
-                throw userError;
-              }
+            if (userError) throw userError;
 
-              // Get user's groups in this client
-              const { data: userGroups } = await supabase
-                .from('user_groups')
-                .select(`
-                  group_id,
-                  groups!inner (
-                    id,
-                    name,
-                    description,
-                    is_default
-                  )
-                `)
-                .eq('user_id', user.user_id);
+            // Get user's groups in a single query
+            const { data: groups, error: groupsError } = await supabase
+              .from('groups')
+              .select(`
+                id,
+                name,
+                description,
+                is_default
+              `)
+              .eq('client_id', clientId);
 
-              const groups = (userGroups || []).map(ug => ug.groups);
-              const groupIds = groups.map(g => g.id);
+            if (groupsError) throw groupsError;
 
-              // Get user's teams in those groups
-              const { data: userTeams } = await supabase
-                .from('user_teams')
-                .select(`
-                  team_id,
-                  teams!inner (
-                    id,
-                    name,
-                    group_id
-                  )
-                `)
-                .eq('user_id', user.user_id)
-                .in('teams.group_id', groupIds.length ? groupIds : ['00000000-0000-0000-0000-000000000000']);
+            // Get user's teams in a single query
+            const { data: teams, error: teamsError } = await supabase
+              .from('teams')
+              .select(`
+                id,
+                name,
+                group_id
+              `)
+              .in('group_id', groups.map(g => g.id));
 
-              const teams = (userTeams || [])
-                .map(ut => ({
-                  ...ut.teams,
-                  group: groups.find(g => g.id === ut.teams.group_id)
-                }));
+            if (teamsError) throw teamsError;
 
-              return {
-                ...user,
-                email: userData?.user?.email || 'No email found',
-                groups,
-                teams
-              };
-            } catch (error) {
-              console.error('Error processing user:', user.user_id, error);
-              toast.error(`Error loading data for user ${user.profiles?.first_name || 'Unknown'}`);
-              return {
-                ...user,
-                email: 'Error loading email',
-                groups: [],
-                teams: []
-              };
-            }
-          })
-        );
+            // Map teams to include their group information
+            const processedTeams = teams.map(team => ({
+              ...team,
+              group: groups.find(g => g.id === team.group_id)
+            }));
+
+            usersWithDetails.push({
+              ...user,
+              email: userData?.user?.email || 'No email found',
+              groups: groups || [],
+              teams: processedTeams || []
+            });
+          } catch (error) {
+            console.error('Error processing user:', user.user_id, error);
+            toast.error(`Error loading data for user ${user.profiles?.first_name || 'Unknown'}`);
+            usersWithDetails.push({
+              ...user,
+              email: 'Error loading email',
+              groups: [],
+              teams: []
+            });
+          }
+        }
 
         return usersWithDetails;
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error in queryFn:', error);
-        toast.error('Error loading users');
+        toast.error(`Error loading users: ${error.message || 'Unknown error'}`);
         throw error;
       }
     },
+    retry: 1
   });
 
   if (isLoading) return <div>Loading...</div>;
