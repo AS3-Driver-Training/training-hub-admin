@@ -17,7 +17,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
     queryKey: ['client_users', clientId],
     queryFn: async () => {
       try {
-        // First, get all active client users with their profiles
+        // Step 1: Get client users
         const { data: clientUsers, error: clientUsersError } = await supabase
           .from('client_users')
           .select(`
@@ -45,8 +45,10 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           return [];
         }
 
-        // Get user emails in batch using edge function
         const userIds = clientUsers.map(user => user.user_id);
+
+        // Step 2: Fetch all required data before mapping
+        // Get user emails
         const { data: usersData, error: usersError } = await supabase.functions.invoke(
           'get-user-by-id',
           { 
@@ -56,12 +58,9 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           }
         );
 
-        if (usersError) {
-          console.error('Error fetching user details:', usersError);
-          throw usersError;
-        }
+        if (usersError) throw usersError;
 
-        // Get all groups for this client
+        // Get groups
         const { data: groups, error: groupsError } = await supabase
           .from('groups')
           .select(`
@@ -77,47 +76,41 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           `)
           .eq('client_id', clientId);
 
-        if (groupsError) {
-          console.error('Error fetching groups:', groupsError);
-          throw groupsError;
-        }
+        if (groupsError) throw groupsError;
 
-        // Get all user group assignments
+        // Get user group assignments
         const { data: userGroups, error: userGroupsError } = await supabase
           .from('user_groups')
           .select('*')
           .in('user_id', userIds);
 
-        if (userGroupsError) {
-          console.error('Error fetching user groups:', userGroupsError);
-          throw userGroupsError;
-        }
+        if (userGroupsError) throw userGroupsError;
 
-        // Get all user team assignments
+        // Get user team assignments
         const { data: userTeams, error: userTeamsError } = await supabase
           .from('user_teams')
           .select('*')
           .in('user_id', userIds);
 
-        if (userTeamsError) {
-          console.error('Error fetching user teams:', userTeamsError);
-          throw userTeamsError;
-        }
+        if (userTeamsError) throw userTeamsError;
 
-        // Map everything together
+        // Step 3: Now map the data with all variables properly declared
         return clientUsers.map(user => {
           const userEmail = usersData?.users?.find(u => u.id === user.user_id)?.email || 'No email found';
-          const userGroupIds = userGroups
-            ?.filter(ug => ug.user_id === user.user_id)
-            .map(ug => ug.group_id) || [];
-          const userTeamIds = userTeams
-            ?.filter(ut => ut.user_id === user.user_id)
-            .map(ut => ut.team_id) || [];
+          
+          // Use the now-declared userGroups and userTeams
+          const userGroupIds = (userGroups || [])
+            .filter(ug => ug.user_id === user.user_id)
+            .map(ug => ug.group_id);
 
-          const userGroups = groups?.filter(group => 
+          const userTeamIds = (userTeams || [])
+            .filter(ut => ut.user_id === user.user_id)
+            .map(ut => ut.team_id);
+
+          const userGroups = (groups || []).filter(group => 
             userGroupIds.includes(group.id) || 
             (group.is_default && userGroupIds.length === 0)
-          ) || [];
+          );
 
           const userTeams = userGroups.flatMap(group => 
             group.teams?.filter(team => userTeamIds.includes(team.id)) || []
