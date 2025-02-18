@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { AddUserDialog } from "./AddUserDialog";
 import { UsersTable } from "./UsersTable";
+import { toast } from "sonner";
 
 interface ClientUsersTabProps {
   clientId: string;
@@ -15,21 +16,6 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
     queryKey: ['client_users', clientId],
     queryFn: async () => {
       try {
-        console.log('Checking client access...');
-        const { data: hasAccess, error: accessError } = await supabase.rpc(
-          'check_client_access_simple',
-          { client_id_param: clientId }
-        );
-
-        if (accessError) {
-          console.error('Access check error:', accessError);
-          throw new Error('Failed to verify access');
-        }
-
-        if (!hasAccess) {
-          throw new Error('No access to this client');
-        }
-
         console.log('Fetching client users for client:', clientId);
         
         const { data: clientUsers, error: clientUsersError } = await supabase
@@ -84,7 +70,9 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 .select(`
                   groups (
                     id,
-                    name
+                    name,
+                    description,
+                    is_default
                   )
                 `)
                 .eq('user_id', user.user_id)
@@ -104,11 +92,12 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 .select(`
                   teams (
                     id,
-                    name
+                    name,
+                    group_id
                   )
                 `)
                 .eq('user_id', user.user_id)
-                .in('teams.group_id', groupIds);
+                .in('teams.group_id', groupIds.length > 0 ? groupIds : ['00000000-0000-0000-0000-000000000000']);
 
               if (teamsError) {
                 console.error('Error fetching user teams:', teamsError);
@@ -120,18 +109,28 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
                 throw userError;
               }
 
+              // Process and organize the data
+              const groups = (userGroups || [])
+                .map(g => g.groups)
+                .filter(Boolean);
+
+              const teams = (userTeams || [])
+                .map(t => t.teams)
+                .filter(Boolean)
+                .map(team => ({
+                  ...team,
+                  group: groups.find(g => g.id === team.group_id)
+                }));
+
               return {
                 ...user,
                 email: userData?.user?.email || 'No email found',
-                groups: (userGroups || [])
-                  .map(g => g.groups)
-                  .filter(Boolean),
-                teams: (userTeams || [])
-                  .map(t => t.teams)
-                  .filter(Boolean)
+                groups,
+                teams
               };
             } catch (error) {
               console.error('Error processing user:', user.user_id, error);
+              toast.error(`Error loading data for user ${user.profiles?.first_name || 'Unknown'}`);
               return {
                 ...user,
                 email: 'Error loading email',
@@ -146,6 +145,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         return usersWithDetails;
       } catch (error) {
         console.error('Error in queryFn:', error);
+        toast.error('Error loading users');
         throw error;
       }
     },
