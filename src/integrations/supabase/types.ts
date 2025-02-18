@@ -428,7 +428,7 @@ export type Database = {
       }
       has_client_access: {
         Args: {
-          client_id: string
+          client_id_param: string
         }
         Returns: boolean
       }

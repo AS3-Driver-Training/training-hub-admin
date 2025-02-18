@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { AddUserDialog } from "./AddUserDialog";
 import { UsersTable } from "./UsersTable";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface ClientUsersTabProps {
   clientId: string;
@@ -16,9 +17,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
     queryKey: ['client_users', clientId],
     queryFn: async () => {
       try {
-        console.log('Fetching client users for client:', clientId);
-
-        // Get the client users with their profiles in a single query
+        // First, get all active client users with their profiles
         const { data: clientUsers, error: clientUsersError } = await supabase
           .from('client_users')
           .select(`
@@ -29,7 +28,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
             client_id,
             created_at,
             updated_at,
-            profiles (
+            profiles:user_id (
               first_name,
               last_name
             )
@@ -46,70 +45,94 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           return [];
         }
 
-        console.log('Successfully fetched client users:', clientUsers);
-
-        // Process each user sequentially to avoid overloading
-        const usersWithDetails = [];
-        for (const user of clientUsers) {
-          try {
-            // Get user email
-            const { data: userData, error: userError } = await supabase.functions.invoke(
-              'get-user-by-id',
-              { body: { userId: user.user_id } }
-            );
-
-            if (userError) throw userError;
-
-            // Get user's groups in a single query
-            const { data: groups, error: groupsError } = await supabase
-              .from('groups')
-              .select(`
-                id,
-                name,
-                description,
-                is_default
-              `)
-              .eq('client_id', clientId);
-
-            if (groupsError) throw groupsError;
-
-            // Get user's teams in a single query
-            const { data: teams, error: teamsError } = await supabase
-              .from('teams')
-              .select(`
-                id,
-                name,
-                group_id
-              `)
-              .in('group_id', groups.map(g => g.id));
-
-            if (teamsError) throw teamsError;
-
-            // Map teams to include their group information
-            const processedTeams = teams.map(team => ({
-              ...team,
-              group: groups.find(g => g.id === team.group_id)
-            }));
-
-            usersWithDetails.push({
-              ...user,
-              email: userData?.user?.email || 'No email found',
-              groups: groups || [],
-              teams: processedTeams || []
-            });
-          } catch (error) {
-            console.error('Error processing user:', user.user_id, error);
-            toast.error(`Error loading data for user ${user.profiles?.first_name || 'Unknown'}`);
-            usersWithDetails.push({
-              ...user,
-              email: 'Error loading email',
-              groups: [],
-              teams: []
-            });
+        // Get user emails in batch using edge function
+        const userIds = clientUsers.map(user => user.user_id);
+        const { data: usersData, error: usersError } = await supabase.functions.invoke(
+          'get-user-by-id',
+          { 
+            body: { 
+              userIds: userIds 
+            } 
           }
+        );
+
+        if (usersError) {
+          console.error('Error fetching user details:', usersError);
+          throw usersError;
         }
 
-        return usersWithDetails;
+        // Get all groups for this client
+        const { data: groups, error: groupsError } = await supabase
+          .from('groups')
+          .select(`
+            id,
+            name,
+            description,
+            is_default,
+            teams (
+              id,
+              name,
+              group_id
+            )
+          `)
+          .eq('client_id', clientId);
+
+        if (groupsError) {
+          console.error('Error fetching groups:', groupsError);
+          throw groupsError;
+        }
+
+        // Get all user group assignments
+        const { data: userGroups, error: userGroupsError } = await supabase
+          .from('user_groups')
+          .select('*')
+          .in('user_id', userIds);
+
+        if (userGroupsError) {
+          console.error('Error fetching user groups:', userGroupsError);
+          throw userGroupsError;
+        }
+
+        // Get all user team assignments
+        const { data: userTeams, error: userTeamsError } = await supabase
+          .from('user_teams')
+          .select('*')
+          .in('user_id', userIds);
+
+        if (userTeamsError) {
+          console.error('Error fetching user teams:', userTeamsError);
+          throw userTeamsError;
+        }
+
+        // Map everything together
+        return clientUsers.map(user => {
+          const userEmail = usersData?.users?.find(u => u.id === user.user_id)?.email || 'No email found';
+          const userGroupIds = userGroups
+            ?.filter(ug => ug.user_id === user.user_id)
+            .map(ug => ug.group_id) || [];
+          const userTeamIds = userTeams
+            ?.filter(ut => ut.user_id === user.user_id)
+            .map(ut => ut.team_id) || [];
+
+          const userGroups = groups?.filter(group => 
+            userGroupIds.includes(group.id) || 
+            (group.is_default && userGroupIds.length === 0)
+          ) || [];
+
+          const userTeams = userGroups.flatMap(group => 
+            group.teams?.filter(team => userTeamIds.includes(team.id)) || []
+          );
+
+          return {
+            ...user,
+            email: userEmail,
+            groups: userGroups,
+            teams: userTeams.map(team => ({
+              ...team,
+              group: userGroups.find(g => g.id === team.group_id)
+            }))
+          };
+        });
       } catch (error: any) {
         console.error('Error in queryFn:', error);
         toast.error(`Error loading users: ${error.message || 'Unknown error'}`);
@@ -119,7 +142,15 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
     retry: 1
   });
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-center h-32">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6">
