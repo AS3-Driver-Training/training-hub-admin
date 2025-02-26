@@ -5,7 +5,9 @@ import { Card } from "@/components/ui/card";
 import { AddUserDialog } from "./AddUserDialog";
 import { UsersTable } from "./UsersTable";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface ClientUsersTabProps {
   clientId: string;
@@ -13,6 +15,8 @@ interface ClientUsersTabProps {
 }
 
 export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
+  const navigate = useNavigate();
+
   const { data: users, isLoading } = useQuery({
     queryKey: ['client_users', clientId],
     queryFn: async () => {
@@ -146,6 +150,24 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
     retry: 1
   });
 
+  const handleImpersonateClient = async () => {
+    try {
+      // Store current session info for later restoration
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        localStorage.setItem('previousRole', 'staff');
+        localStorage.setItem('previousUserId', session.user.id);
+      }
+
+      // Navigate to client dashboard with impersonation flag
+      navigate(`/client/${clientId}/dashboard?impersonate=true`);
+      toast.success('Switched to client view');
+    } catch (error) {
+      console.error('Error impersonating client:', error);
+      toast.error('Failed to switch to client view');
+    }
+  };
+
   if (isLoading) {
     return (
       <Card className="p-6">
@@ -165,7 +187,16 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
             Manage client users and their permissions
           </p>
         </div>
-        <AddUserDialog clientId={clientId} />
+        <div className="flex gap-3">
+          <Button 
+            variant="outline"
+            onClick={handleImpersonateClient}
+          >
+            <UserCircle2 className="mr-2 h-4 w-4" />
+            View as Client
+          </Button>
+          <AddUserDialog clientId={clientId} />
+        </div>
       </div>
       <UsersTable users={users} clientId={clientId} />
     </Card>
