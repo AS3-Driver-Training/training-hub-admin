@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, UserCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { ClientUsersTab } from "@/components/client-settings/ClientUsersTab";
 import { ClientSettingsTab } from "@/components/client-settings/ClientSettingsTab";
@@ -48,6 +48,24 @@ export default function ClientSettings() {
     retry: 1,
   });
 
+  const handleImpersonateClient = async () => {
+    try {
+      // Store current session info for later restoration
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        localStorage.setItem('previousRole', 'staff');
+        localStorage.setItem('previousUserId', session.user.id);
+      }
+
+      // Navigate to client dashboard with impersonation flag
+      navigate(`/client/${clientId}/dashboard?impersonate=true`);
+      toast.success('Switched to client view');
+    } catch (error) {
+      console.error('Error impersonating client:', error);
+      toast.error('Failed to switch to client view');
+    }
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -76,20 +94,29 @@ export default function ClientSettings() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-start gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="text-left">
-            <h1 className="text-3xl font-bold text-left">{client.name}</h1>
-            <p className="text-muted-foreground">
-              Manage client settings, users, and groups
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-start gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="text-left">
+              <h1 className="text-3xl font-bold text-left">{client.name}</h1>
+              <p className="text-muted-foreground">
+                Manage client settings, users, and groups
+              </p>
+            </div>
           </div>
+          <Button 
+            variant="outline"
+            onClick={handleImpersonateClient}
+          >
+            <UserCircle2 className="mr-2 h-4 w-4" />
+            View as Client
+          </Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
