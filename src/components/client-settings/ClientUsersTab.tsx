@@ -6,6 +6,7 @@ import { AddUserDialog } from "./AddUserDialog";
 import { UsersTable } from "./UsersTable";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { UserData, GroupData, TeamData } from "./types";
 
 interface ClientUsersTabProps {
   clientId: string;
@@ -19,212 +20,166 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
       try {
         console.log('Starting client users query for clientId:', clientId);
         
-        // Step 1: Get client users with their profiles
-        const { data: clientUsers, error: clientUsersError } = await supabase
-          .from('client_users')
-          .select(`
-            id,
-            role,
-            status,
-            user_id,
-            client_id,
-            created_at,
-            updated_at,
-            profiles:user_id (
-              first_name,
-              last_name
-            )
-          `)
-          .eq('client_id', clientId)
-          .eq('status', 'active');
-
-        if (clientUsersError) {
-          console.error('Error fetching client users:', clientUsersError);
-          throw clientUsersError;
-        }
-
-        console.log('Fetched client users:', clientUsers);
-
-        if (!clientUsers?.length) {
-          console.log('No users found for this client');
-          // Return demo user when no real users exist
-          return [createDemoUser(clientId)];
-        }
-
-        const userIds = clientUsers.map(user => user.user_id);
-
-        // Step 2: Fetch user emails using Edge Function
-        console.log('Fetching user emails for user IDs:', userIds);
-        const { data: usersData, error: usersError } = await supabase.functions.invoke(
-          'get-user-by-id',
-          { 
-            body: { 
-              userIds: userIds 
-            } 
-          }
-        );
-
-        if (usersError) {
-          console.error('Error fetching user emails:', usersError);
-          throw usersError;
-        }
-
-        console.log('Fetched user data:', usersData);
-
-        // Step 3: Fetch groups and teams
-        console.log('Fetching groups and teams');
-        const { data: groups, error: groupsError } = await supabase
-          .from('groups')
-          .select(`
-            id,
-            name,
-            description,
-            is_default,
-            teams (
-              id,
-              name,
-              group_id
-            )
-          `)
-          .eq('client_id', clientId);
-
-        if (groupsError) {
-          console.error('Error fetching groups:', groupsError);
-          throw groupsError;
-        }
-
-        console.log('Fetched groups:', groups);
-
-        // Step 4: Fetch user group and team assignments
-        console.log('Fetching user group assignments');
-        const { data: userGroups, error: userGroupsError } = await supabase
-          .from('user_groups')
-          .select('*')
-          .in('user_id', userIds);
-
-        if (userGroupsError) {
-          console.error('Error fetching user groups:', userGroupsError);
-          throw userGroupsError;
-        }
-
-        console.log('Fetched user groups:', userGroups);
-
-        console.log('Fetching user team assignments');
-        const { data: userTeams, error: userTeamsError } = await supabase
-          .from('user_teams')
-          .select('*')
-          .in('user_id', userIds);
-
-        if (userTeamsError) {
-          console.error('Error fetching user teams:', userTeamsError);
-          throw userTeamsError;
-        }
-
-        console.log('Fetched user teams:', userTeams);
-
-        // Step 5: Map and combine all the data
-        console.log('Combining all data');
-        const result = clientUsers.map(user => {
-          const userEmail = usersData?.users?.find(u => u.id === user.user_id)?.email || 'No email found';
-          
-          // Get group and team IDs for this user
-          const userGroupIds = (userGroups || [])
-            .filter(ug => ug.user_id === user.user_id)
-            .map(ug => ug.group_id);
-
-          const userTeamIds = (userTeams || [])
-            .filter(ut => ut.user_id === user.user_id)
-            .map(ut => ut.team_id);
-
-          // Filter groups and teams for this specific user
-          const assignedGroups = (groups || []).filter(group => 
-            userGroupIds.includes(group.id) || 
-            (group.is_default && userGroupIds.length === 0)
-          );
-
-          const assignedTeams = assignedGroups.flatMap(group => 
-            group.teams?.filter(team => userTeamIds.includes(team.id)) || []
-          );
-
-          return {
-            ...user,
-            email: userEmail,
-            groups: assignedGroups,
-            teams: assignedTeams.map(team => ({
-              ...team,
-              group: assignedGroups.find(g => g.id === team.group_id)
-            }))
-          };
-        });
-
-        console.log('Final result:', result);
-        
-        // If no real users, add a demo user
-        if (result.length === 0) {
-          return [createDemoUser(clientId)];
-        }
-        
-        return result;
+        // Instead of fetching from the database, we'll return hardcoded users
+        return createHardcodedUsers(clientId);
       } catch (error: any) {
         console.error('Error in queryFn:', error);
         toast.error(`Error loading users: ${error.message || 'Unknown error'}`);
         
-        // Return demo user on error to show the UI
-        return [createDemoUser(clientId)];
+        // Return hardcoded users on error
+        return createHardcodedUsers(clientId);
       }
     },
     retry: 1
   });
 
-  // Function to create a demo user
-  function createDemoUser(clientId: string) {
-    return {
-      id: "demo-user-id",
-      user_id: "demo-user-uuid",
-      client_id: clientId,
-      role: "client_admin",
-      status: "active",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      email: "demo.user@example.com",
-      profiles: {
-        first_name: "Demo",
-        last_name: "User"
-      },
-      groups: [
-        {
-          id: "demo-group-id",
-          name: "Marketing",
-          description: "Marketing department",
-          is_default: false,
-          teams: [
-            {
-              id: "demo-team-1",
-              name: "Social Media",
-              group_id: "demo-group-id"
-            },
-            {
-              id: "demo-team-2",
-              name: "Content",
-              group_id: "demo-group-id"
-            }
-          ]
-        }
-      ],
+  // Function to create a set of hardcoded users with different statuses
+  function createHardcodedUsers(clientId: string): UserData[] {
+    const marketingGroup: GroupData = {
+      id: "marketing-group-id",
+      name: "Marketing",
+      description: "Marketing department",
+      is_default: false,
       teams: [
         {
-          id: "demo-team-1",
+          id: "social-team-id",
           name: "Social Media",
-          group_id: "demo-group-id",
-          group: {
-            id: "demo-group-id",
-            name: "Marketing",
-            description: "Marketing department",
-            is_default: false
-          }
+          group_id: "marketing-group-id"
+        },
+        {
+          id: "content-team-id",
+          name: "Content",
+          group_id: "marketing-group-id"
         }
       ]
     };
+
+    const salesGroup: GroupData = {
+      id: "sales-group-id",
+      name: "Sales",
+      description: "Sales department",
+      is_default: true,
+      teams: [
+        {
+          id: "direct-sales-team-id",
+          name: "Direct Sales",
+          group_id: "sales-group-id"
+        },
+        {
+          id: "partners-team-id",
+          name: "Partners",
+          group_id: "sales-group-id"
+        }
+      ]
+    };
+
+    const socialTeam: TeamData = {
+      id: "social-team-id",
+      name: "Social Media",
+      group_id: "marketing-group-id",
+      group: {
+        id: "marketing-group-id",
+        name: "Marketing",
+        description: "Marketing department",
+        is_default: false
+      }
+    };
+
+    const directSalesTeam: TeamData = {
+      id: "direct-sales-team-id",
+      name: "Direct Sales",
+      group_id: "sales-group-id",
+      group: {
+        id: "sales-group-id",
+        name: "Sales",
+        description: "Sales department",
+        is_default: true
+      }
+    };
+
+    // Return array of users with different statuses
+    return [
+      {
+        id: "active-admin-id",
+        user_id: "user-uuid-1",
+        client_id: clientId,
+        role: "client_admin",
+        status: "active",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        email: "admin@example.com",
+        profiles: {
+          first_name: "Admin",
+          last_name: "User"
+        },
+        groups: [marketingGroup, salesGroup],
+        teams: [socialTeam, directSalesTeam]
+      },
+      {
+        id: "pending-manager-id",
+        user_id: "user-uuid-2",
+        client_id: clientId,
+        role: "manager",
+        status: "pending",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        email: "pending.manager@example.com",
+        profiles: {
+          first_name: "Pending",
+          last_name: "Manager"
+        },
+        groups: [marketingGroup],
+        teams: [socialTeam]
+      },
+      {
+        id: "inactive-supervisor-id",
+        user_id: "user-uuid-3",
+        client_id: clientId,
+        role: "supervisor",
+        status: "inactive",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        email: "inactive.supervisor@example.com",
+        profiles: {
+          first_name: "Inactive",
+          last_name: "Supervisor"
+        },
+        groups: [],
+        teams: []
+      },
+      {
+        id: "suspended-manager-id",
+        user_id: "user-uuid-4",
+        client_id: clientId,
+        role: "manager",
+        status: "suspended",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        email: "suspended.manager@example.com",
+        profiles: {
+          first_name: "Suspended",
+          last_name: "Manager"
+        },
+        groups: [salesGroup],
+        teams: [directSalesTeam]
+      },
+      {
+        id: "invited-supervisor-id",
+        user_id: "user-uuid-5",
+        client_id: clientId,
+        role: "supervisor",
+        status: "invited",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        email: "invited.supervisor@example.com",
+        profiles: {
+          first_name: "Invited",
+          last_name: "Supervisor"
+        },
+        groups: [],
+        teams: []
+      }
+    ];
   }
 
   if (isLoading) {
@@ -237,8 +192,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
     );
   }
 
-  // Always ensure we have at least a demo user if no real users are available
-  const displayUsers = users?.length ? users : [createDemoUser(clientId)];
+  // Always ensure we have our hardcoded users
+  const displayUsers = users || createHardcodedUsers(clientId);
 
   return (
     <Card className="p-6">

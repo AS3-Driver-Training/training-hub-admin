@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { UserActions } from "./users/UserActions";
 import { ManageUserDialog } from "./users/ManageUserDialog";
-import { UserData } from "./types";
+import { UserData, GroupData } from "./types";
 
 interface UsersTableProps {
   users: UserData[] | undefined;
@@ -28,34 +28,70 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
     queryKey: ['client_groups', clientId],
     queryFn: async () => {
       console.log('Fetching groups for client:', clientId);
-      const { data, error } = await supabase
-        .from('groups')
-        .select(`
-          id,
-          name,
-          description,
-          is_default,
-          teams (
-            id,
-            name
-          )
-        `)
-        .eq('client_id', clientId)
-        .order('name');
-
-      if (error) {
-        console.error('Error fetching groups:', error);
-        throw error;
-      }
-
-      console.log('Successfully fetched groups:', data);
-      return data || [];
+      
+      // Return hardcoded groups instead of fetching from database
+      const hardcodedGroups: GroupData[] = [
+        {
+          id: "marketing-group-id",
+          name: "Marketing",
+          description: "Marketing department",
+          is_default: false,
+          teams: [
+            {
+              id: "social-team-id",
+              name: "Social Media",
+              group_id: "marketing-group-id"
+            },
+            {
+              id: "content-team-id",
+              name: "Content",
+              group_id: "marketing-group-id"
+            }
+          ]
+        },
+        {
+          id: "sales-group-id",
+          name: "Sales",
+          description: "Sales department",
+          is_default: true,
+          teams: [
+            {
+              id: "direct-sales-team-id",
+              name: "Direct Sales",
+              group_id: "sales-group-id"
+            },
+            {
+              id: "partners-team-id",
+              name: "Partners",
+              group_id: "sales-group-id"
+            }
+          ]
+        }
+      ];
+      
+      return hardcodedGroups;
     },
   });
 
   const handleManageUser = (user: UserData) => {
     setSelectedUser(user);
     setIsManageUserOpen(true);
+  };
+
+  // Function to determine badge variant based on status
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'default';
+      case 'pending':
+      case 'invited':
+        return 'secondary';
+      case 'inactive':
+      case 'suspended':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
   };
 
   if (isLoadingGroups) {
@@ -103,7 +139,7 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
                   <Badge variant="outline">{user.role}</Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={user.status === "pending" ? "secondary" : "default"}>
+                  <Badge variant={getStatusBadgeVariant(user.status)}>
                     {user.status}
                   </Badge>
                 </TableCell>
