@@ -1,56 +1,65 @@
 
-import { getGoogleMapsScriptUrl, SCRIPT_LOAD_TIMEOUT } from './constants';
+// Google Maps API key - in a real app, this would be from environment variables
+const GOOGLE_MAPS_API_KEY = 'AIzaSyCu7aCPjM539cGuK3ng2TXDvYcVkLJ1Pi4';
+
+// Timeout for loading in milliseconds
+const SCRIPT_LOAD_TIMEOUT = 10000;
 
 /**
- * Loads the Google Maps API script with Places library
+ * Load the Google Maps API script
  */
-export async function loadGoogleMapsScript(): Promise<void> {
+export function loadGoogleMapsScript(): Promise<void> {
   return new Promise((resolve, reject) => {
-    // Check if the script is already loaded
-    if (window.google && window.google.maps && window.google.maps.places) {
-      console.info('Google Maps script already loaded');
-      resolve();
-      return;
+    // If already loaded, resolve immediately
+    if (window.google?.maps?.places) {
+      console.log("Google Maps script already loaded");
+      return resolve();
     }
 
-    // Check if we're already loading the script (to prevent duplicate loads)
-    const existingScript = document.getElementById('google-maps-script');
-    if (existingScript) {
-      console.info('Google Maps script already loading');
-      existingScript.addEventListener('load', () => resolve());
-      existingScript.addEventListener('error', (e) => reject(new Error('Google Maps script failed to load')));
-      return;
-    }
-
-    // Set up a timeout to reject the promise if loading takes too long
-    const timeoutId = setTimeout(() => {
-      reject(new Error('Google Maps script load timeout'));
-    }, SCRIPT_LOAD_TIMEOUT);
-
-    // Define the callback function that will be called when the script loads
+    // Define the callback function that Google Maps will call when loaded
     window.initGoogleMapsCallback = () => {
-      clearTimeout(timeoutId);
-      console.info('Google Maps script loaded successfully');
+      console.log("Google Maps loaded successfully");
       resolve();
     };
 
-    // Create script element
-    const script = document.createElement('script');
-    script.id = 'google-maps-script';
-    script.type = 'text/javascript';
-    script.src = getGoogleMapsScriptUrl();
-    script.async = true;
-    script.defer = true;
-
-    // Handle script load error
-    script.onerror = () => {
-      clearTimeout(timeoutId);
-      const error = new Error('Google Maps script failed to load');
+    // Set up auth failure handler
+    window.gm_authFailure = () => {
+      const error = new Error("Google Maps authentication failed - API key may be invalid");
       console.error(error);
       reject(error);
     };
 
-    // Append the script to the document
+    // Create and add the script tag
+    const script = document.createElement('script');
+    script.id = 'google-maps-script';
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=initGoogleMapsCallback`;
+    script.async = true;
+    script.defer = true;
+    
+    // Error handling
+    script.onerror = () => {
+      const error = new Error("Failed to load Google Maps script");
+      console.error(error);
+      reject(error);
+    };
+
+    // Set a timeout in case Google never calls our callback
+    const timeoutId = setTimeout(() => {
+      if (!window.google?.maps?.places) {
+        const error = new Error("Google Maps script load timeout");
+        console.error(error);
+        reject(error);
+      }
+    }, SCRIPT_LOAD_TIMEOUT);
+
+    // Clean up the timeout when the script loads
+    script.onload = () => {
+      // The actual initialization happens in the callback
+      // This just clears the timeout
+      clearTimeout(timeoutId);
+    };
+
+    // Add script to document
     document.head.appendChild(script);
   });
 }
