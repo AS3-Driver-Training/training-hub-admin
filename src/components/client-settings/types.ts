@@ -56,22 +56,28 @@ export interface UserData {
     first_name: string;
     last_name: string;
   };
-  groups: GroupData[];
-  teams: TeamData[];
+  groups: Group[];
+  teams: Team[];
 }
 
+// Make Group and Team compatible with GroupData and TeamData
 export interface Group {
   id: string;
   name: string;
   is_default: boolean;
   description?: string;
   client_id: string;
-  teams?: TeamData[];
+  teams?: Team[];
 }
 
 export interface Team {
   id: string;
   name: string;
   group_id: string;
-  group?: GroupData;
+  group?: {
+    id: string;
+    name: string;
+    description?: string;
+    is_default: boolean;
+  };
 }

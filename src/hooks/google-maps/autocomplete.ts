@@ -17,6 +17,17 @@ const applyAutocompleteStyles = () => {
       pointer-events: auto !important;
       cursor: pointer !important;
     }
+    .pac-item:hover {
+      background-color: #f8f9fa !important;
+    }
+    /* Prevent clicks on pac-container from closing dialogs */
+    .pac-container, .pac-item, .pac-item span {
+      pointer-events: auto !important;
+    }
+    /* Force the pac-container to appear above dialogs */
+    body > .pac-container {
+      z-index: 99999 !important;
+    }
   `;
   
   // Remove existing style if it exists
@@ -43,17 +54,32 @@ const pacContainerHandler = (e: any) => {
        e.target.className.includes('pac-container'))) {
     
     // Set critical styles directly on the element
-    e.target.style.cssText = 'z-index: 9999 !important; position: absolute !important; pointer-events: auto !important;';
+    e.target.style.cssText = 'z-index: 99999 !important; position: absolute !important; pointer-events: auto !important;';
     
     // Make sure clicks on dropdown items work
     const items = e.target.querySelectorAll('.pac-item');
     items.forEach((item: HTMLElement) => {
       item.style.cssText = 'pointer-events: auto !important; cursor: pointer !important;';
       
-      // Add direct click handlers to each item
+      // Add direct click handlers to each item to prevent event propagation
       item.addEventListener('mousedown', (evt) => {
         evt.stopPropagation();
       });
+      
+      item.addEventListener('click', (evt) => {
+        evt.stopPropagation();
+        evt.preventDefault();
+      });
+    });
+    
+    // Add a global click handler to the container itself
+    e.target.addEventListener('mousedown', (evt: Event) => {
+      evt.stopPropagation();
+    });
+    
+    e.target.addEventListener('click', (evt: Event) => {
+      evt.stopPropagation();
+      evt.preventDefault();
     });
   }
 };

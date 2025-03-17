@@ -53,6 +53,23 @@ export function PlaceField({
       inputRef.current.addEventListener('click', handleClick);
       inputRef.current.addEventListener('mousedown', handleMouseDown);
       
+      // Add a global handler for pac-container clicks to prevent dialog close
+      const handleDocumentClick = (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        if (target && (
+            target.classList.contains('pac-container') || 
+            target.closest('.pac-container') || 
+            target.classList.contains('pac-item') || 
+            target.closest('.pac-item')
+          )) {
+          e.stopPropagation();
+          e.preventDefault();
+        }
+      };
+      
+      document.addEventListener('click', handleDocumentClick, true);
+      document.addEventListener('mousedown', handleDocumentClick, true);
+      
       // Add inline styles to ensure proper stacking and event handling
       inputRef.current.style.position = 'relative';
       inputRef.current.style.zIndex = '9000';
@@ -62,6 +79,8 @@ export function PlaceField({
           inputRef.current.removeEventListener('click', handleClick);
           inputRef.current.removeEventListener('mousedown', handleMouseDown);
         }
+        document.removeEventListener('click', handleDocumentClick, true);
+        document.removeEventListener('mousedown', handleDocumentClick, true);
       };
     }
   }, [inputRef]);
