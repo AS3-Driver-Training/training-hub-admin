@@ -39,14 +39,8 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}) {
   const [scriptError, setScriptError] = useState<string | null>(null);
   const autoCompleteRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-
-  // Function to handle API key errors
-  const handleApiKeyError = () => {
-    console.error("Google Maps authentication error - billing may not be enabled for this API key");
-    setScriptError("Google Maps API key requires billing to be enabled. You can still enter address manually.");
-  };
-
-  // Load Google Maps JavaScript API with Places library
+  
+  // Function to handle Google Maps API loading
   useEffect(() => {
     // Skip if we already found an error
     if (scriptError) {
@@ -57,11 +51,18 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}) {
     window.initGoogleMapsCallback = () => {
       console.log("Google Maps API loaded successfully");
       setIsLoadingScript(false);
-      initializeAutocomplete();
+      
+      // Short delay to ensure DOM is ready
+      setTimeout(() => {
+        initializeAutocomplete();
+      }, 100);
     };
 
     // Set up global error handler for API key issues
-    window.gm_authFailure = handleApiKeyError;
+    window.gm_authFailure = () => {
+      console.error("Google Maps authentication error - billing or API key issue");
+      setScriptError("Google Maps API requires proper configuration and billing to be enabled. You can still enter addresses manually.");
+    };
 
     // Check if Google Maps script is already loaded
     if (window.google?.maps?.places) {
@@ -73,8 +74,9 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}) {
     console.log("Loading Google Maps API script...");
     setIsLoadingScript(true);
     
+    // Create and append the script tag
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=initGoogleMapsCallback&loading=async`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=initGoogleMapsCallback`;
     script.async = true;
     script.defer = true;
     
@@ -85,7 +87,7 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}) {
       setScriptError("Failed to load Google Maps. Please enter address manually.");
     };
 
-    // Set a reasonable timeout for loading the script
+    // Set a timeout for loading the script
     const timeoutId = setTimeout(() => {
       if (isLoadingScript) {
         console.error("Google Maps script load timeout");
@@ -116,6 +118,43 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}) {
     };
   }, [scriptError]);
 
+  // Listen for specific Google Maps errors that occur after initialization
+  useEffect(() => {
+    const handleRuntimeError = (event: ErrorEvent) => {
+      // Only catch Google Maps related errors
+      if (event.filename?.includes('maps.googleapis.com')) {
+        console.error("Google Maps runtime error:", event.message);
+        
+        // Look for specific error messages in the error output
+        if (
+          event.message?.includes('ApiTargetBlockedMapError') || 
+          event.message?.includes('BillingNotEnabledMapError') ||
+          event.message?.includes('RefererNotAllowedMapError') ||
+          event.message?.includes('InvalidKeyMapError') ||
+          event.message?.includes('MissingKeyMapError')
+        ) {
+          setScriptError("Google Maps API configuration error. Please check your Google Cloud Console settings for API key restrictions, billing, and enabled APIs.");
+        }
+      }
+    };
+
+    // Listen for DOM errors related to Google Maps
+    const handleDOMError = (event: Event) => {
+      const target = event.target as HTMLElement;
+      if (target && target.textContent?.includes("This page can't load Google Maps correctly")) {
+        setScriptError("Google Maps API configuration error. Please make sure Places API is enabled in Google Cloud Console.");
+      }
+    };
+
+    window.addEventListener('error', handleRuntimeError);
+    document.addEventListener('DOMNodeInserted', handleDOMError);
+    
+    return () => {
+      window.removeEventListener('error', handleRuntimeError);
+      document.removeEventListener('DOMNodeInserted', handleDOMError);
+    };
+  }, []);
+
   const initializeAutocomplete = () => {
     if (!inputRef.current || !window.google?.maps?.places) {
       console.warn("Cannot initialize Google Places Autocomplete - dependencies not loaded");
@@ -136,8 +175,15 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}) {
           const place = autoCompleteRef.current.getPlace();
           console.log("Selected place:", place);
           
-          if (!place || !place.geometry) {
+          if (!place) {
             console.warn("No place details available");
+            return;
+          }
+          
+          // If place has no geometry, it might be because of restrictions or errors
+          if (!place.geometry) {
+            console.warn("Place has no geometry, possibly due to API restrictions");
+            setScriptError("Unable to get complete place details. Check your Google Cloud Console settings.");
             return;
           }
 
@@ -183,33 +229,17 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}) {
     }
   };
 
-  // Manual fallback for handling errors after initialization
-  useEffect(() => {
-    const handleAutocompleteError = (event: ErrorEvent) => {
-      // Only catch Google Maps related errors
-      if (event.filename?.includes('maps.googleapis.com')) {
-        console.error("Google Maps runtime error:", event.message);
-        
-        // Check for common API key and billing errors
-        if (event.message?.includes('API key') || 
-            event.message?.includes('billing') || 
-            event.message?.includes('ApiTargetBlockedMapError') || 
-            event.message?.includes('BillingNotEnabledMapError')) {
-          setScriptError("Google Maps API key requires billing to be enabled. Please enter address manually.");
-        }
-      }
-    };
-
-    window.addEventListener('error', handleAutocompleteError);
-    
-    return () => {
-      window.removeEventListener('error', handleAutocompleteError);
-    };
-  }, []);
+  // Provide a method to manually reset the autocomplete
+  const resetAutocomplete = () => {
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
+  };
 
   return {
     inputRef,
     isLoadingScript,
     scriptError,
+    resetAutocomplete,
   };
 }

@@ -6,9 +6,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, HelpCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useGooglePlaces } from "@/hooks/useGooglePlaces";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const venueSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -33,7 +39,7 @@ export function VenueForm({ defaultValues, onSubmit, isSubmitting, isEditing }: 
     defaultValues,
   });
 
-  const { inputRef, isLoadingScript, scriptError } = useGooglePlaces({
+  const { inputRef, isLoadingScript, scriptError, resetAutocomplete } = useGooglePlaces({
     onPlaceSelect: (placeData) => {
       form.setValue("address", placeData.address);
       form.setValue("googleLocation", placeData.googleLocation);
@@ -74,8 +80,19 @@ export function VenueForm({ defaultValues, onSubmit, isSubmitting, isEditing }: 
         {scriptError && (
           <Alert variant="destructive" className="mb-4">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Google Maps Error</AlertTitle>
-            <AlertDescription>{scriptError}</AlertDescription>
+            <AlertTitle>Google Maps Configuration Error</AlertTitle>
+            <AlertDescription className="space-y-2">
+              <p>{scriptError}</p>
+              <p className="text-xs mt-1">
+                To fix this issue, please check the following in your Google Cloud Console:
+              </p>
+              <ul className="list-disc pl-5 text-xs space-y-1">
+                <li>Make sure billing is enabled for your Google Cloud project</li>
+                <li>Enable the Places API in the API Library</li>
+                <li>Ensure your API key has the proper permissions and no restrictions that would block this domain</li>
+                <li>Check that you have sufficient quota and haven't exceeded API limits</li>
+              </ul>
+            </AlertDescription>
           </Alert>
         )}
         
@@ -121,7 +138,33 @@ export function VenueForm({ defaultValues, onSubmit, isSubmitting, isEditing }: 
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Address</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Address</FormLabel>
+                {!scriptError && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 px-2 text-muted-foreground"
+                          onClick={() => resetAutocomplete()}
+                        >
+                          <HelpCircle className="h-4 w-4 mr-1" />
+                          <span className="text-xs">Start typing to search</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs text-xs">
+                          Type to search for a venue by name or address.
+                          Select a result to automatically fill in location details.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
               <FormControl>
                 <Input 
                   placeholder={scriptError ? "Enter address manually" : "Search for address or place"} 
