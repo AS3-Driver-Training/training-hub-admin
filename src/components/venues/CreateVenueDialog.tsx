@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Venue } from "@/types/venues";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const venueSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -45,11 +46,30 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
   const onSubmit = async (data: VenueFormValues) => {
     setIsSubmitting(true);
     try {
-      // In a real app, this would be an API call
-      console.log("Submitting venue data:", data);
+      const venueData = {
+        name: data.name,
+        short_name: data.shortName,
+        address: data.address,
+        google_location: data.googleLocation,
+        region: data.region,
+      };
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let result;
+      
+      if (isEditing && venue) {
+        result = await supabase
+          .from('venues')
+          .update(venueData)
+          .eq('id', parseInt(venue.id))
+          .select();
+      } else {
+        result = await supabase
+          .from('venues')
+          .insert(venueData)
+          .select();
+      }
+      
+      if (result.error) throw result.error;
       
       toast({
         title: isEditing ? "Venue updated" : "Venue created",

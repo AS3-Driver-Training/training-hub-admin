@@ -8,36 +8,28 @@ import { VenuesTable } from "@/components/venues/VenuesTable";
 import { CreateVenueDialog } from "@/components/venues/CreateVenueDialog";
 import { Venue } from "@/types/venues";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mock API call to get venues
+// Function to fetch venues from Supabase
 const fetchVenues = async (): Promise<Venue[]> => {
-  // In a real app, this would be an API call
-  return [
-    {
-      id: "1",
-      name: "Downtown Conference Center",
-      shortName: "DCC",
-      address: "123 Main St, San Francisco, CA 94105",
-      googleLocation: "37.7749,-122.4194",
-      region: "West",
-    },
-    {
-      id: "2",
-      name: "Midtown Training Facility",
-      shortName: "MTF",
-      address: "456 Park Ave, New York, NY 10022",
-      googleLocation: "40.7128,-74.0060",
-      region: "East",
-    },
-    {
-      id: "3",
-      name: "South Campus Learning Center",
-      shortName: "SCLC",
-      address: "789 Peachtree St, Atlanta, GA 30308",
-      googleLocation: "33.7490,-84.3880",
-      region: "South",
-    },
-  ];
+  const { data, error } = await supabase
+    .from('venues')
+    .select('*');
+  
+  if (error) {
+    console.error("Error fetching venues:", error);
+    throw new Error("Failed to fetch venues");
+  }
+  
+  // Transform the data to match our frontend model
+  return (data || []).map(venue => ({
+    id: venue.id.toString(),
+    name: venue.name,
+    shortName: venue.short_name || "",
+    address: venue.address || "",
+    googleLocation: venue.google_location || "",
+    region: venue.region || "",
+  }));
 };
 
 export function VenuesList() {
@@ -60,13 +52,29 @@ export function VenuesList() {
     setIsCreateDialogOpen(true);
   };
 
-  const handleDeleteVenue = (venueId: string) => {
-    // In a real app, this would call an API
-    toast({
-      title: "Venue deleted",
-      description: "The venue has been successfully deleted.",
-    });
-    refetch();
+  const handleDeleteVenue = async (venueId: string) => {
+    try {
+      const { error } = await supabase
+        .from('venues')
+        .delete()
+        .eq('id', parseInt(venueId));
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Venue deleted",
+        description: "The venue has been successfully deleted.",
+      });
+      
+      refetch();
+    } catch (error) {
+      console.error("Error deleting venue:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete venue. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDialogClose = (success?: boolean) => {

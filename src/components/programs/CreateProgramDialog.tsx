@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Program } from "@/types/programs";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const programSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -42,9 +43,10 @@ interface CreateProgramDialogProps {
   open: boolean;
   onClose: (success?: boolean) => void;
   program?: Program | null;
+  getLevelNumber: (level: string) => number;
 }
 
-export function CreateProgramDialog({ open, onClose, program }: CreateProgramDialogProps) {
+export function CreateProgramDialog({ open, onClose, program, getLevelNumber }: CreateProgramDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const isEditing = !!program;
@@ -66,11 +68,33 @@ export function CreateProgramDialog({ open, onClose, program }: CreateProgramDia
   const onSubmit = async (data: ProgramFormValues) => {
     setIsSubmitting(true);
     try {
-      // In a real app, this would be an API call
-      console.log("Submitting program data:", data);
+      const programData = {
+        name: data.name,
+        sku: data.sku,
+        description: data.description,
+        duration_days: data.durationDays,
+        max_students: data.maxStudents,
+        min_students: data.minStudents,
+        price: data.price,
+        lvl: getLevelNumber(data.lvl),
+      };
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let result;
+      
+      if (isEditing && program) {
+        result = await supabase
+          .from('programs')
+          .update(programData)
+          .eq('id', parseInt(program.id))
+          .select();
+      } else {
+        result = await supabase
+          .from('programs')
+          .insert(programData)
+          .select();
+      }
+      
+      if (result.error) throw result.error;
       
       toast({
         title: isEditing ? "Program updated" : "Program created",
