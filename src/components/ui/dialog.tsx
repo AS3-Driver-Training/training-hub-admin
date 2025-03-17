@@ -3,7 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 
 import { cn } from "@/lib/utils"
 
-const Dialog = DialogPrimitive.Root
+const DialogRoot = DialogPrimitive.Root
 
 const DialogTrigger = DialogPrimitive.Trigger
 
@@ -123,11 +123,11 @@ const DialogProvider = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-interface DialogProps extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root> {
+interface DialogProps extends React.ComponentPropsWithoutRef<typeof DialogRoot> {
   children: React.ReactNode;
 }
 
-export default function Dialog(props: DialogProps) {
+function Dialog(props: DialogProps) {
   return (
     <DialogProvider>
       <div 
@@ -143,6 +143,7 @@ export default function Dialog(props: DialogProps) {
 
 export {
   Dialog,
+  DialogRoot,
   DialogPortal,
   DialogTrigger,
   DialogClose,
