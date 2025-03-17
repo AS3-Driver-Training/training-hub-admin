@@ -7,7 +7,7 @@ export interface GoogleMapsWindow extends Window {
         Autocomplete: new (
           input: HTMLInputElement,
           options?: any
-        ) => any;
+        ) => google.maps.places.Autocomplete;
       };
       Map: any;
       LatLng: any;

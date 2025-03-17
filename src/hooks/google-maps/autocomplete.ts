@@ -1,8 +1,35 @@
 
 import { GoogleMapsWindow, GooglePlaceData } from './types';
 
+// Declare global type for Google Maps
 declare global {
   interface Window extends GoogleMapsWindow {}
+  namespace google.maps.places {
+    class Autocomplete {
+      constructor(inputElement: HTMLInputElement, options?: any);
+      addListener(eventName: string, handler: Function): void;
+      getPlace(): google.maps.places.PlaceResult;
+    }
+    
+    interface PlaceResult {
+      address_components?: AddressComponent[];
+      formatted_address?: string;
+      geometry?: {
+        location?: {
+          lat(): number;
+          lng(): number;
+        };
+      };
+      name?: string;
+      place_id?: string;
+    }
+    
+    interface AddressComponent {
+      long_name: string;
+      short_name: string;
+      types: string[];
+    }
+  }
 }
 
 const extractAddressComponents = (place: google.maps.places.PlaceResult): Record<string, string> => {

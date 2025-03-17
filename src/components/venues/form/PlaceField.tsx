@@ -14,6 +14,14 @@ interface PlaceFieldProps {
   isRequired?: boolean;
 }
 
+interface LoadingIndicatorProps {
+  isLoading: boolean;
+}
+
+interface GoogleMapsErrorProps {
+  errorMessage: string;
+}
+
 export function PlaceField({ value, onChange, onPlaceSelect, isRequired = true }: PlaceFieldProps) {
   const [inputValue, setInputValue] = useState(value);
   const { inputRef, isLoadingScript, scriptError, resetAutocomplete } = useGooglePlaces({
@@ -59,13 +67,13 @@ export function PlaceField({ value, onChange, onPlaceSelect, isRequired = true }
         {/* Loading indicator */}
         {isLoadingScript && (
           <div className="absolute inset-y-0 right-2 flex items-center">
-            <LoadingIndicator />
+            <LoadingIndicator isLoading={true} />
           </div>
         )}
       </div>
 
       {/* Error message */}
-      {scriptError && <GoogleMapsError error={scriptError} />}
+      {scriptError && <GoogleMapsError errorMessage={scriptError} />}
     </div>
   );
 }

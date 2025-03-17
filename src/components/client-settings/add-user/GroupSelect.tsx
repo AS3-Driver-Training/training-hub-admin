@@ -8,10 +8,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Group } from "../types";
+import { GroupData } from "../types";
 
 interface GroupSelectProps {
-  groups: Group[];
+  groups: GroupData[];
   selectedGroup: string | null;
   onGroupChange: (value: string) => void;
 }
