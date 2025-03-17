@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +10,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Venue } from "@/types/venues";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
+
+// This should be loaded from environment variables in a real app
+const GOOGLE_MAPS_API_KEY = 'AIzaSyCu7aCPjM539cGuK3ng2TXDvYcVkLJ1Pi4';
 
 const venueSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -29,8 +34,12 @@ interface CreateVenueDialogProps {
 
 export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingScript, setIsLoadingScript] = useState(false);
+  const [scriptError, setScriptError] = useState<string | null>(null);
   const { toast } = useToast();
   const isEditing = !!venue;
+  const autoCompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<VenueFormValues>({
     resolver: zodResolver(venueSchema),
@@ -42,6 +51,99 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
       region: "",
     },
   });
+
+  // Load Google Maps JavaScript API with Places library
+  useEffect(() => {
+    if (!open) return;
+
+    // Check if Google Maps script is already loaded
+    if (window.google && window.google.maps && window.google.maps.places) {
+      initializeAutocomplete();
+      return;
+    }
+
+    setIsLoadingScript(true);
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      setIsLoadingScript(false);
+      initializeAutocomplete();
+    };
+    script.onerror = () => {
+      setIsLoadingScript(false);
+      setScriptError("Failed to load Google Maps. You can still enter address manually.");
+      console.error("Google Maps script failed to load");
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      // Clean up script if dialog is closed before script loads
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
+  }, [open]);
+
+  const initializeAutocomplete = () => {
+    if (!inputRef.current || !window.google) return;
+
+    // Initialize Google Places Autocomplete
+    autoCompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
+      fields: ["address_components", "formatted_address", "geometry", "name"],
+      types: ["establishment", "geocode"],
+    });
+
+    // Add listener for place selection
+    autoCompleteRef.current.addListener("place_changed", () => {
+      const place = autoCompleteRef.current?.getPlace();
+      
+      if (!place || !place.geometry) {
+        console.warn("No place details available");
+        return;
+      }
+
+      // Extract address components
+      let region = "";
+      let formattedAddress = place.formatted_address || "";
+      
+      // Attempt to extract region (administrative_area_level_1)
+      if (place.address_components) {
+        for (const component of place.address_components) {
+          if (component.types.includes("administrative_area_level_1")) {
+            region = component.long_name;
+            break;
+          }
+        }
+      }
+
+      // Format latitude and longitude
+      const lat = place.geometry.location?.lat();
+      const lng = place.geometry.location?.lng();
+      const googleLocation = lat && lng ? `${lat},${lng}` : "";
+
+      // Generate a short name if none exists (use first part of name or address)
+      const placeName = place.name || "";
+      const suggestedShortName = form.getValues("shortName") || 
+        placeName.split(" ")[0] || 
+        formattedAddress.split(",")[0] || 
+        "";
+
+      // Update form fields
+      form.setValue("address", formattedAddress);
+      form.setValue("googleLocation", googleLocation);
+      
+      if (region) {
+        form.setValue("region", region);
+      }
+      
+      if (!form.getValues("shortName") && suggestedShortName) {
+        form.setValue("shortName", suggestedShortName);
+      }
+    });
+  };
 
   const onSubmit = async (data: VenueFormValues) => {
     setIsSubmitting(true);
@@ -98,6 +200,19 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
           <DialogTitle>{isEditing ? "Edit Venue" : "Create New Venue"}</DialogTitle>
         </DialogHeader>
         
+        {scriptError && (
+          <Alert className="mb-4">
+            <AlertDescription>{scriptError}</AlertDescription>
+          </Alert>
+        )}
+        
+        {isLoadingScript && (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <span className="ml-2">Loading Google Maps...</span>
+          </div>
+        )}
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -137,9 +252,21 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="Full venue address" {...field} />
+                    <Input 
+                      placeholder="Search for address or place" 
+                      {...field} 
+                      ref={(e) => {
+                        inputRef.current = e;
+                        field.ref(e);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
+                  {!scriptError && (
+                    <p className="text-xs text-muted-foreground">
+                      Type to search for a place or enter address manually
+                    </p>
+                  )}
                 </FormItem>
               )}
             />
