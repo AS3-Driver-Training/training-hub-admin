@@ -1,7 +1,7 @@
 
 import { GooglePlaceData } from './types';
 
-// Higher z-index applied to pac-container
+// Higher z-index applied to pac-container with improved styling
 const applyAutocompleteStyles = () => {
   // Create a style element for the autocomplete dropdown
   const styleElement = document.createElement('style');
@@ -11,6 +11,11 @@ const applyAutocompleteStyles = () => {
       z-index: 9999 !important;
       position: absolute !important;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+      pointer-events: auto !important;
+    }
+    .pac-item {
+      pointer-events: auto !important;
+      cursor: pointer !important;
     }
   `;
   
@@ -22,6 +27,35 @@ const applyAutocompleteStyles = () => {
   
   // Add the style to the document head
   document.head.appendChild(styleElement);
+};
+
+// Setup direct DOM monitoring for pac-container
+const setupPacContainerObserver = () => {
+  // Remove any existing listener to prevent duplicates
+  document.removeEventListener('DOMNodeInserted', pacContainerHandler);
+  document.addEventListener('DOMNodeInserted', pacContainerHandler);
+};
+
+// Handler for when pac-container is inserted into the DOM
+const pacContainerHandler = (e: any) => {
+  if (e.target && e.target.className && 
+      (e.target.className === 'pac-container pac-logo' || 
+       e.target.className.includes('pac-container'))) {
+    
+    // Set critical styles directly on the element
+    e.target.style.cssText = 'z-index: 9999 !important; position: absolute !important; pointer-events: auto !important;';
+    
+    // Make sure clicks on dropdown items work
+    const items = e.target.querySelectorAll('.pac-item');
+    items.forEach((item: HTMLElement) => {
+      item.style.cssText = 'pointer-events: auto !important; cursor: pointer !important;';
+      
+      // Add direct click handlers to each item
+      item.addEventListener('mousedown', (evt) => {
+        evt.stopPropagation();
+      });
+    });
+  }
 };
 
 /**
@@ -40,12 +74,29 @@ export function initializeAutocomplete(
     // Apply custom styles to ensure dropdown appears above other elements
     applyAutocompleteStyles();
     
+    // Setup DOM observer for pac-container
+    setupPacContainerObserver();
+    
     // Prevent other click handlers from interfering
     const clickHandler = (e: Event) => {
       e.stopPropagation();
+      e.preventDefault();
+      
+      // Ensure the input retains focus
+      inputElement.focus();
     };
     
+    // Clear previous handlers to prevent duplicates
+    inputElement.removeEventListener('click', clickHandler);
     inputElement.addEventListener('click', clickHandler);
+    
+    // Add mousedown handler to prevent focus stealing
+    const mousedownHandler = (e: Event) => {
+      e.stopPropagation();
+    };
+    
+    inputElement.removeEventListener('mousedown', mousedownHandler);
+    inputElement.addEventListener('mousedown', mousedownHandler);
     
     // Create the autocomplete object
     const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
@@ -105,5 +156,16 @@ export function initializeAutocomplete(
   } catch (error) {
     console.error("Error initializing autocomplete:", error);
     return null;
+  }
+}
+
+// Cleanup function to remove event listeners
+export function cleanupAutocomplete() {
+  document.removeEventListener('DOMNodeInserted', pacContainerHandler);
+  
+  // Remove the style element
+  const styleElement = document.getElementById('google-places-autocomplete-styles');
+  if (styleElement) {
+    document.head.removeChild(styleElement);
   }
 }

@@ -40,16 +40,27 @@ export function PlaceField({
   // Use useLayoutEffect to ensure the input element has the proper stacking context
   useLayoutEffect(() => {
     if (inputRef.current) {
-      // Add event listener to stop propagation of click events
+      // Add event listeners to stop propagation and prevent default
       const handleClick = (e: Event) => {
+        e.stopPropagation();
+        e.preventDefault();
+      };
+      
+      const handleMouseDown = (e: Event) => {
         e.stopPropagation();
       };
       
       inputRef.current.addEventListener('click', handleClick);
+      inputRef.current.addEventListener('mousedown', handleMouseDown);
+      
+      // Add inline styles to ensure proper stacking and event handling
+      inputRef.current.style.position = 'relative';
+      inputRef.current.style.zIndex = '9000';
       
       return () => {
         if (inputRef.current) {
           inputRef.current.removeEventListener('click', handleClick);
+          inputRef.current.removeEventListener('mousedown', handleMouseDown);
         }
       };
     }
@@ -65,12 +76,12 @@ export function PlaceField({
   };
 
   return (
-    <div className="relative space-y-2 z-50">
+    <div className="relative space-y-2 z-[9000]" style={{ position: 'relative' }}>
       <Label htmlFor="place" className={isRequired ? "after:content-['*'] after:ml-0.5 after:text-red-500" : ""}>
         Place Name
       </Label>
       
-      <div className="relative">
+      <div className="relative" style={{ position: 'relative', zIndex: 9000 }}>
         <Input
           id="place"
           ref={inputRef}
@@ -80,6 +91,7 @@ export function PlaceField({
           className="pr-8"
           required={isRequired}
           autoComplete="off"
+          style={{ position: 'relative', zIndex: 9000 }}
         />
         
         {/* Loading indicator */}

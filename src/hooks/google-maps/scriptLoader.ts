@@ -34,7 +34,7 @@ export function loadGoogleMapsScript(): Promise<void> {
       // Add a small delay to ensure the API is fully initialized
       setTimeout(() => {
         resolve();
-      }, 100);
+      }, 200); // Increased delay to ensure full initialization
     };
 
     // Set up auth failure handler

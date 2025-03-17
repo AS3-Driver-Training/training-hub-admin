@@ -1,7 +1,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { loadGoogleMapsScript } from './google-maps/scriptLoader';
-import { initializeAutocomplete } from './google-maps/autocomplete';
+import { initializeAutocomplete, cleanupAutocomplete } from './google-maps/autocomplete';
 import { UseGooglePlacesProps, UseGooglePlacesReturn, GooglePlaceData } from './google-maps/types';
 
 export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): UseGooglePlacesReturn {
@@ -12,12 +12,24 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
   const autocompleteInstanceRef = useRef<google.maps.places.Autocomplete | null>(null);
   const listenerRef = useRef<google.maps.MapsEventListener | null>(null);
   
-  // Track when input is ready
+  // Track when input is ready using a ref to avoid dependency array issues
   useEffect(() => {
     if (inputRef.current) {
       setIsInputReady(true);
     }
-  }, [inputRef.current]);
+  }, []);
+  
+  // Check for input ref changes
+  useEffect(() => {
+    const checkInterval = setInterval(() => {
+      if (inputRef.current && !isInputReady) {
+        setIsInputReady(true);
+        clearInterval(checkInterval);
+      }
+    }, 100);
+    
+    return () => clearInterval(checkInterval);
+  }, [isInputReady]);
   
   // Load the Google Maps script
   useEffect(() => {
@@ -73,16 +85,25 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
     
     try {
       // Cleanup previous instance if it exists
+      if (autocompleteInstanceRef.current) {
+        autocompleteInstanceRef.current = null;
+      }
+      
       if (listenerRef.current) {
         listenerRef.current.remove();
         listenerRef.current = null;
       }
       
-      // Initialize autocomplete
-      autocompleteInstanceRef.current = initializeAutocomplete(
-        inputRef.current,
-        handlePlaceSelect
-      );
+      // Initialize autocomplete with a slight delay to ensure DOM is ready
+      setTimeout(() => {
+        if (inputRef.current && window.google?.maps?.places) {
+          // Initialize autocomplete
+          autocompleteInstanceRef.current = initializeAutocomplete(
+            inputRef.current,
+            handlePlaceSelect
+          );
+        }
+      }, 100);
       
     } catch (error) {
       console.error("Error in autocomplete initialization:", error);
@@ -96,8 +117,9 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
         listenerRef.current = null;
       }
       autocompleteInstanceRef.current = null;
+      cleanupAutocomplete();
     };
-  }, [isInputReady, onPlaceSelect, window.google?.maps?.places]);
+  }, [isInputReady, onPlaceSelect]);
   
   // Function to reset the autocomplete
   const resetAutocomplete = useCallback(() => {
@@ -107,12 +129,16 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
       // Re-initialize if needed
       if (window.google?.maps?.places && !autocompleteInstanceRef.current && isInputReady) {
         try {
-          autocompleteInstanceRef.current = initializeAutocomplete(
-            inputRef.current,
-            (placeData: GooglePlaceData) => {
-              if (onPlaceSelect) onPlaceSelect(placeData);
+          setTimeout(() => {
+            if (inputRef.current) {
+              autocompleteInstanceRef.current = initializeAutocomplete(
+                inputRef.current,
+                (placeData: GooglePlaceData) => {
+                  if (onPlaceSelect) onPlaceSelect(placeData);
+                }
+              );
             }
-          );
+          }, 100);
         } catch (error) {
           console.error("Error reinitializing autocomplete:", error);
         }

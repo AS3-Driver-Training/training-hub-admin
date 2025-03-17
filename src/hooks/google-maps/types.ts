@@ -25,7 +25,7 @@ export interface UseGooglePlacesReturn {
 // Define window augmentation correctly
 declare global {
   interface Window {
-    google: typeof google;
+    google: any;
     initGoogleMapsCallback: () => void;
     gm_authFailure: () => void;
   }

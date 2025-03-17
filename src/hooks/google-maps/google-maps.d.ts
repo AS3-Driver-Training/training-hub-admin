@@ -19,12 +19,16 @@ declare namespace google {
         constructor(inputField: HTMLInputElement, opts?: AutocompleteOptions);
         addListener(eventName: string, handler: Function): MapsEventListener;
         getPlace(): PlaceResult;
+        setBounds(bounds: LatLngBounds): void;
+        setFields(fields: string[]): void;
+        setOptions(options: AutocompleteOptions): void;
       }
 
       interface AutocompleteOptions {
         types?: string[];
         fields?: string[];
         componentRestrictions?: ComponentRestrictions;
+        bounds?: LatLngBounds;
       }
 
       interface ComponentRestrictions {
@@ -42,6 +46,7 @@ declare namespace google {
         };
         name?: string;
         place_id?: string;
+        types?: string[];
       }
 
       interface AddressComponent {
