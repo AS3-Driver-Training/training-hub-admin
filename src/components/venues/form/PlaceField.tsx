@@ -1,49 +1,49 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, RefObject } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GooglePlaceData } from "@/hooks/google-maps/types";
-import useGooglePlaces from "@/hooks/useGooglePlaces";
+import { UseFormReturn } from "react-hook-form";
 import { LoadingIndicator } from "./LoadingIndicator";
 import { GoogleMapsError } from "./GoogleMapsError";
 
 interface PlaceFieldProps {
-  value: string;
-  onChange: (value: string) => void;
+  form: UseFormReturn<any>;
+  inputRef: RefObject<HTMLInputElement>;
+  scriptError: string | null;
+  resetAutocomplete: () => void;
+  value?: string;
+  onChange?: (value: string) => void;
   onPlaceSelect?: (placeData: GooglePlaceData) => void;
   isRequired?: boolean;
 }
 
-interface LoadingIndicatorProps {
-  isLoading: boolean;
-}
-
-interface GoogleMapsErrorProps {
-  errorMessage: string;
-}
-
-export function PlaceField({ value, onChange, onPlaceSelect, isRequired = true }: PlaceFieldProps) {
-  const [inputValue, setInputValue] = useState(value);
-  const { inputRef, isLoadingScript, scriptError, resetAutocomplete } = useGooglePlaces({
-    onPlaceSelect: (data) => {
-      if (onPlaceSelect) {
-        onPlaceSelect(data);
-      }
-      setInputValue(data.place);
-      onChange(data.place);
-    }
-  });
-
+export function PlaceField({ 
+  form, 
+  inputRef, 
+  scriptError, 
+  resetAutocomplete,
+  value, 
+  onChange, 
+  onPlaceSelect, 
+  isRequired = true 
+}: PlaceFieldProps) {
+  const [inputValue, setInputValue] = useState(value || '');
+  
   // When external value changes, update the input value
   useEffect(() => {
-    setInputValue(value);
+    if (value !== undefined) {
+      setInputValue(value);
+    }
   }, [value]);
 
   // Listen for manual input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
-    onChange(newValue);
+    if (onChange) {
+      onChange(newValue);
+    }
   };
 
   return (
@@ -65,15 +65,13 @@ export function PlaceField({ value, onChange, onPlaceSelect, isRequired = true }
         />
         
         {/* Loading indicator */}
-        {isLoadingScript && (
-          <div className="absolute inset-y-0 right-2 flex items-center">
-            <LoadingIndicator isLoading={true} />
-          </div>
-        )}
+        <div className="absolute inset-y-0 right-2 flex items-center">
+          <LoadingIndicator isLoading={!!form.formState.isSubmitting} />
+        </div>
       </div>
 
       {/* Error message */}
-      {scriptError && <GoogleMapsError errorMessage={scriptError} />}
+      {scriptError && <GoogleMapsError scriptError={scriptError} />}
     </div>
   );
 }

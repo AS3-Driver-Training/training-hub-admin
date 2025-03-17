@@ -1,6 +1,6 @@
 
 // Google Maps type declarations
-export interface GoogleMapsWindow extends Window {
+export interface GoogleMapsWindow {
   google?: {
     maps: {
       places: {
@@ -17,6 +17,11 @@ export interface GoogleMapsWindow extends Window {
   initGoogleMapsCallback?: () => void;
   gm_authFailure?: () => void;
   gm_errorHandler?: (event: any) => void;
+}
+
+// Extend the global Window interface
+declare global {
+  interface Window extends GoogleMapsWindow {}
 }
 
 export interface GooglePlaceData {
