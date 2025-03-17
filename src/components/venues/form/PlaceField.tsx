@@ -55,7 +55,7 @@ export function PlaceField({ form, inputRef, scriptError, resetAutocomplete }: P
             )}
           </div>
           <FormControl>
-            <div className="relative" style={{ zIndex: 1000 }}>
+            <div className="relative" style={{ zIndex: 9999 }}>
               <Input 
                 placeholder={scriptError ? "Enter place name manually" : "Search for a venue or place"} 
                 {...field}
@@ -65,13 +65,13 @@ export function PlaceField({ form, inputRef, scriptError, resetAutocomplete }: P
                   
                   // Only update our Google Maps inputRef if it exists and element exists
                   if (element && inputRef) {
-                    // Use a function call instead of direct assignment
-                    // to avoid modifying the read-only current property
-                    Object.defineProperty(inputRef, 'current', {
-                      value: element,
-                      writable: true,
-                      configurable: true,
-                    });
+                    if (inputRef.current !== element) {
+                      Object.defineProperty(inputRef, 'current', {
+                        value: element,
+                        writable: true,
+                        configurable: true,
+                      });
+                    }
                   }
                 }}
                 onFocus={(e) => {

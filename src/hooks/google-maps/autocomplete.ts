@@ -1,113 +1,91 @@
 
-import { UseGooglePlacesProps, GooglePlaceData } from './types';
+import { GooglePlaceData } from '@/hooks/google-maps/types';
+
+// Cache to store autocomplete instances by input element
+const autocompleteCache = new Map<HTMLInputElement, google.maps.places.Autocomplete>();
 
 /**
- * Initialize Google Places Autocomplete
+ * Initializes Google Places Autocomplete for the given input element
  */
-export const initializeAutocomplete = (
-  inputRef: React.RefObject<HTMLInputElement>,
-  autoCompleteRef: React.RefObject<any>,
-  onPlaceSelect: UseGooglePlacesProps['onPlaceSelect'],
-  setScriptError: (error: string) => void
-) => {
-  if (!inputRef.current || !window.google?.maps?.places) {
-    console.warn("Cannot initialize Google Places Autocomplete - dependencies not loaded");
+export function initializeAutocomplete(
+  inputElement: HTMLInputElement,
+  onPlaceSelect: (placeData: GooglePlaceData) => void
+): void {
+  if (!window.google || !window.google.maps || !window.google.maps.places) {
+    throw new Error('Google Maps API not loaded');
+  }
+
+  // Check if we already have an autocomplete instance for this input
+  if (autocompleteCache.has(inputElement)) {
+    console.info('Autocomplete already initialized for this input, skipping');
     return;
   }
 
-  // Check if autocomplete is already initialized for this input
-  if (autoCompleteRef.current && autoCompleteRef.current.inputField === inputRef.current) {
-    console.log("Autocomplete already initialized for this input, skipping");
-    return;
-  }
-
-  console.log("Initializing Google Places Autocomplete for input:", inputRef.current);
+  // Create new autocomplete instance
   try {
-    // Initialize Google Places Autocomplete with expanded options
-    const autocompleteInstance = new window.google.maps.places.Autocomplete(inputRef.current, {
-      fields: ["address_components", "formatted_address", "geometry", "name", "place_id"],
-      types: ["establishment", "geocode"],
+    // Create the autocomplete object
+    const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
+      fields: ['address_components', 'formatted_address', 'name', 'geometry'],
+      types: ['establishment', 'geocode'],
     });
-    
-    // Store reference to input field to prevent duplicate initialization
-    Object.defineProperty(autocompleteInstance, 'inputField', {
-      value: inputRef.current,
-      writable: true,
-      configurable: true,
-    });
-    
-    // Set the reference to the autocomplete instance
-    if (autoCompleteRef) {
-      Object.defineProperty(autoCompleteRef, 'current', {
-        value: autocompleteInstance,
-        writable: true,
-        configurable: true,
-      });
-    }
 
-    // Add listener for place selection using the correct Google Maps API method
-    autocompleteInstance.addListener("place_changed", () => {
-      try {
-        const place = autocompleteInstance.getPlace();
-        console.log("Selected place:", place);
-        
-        if (!place || !place.place_id) {
-          console.warn("No place details available or invalid place selected");
-          return;
-        }
-        
-        // If place has no geometry, it might be because of restrictions or errors
-        if (!place.geometry) {
-          console.warn("Place has no geometry, possibly due to API restrictions");
-          setScriptError("Unable to get complete place details. Check your Google Cloud Console settings.");
-          return;
-        }
+    // Store the autocomplete instance in our cache
+    autocompleteCache.set(inputElement, autocomplete);
 
-        // Extract address components
-        let region = "";
-        let country = "";
-        let formattedAddress = place.formatted_address || "";
-        
-        // Extract components from address_components
-        if (place.address_components) {
-          for (const component of place.address_components) {
-            // Get region (state/province)
-            if (component.types.includes("administrative_area_level_1")) {
-              region = component.long_name;
-            }
-            // Get country
-            if (component.types.includes("country")) {
-              country = component.long_name;
-            }
-          }
-        }
-
-        // Format latitude and longitude
-        const lat = place.geometry.location?.lat();
-        const lng = place.geometry.location?.lng();
-        const googleLocation = lat && lng ? `${lat},${lng}` : "";
-
-        const placeName = place.name || "";
-
-        if (onPlaceSelect) {
-          onPlaceSelect({
-            place: placeName,
-            address: formattedAddress,
-            googleLocation,
-            region,
-            country,
-            placeName
-          });
-        }
-      } catch (error) {
-        console.error("Error processing place selection:", error);
-        setScriptError("Error processing selected place. Please enter address manually.");
+    // Add listener for place selection
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      
+      if (!place || !place.address_components) {
+        console.warn('Invalid place selected:', place);
+        return;
       }
+
+      // Parse address components
+      let region = '';
+      let country = '';
+      let placeName = place.name || '';
+
+      place.address_components.forEach(component => {
+        if (component.types.includes('administrative_area_level_1')) {
+          region = component.long_name;
+        }
+        if (component.types.includes('country')) {
+          country = component.long_name;
+        }
+      });
+
+      // Create place data object
+      const placeData: GooglePlaceData = {
+        place: placeName,
+        address: place.formatted_address || '',
+        googleLocation: JSON.stringify({
+          lat: place.geometry?.location?.lat?.() || 0,
+          lng: place.geometry?.location?.lng?.() || 0,
+        }),
+        region,
+        country,
+        placeName
+      };
+
+      // Call the callback with the place data
+      onPlaceSelect(placeData);
     });
-    
-    console.log("Google Places Autocomplete initialized successfully");
+
+    console.info('Google Places Autocomplete initialized successfully');
   } catch (error) {
-    console.error("Error initializing Google Places Autocomplete:", error);
-    setScriptError("Error initializing Google Places. Please enter address manually.");
+    console.error('Error initializing autocomplete:', error);
+    throw error;
   }
-};
+}
+
+/**
+ * Resets the autocomplete instance for the given input element
+ */
+export function resetAutocomplete(inputElement: HTMLInputElement): void {
+  if (autocompleteCache.has(inputElement)) {
+    // Remove from cache
+    autocompleteCache.delete(inputElement);
+    console.info('Autocomplete instance reset for input');
+  }
+}

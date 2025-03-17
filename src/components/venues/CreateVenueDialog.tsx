@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Venue } from "@/types/venues";
+import { Venue, toVenueModel } from "@/types/venues";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VenueForm } from "@/components/venues/VenueForm";
@@ -57,7 +57,7 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
         result = await supabase
           .from('venues')
           .update(venueData)
-          .eq('id', Number(venue.id))
+          .eq('id', parseInt(venue.id)) // Convert to number for comparison
           .select();
       } else {
         result = await supabase

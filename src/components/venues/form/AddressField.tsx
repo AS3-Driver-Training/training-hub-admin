@@ -59,7 +59,6 @@ export function AddressField({ form, inputRef, scriptError, resetAutocomplete }:
               placeholder={scriptError ? "Enter address manually" : "Address will be auto-populated"} 
               {...field} 
               className="bg-slate-50"
-              readOnly={!scriptError}
             />
           </FormControl>
           <FormMessage />
