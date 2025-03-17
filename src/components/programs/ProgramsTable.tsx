@@ -57,12 +57,12 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
     }
   };
 
-  const getLevelBadgeVariant = (level: string): "default" | "secondary" | "outline" => {
+  const getLevelBadgeColor = (level: string): string => {
     switch(level) {
-      case "Basic": return "default";
-      case "Intermediate": return "secondary";
-      case "Advanced": return "outline";
-      default: return "default";
+      case "Basic": return "bg-blue-100 text-blue-800 hover:bg-blue-100 hover:text-blue-800";
+      case "Intermediate": return "bg-purple-100 text-purple-800 hover:bg-purple-100 hover:text-purple-800";
+      case "Advanced": return "bg-orange-100 text-orange-800 hover:bg-orange-100 hover:text-orange-800";
+      default: return "bg-gray-100 text-gray-800 hover:bg-gray-100 hover:text-gray-800";
     }
   };
 
@@ -75,15 +75,14 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
               <TableHead className="w-[50px]">
                 <Checkbox 
                   checked={selectedPrograms.length === programs.length && programs.length > 0}
-                  indeterminate={selectedPrograms.length > 0 && selectedPrograms.length < programs.length}
                   onCheckedChange={toggleAllPrograms}
                   aria-label="Select all programs"
                 />
               </TableHead>
-              <TableHead className="w-[40%]">Program Information</TableHead>
-              <TableHead className="w-[30%]">Contact</TableHead>
-              <TableHead className="w-[20%]">Organization</TableHead>
-              <TableHead className="w-[70px]">Status</TableHead>
+              <TableHead className="w-[40%]">Program</TableHead>
+              <TableHead className="w-[20%]">Duration & Students</TableHead>
+              <TableHead className="w-[15%]">SKU & Price</TableHead>
+              <TableHead className="w-[15%]">Level</TableHead>
               <TableHead className="w-[100px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -107,38 +106,31 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
                   <TableCell>
                     <div className="font-medium">{program.name}</div>
                     <div className="text-sm text-muted-foreground">
-                      SKU: {program.sku}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
                       ID: {program.id.substring(0, 6)}
+                    </div>
+                    <div className="text-sm text-muted-foreground line-clamp-1">
+                      {program.description}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      <div className="font-medium">
-                        Duration: {program.durationDays} days
-                      </div>
-                      <div className="text-muted-foreground">
-                        Students: {program.minStudents} - {program.maxStudents}
-                      </div>
+                      <div>Duration: <span className="text-muted-foreground">{program.durationDays} days</span></div>
+                      <div>Students: <span className="text-muted-foreground">{program.minStudents} - {program.maxStudents}</span></div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center">
-                      <div>
-                        Group: <span className="text-muted-foreground">
-                          {program.lvl === "Basic" ? "Beginner" : 
-                           program.lvl === "Intermediate" ? "Standard" : "Advanced"}
-                        </span>
-                      </div>
+                    <div className="text-sm">
+                      <div>SKU: <span className="text-muted-foreground">{program.sku}</span></div>
+                      <div>Price: <span className="text-muted-foreground">${program.price}</span></div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge 
                       variant="secondary" 
-                      className="bg-orange-100 text-orange-800 hover:bg-orange-100 hover:text-orange-800"
+                      className={getLevelBadgeColor(program.lvl)}
                     >
-                      Active
+                      Level {program.lvl === "Basic" ? "1" : 
+                             program.lvl === "Intermediate" ? "2" : "3"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
