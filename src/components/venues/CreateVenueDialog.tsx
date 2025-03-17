@@ -19,7 +19,7 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
   const { toast } = useToast();
   const isEditing = !!venue;
   
-  // Fixed: match property names with Venue type
+  // Match property names with Venue type fields
   const defaultValues: VenueFormValues = venue ? {
     place: venue.name || "",
     name: venue.name || "",
@@ -56,7 +56,7 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
         result = await supabase
           .from('venues')
           .update(venueData)
-          .eq('id', parseInt(venue.id))
+          .eq('id', venue.id)
           .select();
       } else {
         result = await supabase

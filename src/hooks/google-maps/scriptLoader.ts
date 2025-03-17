@@ -17,9 +17,9 @@ export const useGoogleMapsScript = (
       return;
     }
 
-    // Check if Google Maps script is already loaded
+    // Check if Google Maps script is already loaded and ready to use
     if (window.google?.maps?.places) {
-      console.log("Google Maps API already loaded");
+      console.log("Google Maps API already loaded and ready to use");
       // Call init callback if Google Maps is already loaded
       initCallback();
       return;
@@ -41,8 +41,13 @@ export const useGoogleMapsScript = (
     // Check if the script tag already exists to prevent duplicate loading
     const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
     if (existingScript) {
-      // Script is already in the DOM but not yet loaded
+      // Script is already in the DOM but not yet fully loaded or initialized
       console.log("Google Maps script tag already exists, waiting for it to load");
+      
+      // If it's already in the DOM but Google isn't defined, we're still loading
+      if (!window.google?.maps?.places) {
+        setIsLoadingScript(true);
+      }
       return;
     }
 
@@ -65,9 +70,11 @@ export const useGoogleMapsScript = (
 
     // Set a timeout for loading the script
     const timeoutId = setTimeout(() => {
-      console.error("Google Maps script load timeout");
-      setIsLoadingScript(false);
-      setScriptError("Google Maps took too long to load. Please enter address manually.");
+      if (!window.google?.maps?.places) {
+        console.error("Google Maps script load timeout");
+        setIsLoadingScript(false);
+        setScriptError("Google Maps took too long to load. Please enter address manually.");
+      }
     }, SCRIPT_LOAD_TIMEOUT);
 
     document.head.appendChild(script);
@@ -77,9 +84,12 @@ export const useGoogleMapsScript = (
       clearTimeout(timeoutId);
       
       // We don't remove the script on unmount as it might be used by other components
-      // But we clean up the global callback
+      // But we clean up the global callback if it's ours
       if (window.initGoogleMapsCallback) {
-        delete window.initGoogleMapsCallback;
+        // Only delete it if it hasn't been replaced by another component
+        if (window.initGoogleMapsCallback.toString().includes("Google Maps API loaded successfully")) {
+          delete window.initGoogleMapsCallback;
+        }
       }
     };
   }, [scriptError, setIsLoadingScript, setScriptError, initCallback]);

@@ -24,20 +24,28 @@ export const useGoogleMapsErrorHandler = (setScriptError: (error: string) => voi
       }
     };
 
-    // Listen for DOM errors related to Google Maps
-    const handleDOMError = (event: Event) => {
-      const target = event.target as HTMLElement;
-      if (target && target.textContent?.includes("This page can't load Google Maps correctly")) {
-        setScriptError("Google Maps API configuration error. Please make sure Places API is enabled in Google Cloud Console.");
-      }
-    };
+    // Use MutationObserver instead of deprecated DOMNodeInserted
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach((node) => {
+            if (node instanceof HTMLElement && 
+                node.textContent?.includes("This page can't load Google Maps correctly")) {
+              setScriptError("Google Maps API configuration error. Please make sure Places API is enabled in Google Cloud Console.");
+            }
+          });
+        }
+      });
+    });
 
+    // Start observing the document body for DOM changes
+    observer.observe(document.body, { childList: true, subtree: true });
+    
     window.addEventListener('error', handleRuntimeError);
-    document.addEventListener('DOMNodeInserted', handleDOMError);
     
     return () => {
       window.removeEventListener('error', handleRuntimeError);
-      document.removeEventListener('DOMNodeInserted', handleDOMError);
+      observer.disconnect();
     };
   }, [setScriptError]);
 };
@@ -57,4 +65,3 @@ export const setupGlobalAuthErrorHandler = (setScriptError: (error: string) => v
     }
   };
 };
-

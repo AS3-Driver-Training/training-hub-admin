@@ -15,27 +15,25 @@ export const initializeAutocomplete = (
     return;
   }
 
-  // Avoid re-initializing if it already exists
-  if (autoCompleteRef.current) {
-    console.log("Autocomplete already initialized, skipping");
+  // Check if autocomplete is already initialized for this input
+  if (autoCompleteRef.current && autoCompleteRef.current.inputField === inputRef.current) {
+    console.log("Autocomplete already initialized for this input, skipping");
     return;
   }
 
-  console.log("Initializing Google Places Autocomplete");
+  console.log("Initializing Google Places Autocomplete for input:", inputRef.current);
   try {
-    // Initialize Google Places Autocomplete
+    // Initialize Google Places Autocomplete with expanded options
     const autocompleteInstance = new window.google.maps.places.Autocomplete(inputRef.current, {
-      fields: ["address_components", "formatted_address", "geometry", "name"],
+      fields: ["address_components", "formatted_address", "geometry", "name", "place_id"],
       types: ["establishment", "geocode"],
     });
     
-    // Set the reference to the autocomplete instance using Object.defineProperty to avoid read-only issues
-    if (autoCompleteRef && typeof autoCompleteRef === 'object' && 'current' in autoCompleteRef) {
-      Object.defineProperty(autoCompleteRef, 'current', {
-        value: autocompleteInstance,
-        writable: true
-      });
-    }
+    // Store reference to input field to prevent duplicate initialization
+    autocompleteInstance.inputField = inputRef.current;
+    
+    // Set the reference to the autocomplete instance
+    autoCompleteRef.current = autocompleteInstance;
 
     // Add listener for place selection
     autocompleteInstance.addListener("place_changed", () => {
@@ -43,8 +41,8 @@ export const initializeAutocomplete = (
         const place = autocompleteInstance.getPlace();
         console.log("Selected place:", place);
         
-        if (!place) {
-          console.warn("No place details available");
+        if (!place || !place.place_id) {
+          console.warn("No place details available or invalid place selected");
           return;
         }
         

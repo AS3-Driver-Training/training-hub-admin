@@ -11,7 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RefObject } from "react";
+import { RefObject, useEffect, useRef } from "react";
 
 interface PlaceFieldProps {
   form: UseFormReturn<VenueFormValues>;
@@ -21,21 +21,17 @@ interface PlaceFieldProps {
 }
 
 export function PlaceField({ form, inputRef, scriptError, resetAutocomplete }: PlaceFieldProps) {
-  // Fixed: properly handle input ref assignment without directly modifying the read-only current property
-  const handleInputRef = (element: HTMLInputElement | null) => {
-    if (element) {
-      // Make ref available to react-hook-form
-      form.register("place").ref(element);
-      
-      // Make ref available to Google Maps (without directly assigning to read-only current)
-      if (inputRef && typeof inputRef === 'object' && 'current' in inputRef) {
-        Object.defineProperty(inputRef, 'current', {
-          value: element,
-          writable: true
-        });
-      }
+  // Create a local ref to connect react-hook-form with Google Maps
+  const localInputRef = useRef<HTMLInputElement>(null);
+  
+  // Synchronize the local ref with the Google Maps ref
+  useEffect(() => {
+    if (localInputRef.current && inputRef) {
+      // Update the Google Maps ref to point to this input
+      // @ts-ignore - We need to set the current property
+      inputRef.current = localInputRef.current;
     }
-  };
+  }, [inputRef]);
 
   return (
     <FormField
@@ -74,8 +70,14 @@ export function PlaceField({ form, inputRef, scriptError, resetAutocomplete }: P
             <div className="relative">
               <Input 
                 placeholder={scriptError ? "Enter place name manually" : "Search for a venue or place"} 
-                {...field} 
-                ref={handleInputRef}
+                {...field}
+                ref={(e) => {
+                  // Connect to react-hook-form
+                  field.ref(e);
+                  // Connect to our local ref
+                  localInputRef.current = e;
+                }}
+                autoComplete="off" // Prevent browser autocomplete from interfering
               />
               <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             </div>

@@ -18,6 +18,7 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
   // Initialize autocomplete when script is loaded
   const initAutocomplete = () => {
     if (!initialized && inputRef.current) {
+      console.log("Initializing autocomplete from script load callback with input:", inputRef.current);
       initializeAutocomplete(inputRef, autoCompleteRef, onPlaceSelect, setScriptError);
       setInitialized(true);
     }
@@ -32,24 +33,37 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
     return cleanupAuthHandler;
   }, []);
 
-  // Re-initialize autocomplete if the input reference changes or when the component remounts
+  // Re-initialize autocomplete if the input reference changes
   useEffect(() => {
-    // Small delay to ensure the input ref is properly set
-    const timeoutId = setTimeout(() => {
-      if (inputRef.current && window.google?.maps?.places && !initialized) {
+    // Skip if there's an error or we're still loading
+    if (scriptError || !window.google?.maps?.places) {
+      return;
+    }
+
+    // Reset initialized state if input ref changes
+    const currentInput = inputRef.current;
+    if (currentInput && !initialized) {
+      console.log("Input ref changed, reinitializing autocomplete with:", currentInput);
+      
+      const timeoutId = setTimeout(() => {
         initializeAutocomplete(inputRef, autoCompleteRef, onPlaceSelect, setScriptError);
         setInitialized(true);
-      }
-    }, 300);
-    
-    return () => clearTimeout(timeoutId);
-  }, [onPlaceSelect, initialized]);
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [inputRef.current, onPlaceSelect, initialized, scriptError]);
 
   // Provide a method to manually reset the autocomplete
   const resetAutocomplete = () => {
     if (inputRef.current) {
       inputRef.current.value = '';
       inputRef.current.focus();
+      
+      // If we're already initialized with a different input, reinitialize
+      if (initialized && autoCompleteRef.current) {
+        setInitialized(false);
+      }
     }
   };
 

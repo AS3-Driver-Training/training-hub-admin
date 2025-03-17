@@ -21,22 +21,6 @@ interface AddressFieldProps {
 }
 
 export function AddressField({ form, inputRef, scriptError, resetAutocomplete }: AddressFieldProps) {
-  // Fixed: properly handle input ref assignment without directly modifying the read-only current property
-  const handleInputRef = (element: HTMLInputElement | null) => {
-    if (element) {
-      // Make ref available to react-hook-form
-      form.register("address").ref(element);
-      
-      // Make ref available to Google Maps (without directly assigning to read-only current)
-      if (inputRef && typeof inputRef === 'object' && 'current' in inputRef) {
-        Object.defineProperty(inputRef, 'current', {
-          value: element,
-          writable: true
-        });
-      }
-    }
-  };
-
   return (
     <FormField
       control={form.control}
@@ -74,7 +58,6 @@ export function AddressField({ form, inputRef, scriptError, resetAutocomplete }:
             <Input 
               placeholder={scriptError ? "Enter address manually" : "Address will be auto-populated"} 
               {...field} 
-              ref={handleInputRef}
               className="bg-slate-50"
               readOnly={!scriptError}
             />
