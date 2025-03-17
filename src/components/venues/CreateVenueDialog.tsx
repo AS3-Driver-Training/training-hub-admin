@@ -40,6 +40,8 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
 
   const handleSubmit = async (data: VenueFormValues) => {
     setIsSubmitting(true);
+    console.log("Submitting venue data:", data);
+    
     try {
       // Convert to snake_case for database
       const venueData = {
@@ -54,10 +56,13 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
       let result;
       
       if (isEditing && venue) {
+        // Parse ID to numeric value for comparison
+        const venueId = typeof venue.id === 'string' ? parseInt(venue.id, 10) : venue.id;
+        
         result = await supabase
           .from('venues')
           .update(venueData)
-          .eq('id', parseInt(venue.id)) // Convert to number for comparison
+          .eq('id', venueId)
           .select();
       } else {
         result = await supabase
@@ -66,7 +71,9 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
           .select();
       }
       
-      if (result.error) throw result.error;
+      if (result.error) {
+        throw result.error;
+      }
       
       toast({
         title: isEditing ? "Venue updated" : "Venue created",

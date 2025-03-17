@@ -1,7 +1,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { loadGoogleMapsScript } from '@/hooks/google-maps/scriptLoader';
-import { initializeAutocomplete, resetAutocomplete as resetAutocompleteInstance } from '@/hooks/google-maps/autocomplete';
+import { initializeAutocomplete, resetAutocomplete } from '@/hooks/google-maps/autocomplete';
 import { registerErrorHandlers } from '@/hooks/google-maps/errorHandlers';
 import { GooglePlaceData, UseGooglePlacesProps, UseGooglePlacesReturn } from '@/hooks/google-maps/types';
 
@@ -66,11 +66,11 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
     }
   }, [isLoadingScript, scriptError, handlePlaceSelect, isInitialized]);
 
-  // Reset autocomplete when inputRef changes
-  const resetAutocomplete = useCallback(() => {
+  // Reset autocomplete when needed
+  const resetAutocompleteHandler = useCallback(() => {
     setIsInitialized(false);
     if (inputRef.current) {
-      resetAutocompleteInstance(inputRef.current);
+      resetAutocomplete(inputRef.current);
       
       // Re-initialize autocomplete
       if (window.google && window.google.maps && window.google.maps.places) {
@@ -88,6 +88,6 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
     inputRef,
     isLoadingScript,
     scriptError,
-    resetAutocomplete,
+    resetAutocomplete: resetAutocompleteHandler,
   };
 }

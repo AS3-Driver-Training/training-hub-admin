@@ -55,7 +55,7 @@ export function PlaceField({ form, inputRef, scriptError, resetAutocomplete }: P
             )}
           </div>
           <FormControl>
-            <div className="relative" style={{ zIndex: 9999 }}>
+            <div className="relative" style={{ zIndex: 10000 }}>
               <Input 
                 placeholder={scriptError ? "Enter place name manually" : "Search for a venue or place"} 
                 {...field}
@@ -63,13 +63,13 @@ export function PlaceField({ form, inputRef, scriptError, resetAutocomplete }: P
                   // Update the React Hook Form ref
                   field.ref(element);
                   
-                  // Only update our Google Maps inputRef if it exists and element exists
+                  // Update our Google Maps inputRef if both refs exist
                   if (element && inputRef) {
+                    // We can't directly assign to current as it might be readonly
                     if (inputRef.current !== element) {
                       Object.defineProperty(inputRef, 'current', {
                         value: element,
-                        writable: true,
-                        configurable: true,
+                        writable: true
                       });
                     }
                   }

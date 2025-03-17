@@ -31,6 +31,8 @@ export function VenueForm({ defaultValues, onSubmit, isSubmitting, isEditing }: 
 
   const { inputRef, isLoadingScript, scriptError, resetAutocomplete } = useGooglePlaces({
     onPlaceSelect: (placeData) => {
+      console.log("Place selected in VenueForm:", placeData);
+      
       // Set the place field (main search field)
       form.setValue("place", placeData.place);
       
@@ -66,6 +68,9 @@ export function VenueForm({ defaultValues, onSubmit, isSubmitting, isEditing }: 
           form.setValue("shortName", suggestedShortName);
         }
       }
+      
+      // Trigger validation after setting values
+      form.trigger();
     }
   });
 
@@ -85,9 +90,14 @@ export function VenueForm({ defaultValues, onSubmit, isSubmitting, isEditing }: 
     }
   }, [defaultValues, form, isEditing]);
 
+  const handleSubmitForm = async (data: VenueFormValues) => {
+    console.log("Submitting form with data:", data);
+    await onSubmit(data);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmitForm)} className="space-y-4">
         <GoogleMapsError scriptError={scriptError} />
         <LoadingIndicator isLoading={isLoadingScript} />
         

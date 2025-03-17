@@ -11,6 +11,8 @@ declare global {
           ) => any;
         };
         Map: any;
+        LatLng: any;
+        LatLngBounds: any;
       };
     };
     initGoogleMapsCallback?: () => void;
