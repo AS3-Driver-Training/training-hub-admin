@@ -15,44 +15,40 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
   // Setup error handlers
   useGoogleMapsErrorHandler(setScriptError);
   
-  // Initialize autocomplete when script is loaded
-  const initAutocomplete = () => {
-    if (!initialized && inputRef.current) {
-      console.log("Initializing autocomplete from script load callback with input:", inputRef.current);
-      initializeAutocomplete(inputRef, autoCompleteRef, onPlaceSelect, setScriptError);
-      setInitialized(true);
-    }
-  };
-  
-  // Load Google Maps script
-  useGoogleMapsScript(initAutocomplete, setIsLoadingScript, setScriptError, scriptError);
-  
   // Setup global auth error handler
   useEffect(() => {
     const cleanupAuthHandler = setupGlobalAuthErrorHandler(setScriptError);
     return cleanupAuthHandler;
   }, []);
 
-  // Re-initialize autocomplete if the input reference changes
+  // Initialize autocomplete when script is loaded or input reference changes
   useEffect(() => {
-    // Skip if there's an error or we're still loading
-    if (scriptError || !window.google?.maps?.places) {
+    // Skip if there's an error or we're still loading or no input element
+    if (scriptError || !window.google?.maps?.places || !inputRef.current) {
       return;
     }
 
-    // Reset initialized state if input ref changes
-    const currentInput = inputRef.current;
-    if (currentInput && !initialized) {
-      console.log("Input ref changed, reinitializing autocomplete with:", currentInput);
-      
-      const timeoutId = setTimeout(() => {
+    console.log("Input ref is available, initializing autocomplete with:", inputRef.current);
+    // Initialize or reinitialize autocomplete with the current input
+    initializeAutocomplete(inputRef, autoCompleteRef, onPlaceSelect, setScriptError);
+    setInitialized(true);
+    
+  }, [inputRef.current, onPlaceSelect, scriptError]);  // Re-run when these dependencies change
+
+  // Load Google Maps script
+  useGoogleMapsScript(
+    // Callback when script is loaded
+    () => {
+      if (!initialized && inputRef.current) {
+        console.log("Google Maps script loaded, initializing autocomplete");
         initializeAutocomplete(inputRef, autoCompleteRef, onPlaceSelect, setScriptError);
         setInitialized(true);
-      }, 100);
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [inputRef.current, onPlaceSelect, initialized, scriptError]);
+      }
+    },
+    setIsLoadingScript,
+    setScriptError,
+    scriptError
+  );
 
   // Provide a method to manually reset the autocomplete
   const resetAutocomplete = () => {

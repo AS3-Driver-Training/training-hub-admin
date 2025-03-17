@@ -11,7 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RefObject, useEffect, useRef } from "react";
+import { RefObject, useEffect } from "react";
 
 interface PlaceFieldProps {
   form: UseFormReturn<VenueFormValues>;
@@ -21,18 +21,6 @@ interface PlaceFieldProps {
 }
 
 export function PlaceField({ form, inputRef, scriptError, resetAutocomplete }: PlaceFieldProps) {
-  // Create a local ref to connect react-hook-form with Google Maps
-  const localInputRef = useRef<HTMLInputElement>(null);
-  
-  // Synchronize the local ref with the Google Maps ref
-  useEffect(() => {
-    if (localInputRef.current && inputRef) {
-      // Update the Google Maps ref to point to this input
-      // @ts-ignore - We need to set the current property
-      inputRef.current = localInputRef.current;
-    }
-  }, [inputRef]);
-
   return (
     <FormField
       control={form.control}
@@ -72,10 +60,11 @@ export function PlaceField({ form, inputRef, scriptError, resetAutocomplete }: P
                 placeholder={scriptError ? "Enter place name manually" : "Search for a venue or place"} 
                 {...field}
                 ref={(e) => {
-                  // Connect to react-hook-form
                   field.ref(e);
-                  // Connect to our local ref
-                  localInputRef.current = e;
+                  // Set the inputRef directly with the input element
+                  if (e && inputRef) {
+                    (inputRef as any).current = e;
+                  }
                 }}
                 autoComplete="off" // Prevent browser autocomplete from interfering
               />

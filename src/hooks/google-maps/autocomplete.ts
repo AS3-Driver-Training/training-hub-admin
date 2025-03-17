@@ -33,10 +33,17 @@ export const initializeAutocomplete = (
     autocompleteInstance.inputField = inputRef.current;
     
     // Set the reference to the autocomplete instance
-    autoCompleteRef.current = autocompleteInstance;
+    if (autoCompleteRef) {
+      // Use the provided setter if available, otherwise assign directly
+      if (typeof autoCompleteRef === 'function') {
+        autoCompleteRef(autocompleteInstance);
+      } else {
+        autoCompleteRef.current = autocompleteInstance;
+      }
+    }
 
     // Add listener for place selection
-    autocompleteInstance.addListener("place_changed", () => {
+    google.maps.event.addListener(autocompleteInstance, "place_changed", () => {
       try {
         const place = autocompleteInstance.getPlace();
         console.log("Selected place:", place);
