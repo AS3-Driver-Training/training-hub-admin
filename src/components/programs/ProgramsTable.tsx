@@ -14,7 +14,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 
 interface ProgramsTableProps {
@@ -59,37 +58,28 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
 
   const getLevelBadgeColor = (level: string): string => {
     switch(level) {
-      case "Basic": return "bg-blue-100 text-blue-800 hover:bg-blue-100 hover:text-blue-800";
-      case "Intermediate": return "bg-purple-100 text-purple-800 hover:bg-purple-100 hover:text-purple-800";
-      case "Advanced": return "bg-orange-100 text-orange-800 hover:bg-orange-100 hover:text-orange-800";
-      default: return "bg-gray-100 text-gray-800 hover:bg-gray-100 hover:text-gray-800";
+      case "Basic": return "bg-blue-100 text-blue-800";
+      case "Intermediate": return "bg-purple-100 text-purple-800";
+      case "Advanced": return "bg-orange-100 text-orange-800";
+      default: return "bg-gray-100 text-gray-800";
     }
   };
 
   return (
     <>
-      <div className="border rounded-md">
+      <div className="border rounded-md overflow-hidden">
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead className="w-[50px]">
-                <Checkbox 
-                  checked={selectedPrograms.length === programs.length && programs.length > 0}
-                  onCheckedChange={toggleAllPrograms}
-                  aria-label="Select all programs"
-                />
-              </TableHead>
-              <TableHead className="w-[40%]">Program</TableHead>
-              <TableHead className="w-[20%]">Duration & Students</TableHead>
-              <TableHead className="w-[15%]">SKU & Price</TableHead>
-              <TableHead className="w-[15%]">Level</TableHead>
-              <TableHead className="w-[100px] text-right">Actions</TableHead>
+              <TableHead className="w-[70%]">Program</TableHead>
+              <TableHead className="w-[15%]">Details</TableHead>
+              <TableHead className="w-[15%] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {programs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6">
+                <TableCell colSpan={3} className="text-center py-6">
                   No programs found. Create your first program to get started.
                 </TableCell>
               </TableRow>
@@ -97,41 +87,42 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
               programs.map((program) => (
                 <TableRow key={program.id} className="border-t">
                   <TableCell>
-                    <Checkbox 
-                      checked={selectedPrograms.includes(program.id)} 
-                      onCheckedChange={() => toggleProgramSelection(program.id)}
-                      aria-label={`Select ${program.name}`}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{program.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      ID: {program.id.substring(0, 6)}
-                    </div>
-                    <div className="text-sm text-muted-foreground line-clamp-1">
-                      {program.description}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      <div>Duration: <span className="text-muted-foreground">{program.durationDays} days</span></div>
-                      <div>Students: <span className="text-muted-foreground">{program.minStudents} - {program.maxStudents}</span></div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      <div>SKU: <span className="text-muted-foreground">{program.sku}</span></div>
-                      <div>Price: <span className="text-muted-foreground">${program.price}</span></div>
+                    <div className="space-y-1">
+                      <div className="font-semibold text-base">{program.name}</div>
+                      <div className="flex flex-wrap items-center gap-3 text-sm">
+                        <Badge 
+                          variant="secondary" 
+                          className={getLevelBadgeColor(program.lvl)}
+                        >
+                          Level {program.lvl === "Basic" ? "1" : 
+                                 program.lvl === "Intermediate" ? "2" : "3"}
+                        </Badge>
+                        <span className="text-muted-foreground">
+                          ID: {program.id.substring(0, 6)}
+                        </span>
+                        <span className="text-muted-foreground">
+                          SKU: {program.sku}
+                        </span>
+                      </div>
+                      {program.description && (
+                        <div className="text-sm text-muted-foreground line-clamp-1 mt-1">
+                          {program.description}
+                        </div>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge 
-                      variant="secondary" 
-                      className={getLevelBadgeColor(program.lvl)}
-                    >
-                      Level {program.lvl === "Basic" ? "1" : 
-                             program.lvl === "Intermediate" ? "2" : "3"}
-                    </Badge>
+                    <div className="space-y-1 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">{program.durationDays} days</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">{program.minStudents} - {program.maxStudents} students</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">${program.price}</span>
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
