@@ -4,6 +4,8 @@ import {
   LayoutDashboard,
   Calendar,
   Settings,
+  BookOpen,
+  Building,
 } from "lucide-react";
 import {
   Sidebar,
@@ -40,6 +42,16 @@ const menuItems: MenuItem[] = [
     title: "Training Events",
     icon: Calendar,
     path: "/events",
+  },
+  {
+    title: "Programs",
+    icon: BookOpen,
+    path: "/programs",
+  },
+  {
+    title: "Venues",
+    icon: Building,
+    path: "/venues",
   },
   {
     title: "Settings",

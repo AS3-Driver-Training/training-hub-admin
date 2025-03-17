@@ -229,6 +229,45 @@ export type Database = {
         }
         Relationships: []
       }
+      programs: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration_days: number | null
+          id: number
+          max_students: number | null
+          min_students: number | null
+          name: string
+          price: number | null
+          sku: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration_days?: number | null
+          id?: number
+          max_students?: number | null
+          min_students?: number | null
+          name: string
+          price?: number | null
+          sku: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration_days?: number | null
+          id?: number
+          max_students?: number | null
+          min_students?: number | null
+          name?: string
+          price?: number | null
+          sku?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       teams: {
         Row: {
           created_at: string
@@ -346,6 +385,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      venues: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          google_location: string | null
+          id: number
+          name: string
+          region: string | null
+          short_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          google_location?: string | null
+          id?: number
+          name: string
+          region?: string | null
+          short_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          google_location?: string | null
+          id?: number
+          name?: string
+          region?: string | null
+          short_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

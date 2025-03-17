@@ -9,6 +9,8 @@ import Settings from "@/pages/Settings";
 import ClientSettings from "@/pages/ClientSettings";
 import Clients from "@/pages/Clients";
 import Profile from "@/pages/Profile";
+import Programs from "@/pages/Programs";
+import Venues from "@/pages/Venues";
 import NotFound from "@/pages/NotFound";
 import "./App.css";
 
@@ -23,6 +25,8 @@ function App() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Index />} />
           <Route path="/events" element={<Events />} />
+          <Route path="/programs" element={<Programs />} />
+          <Route path="/venues" element={<Venues />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/clients" element={<Clients />} />
