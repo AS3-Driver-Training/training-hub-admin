@@ -1,4 +1,6 @@
 
+import { getGoogleMapsScriptUrl, SCRIPT_LOAD_TIMEOUT } from './constants';
+
 /**
  * Loads the Google Maps API script with Places library
  */
@@ -20,8 +22,14 @@ export async function loadGoogleMapsScript(): Promise<void> {
       return;
     }
 
+    // Set up a timeout to reject the promise if loading takes too long
+    const timeoutId = setTimeout(() => {
+      reject(new Error('Google Maps script load timeout'));
+    }, SCRIPT_LOAD_TIMEOUT);
+
     // Define the callback function that will be called when the script loads
     window.initGoogleMapsCallback = () => {
+      clearTimeout(timeoutId);
       console.info('Google Maps script loaded successfully');
       resolve();
     };
@@ -30,12 +38,13 @@ export async function loadGoogleMapsScript(): Promise<void> {
     const script = document.createElement('script');
     script.id = 'google-maps-script';
     script.type = 'text/javascript';
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initGoogleMapsCallback`;
+    script.src = getGoogleMapsScriptUrl();
     script.async = true;
     script.defer = true;
 
     // Handle script load error
     script.onerror = () => {
+      clearTimeout(timeoutId);
       const error = new Error('Google Maps script failed to load');
       console.error(error);
       reject(error);

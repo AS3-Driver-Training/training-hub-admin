@@ -1,5 +1,5 @@
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { loadGoogleMapsScript } from './google-maps/scriptLoader';
 import { initializeAutocomplete } from './google-maps/autocomplete';
 import { UseGooglePlacesProps, UseGooglePlacesReturn, GooglePlaceData } from './google-maps/types';
@@ -14,27 +14,42 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
 
   // Load Google Maps script
   useEffect(() => {
-    if (!window.google?.maps?.places) {
+    let cleanupFn: () => void;
+    
+    const loadScript = async () => {
+      if (window.google?.maps?.places) {
+        console.log("Google Maps already loaded");
+        initAutocomplete();
+        return;
+      }
+      
       setIsLoadingScript(true);
-      loadGoogleMapsScript()
-        .then(() => {
-          setIsLoadingScript(false);
-          setScriptError(null);
-          initAutocomplete();
-        })
-        .catch((error) => {
-          setIsLoadingScript(false);
-          setScriptError(error.message || 'Failed to load Google Maps');
-          console.error('Error loading Google Maps script:', error);
-        });
-    } else {
-      initAutocomplete();
-    }
-
+      setScriptError(null);
+      
+      try {
+        await loadGoogleMapsScript();
+        console.log("Google Maps script loaded successfully");
+        setScriptError(null);
+      } catch (error) {
+        console.error('Error loading Google Maps script:', error);
+        setScriptError(error instanceof Error ? error.message : 'Failed to load Google Maps');
+      } finally {
+        setIsLoadingScript(false);
+        initAutocomplete();
+      }
+    };
+    
     // Set up error handlers for Google Maps
-    setupErrorHandlers(setScriptError);
-
+    cleanupFn = setupErrorHandlers(setScriptError);
+    
+    loadScript();
+    
     return () => {
+      // Clean up error handlers
+      if (cleanupFn) {
+        cleanupFn();
+      }
+      
       // Clean up by removing the global callback
       if (window.initGoogleMapsCallback) {
         window.initGoogleMapsCallback = undefined;
@@ -43,8 +58,10 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
   }, []);
 
   // Initialize autocomplete when input is mounted
-  const initAutocomplete = () => {
-    if (!inputRef.current || initCompletedRef.current || !window.google?.maps?.places) return;
+  const initAutocomplete = useCallback(() => {
+    if (!inputRef.current || initCompletedRef.current || !window.google?.maps?.places) {
+      return;
+    }
     
     console.log("Initializing autocomplete with input:", inputRef.current);
     
@@ -58,24 +75,29 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
           }
         };
 
-        autocompleteRef.current = initializeAutocomplete(inputRef.current, handlePlaceSelect);
-        
-        if (autocompleteRef.current) {
-          initCompletedRef.current = true;
-          console.log("Autocomplete successfully initialized");
+        try {
+          autocompleteRef.current = initializeAutocomplete(inputRef.current, handlePlaceSelect);
+          
+          if (autocompleteRef.current) {
+            initCompletedRef.current = true;
+            console.log("Autocomplete successfully initialized");
+          }
+        } catch (error) {
+          console.error("Error initializing autocomplete:", error);
+          setScriptError("Failed to initialize Google Places Autocomplete");
         }
       }
     }, 100);
-  };
+  }, [onPlaceSelect]);
 
   // Reset autocomplete if needed
-  const resetAutocomplete = () => {
+  const resetAutocomplete = useCallback(() => {
     initCompletedRef.current = false;
     if (inputRef.current) {
       inputRef.current.value = '';
       initAutocomplete();
     }
-  };
+  }, [initAutocomplete]);
 
   return {
     inputRef,

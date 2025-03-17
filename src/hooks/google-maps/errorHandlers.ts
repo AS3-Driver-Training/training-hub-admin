@@ -9,7 +9,8 @@ export const setupErrorHandlers = (setScriptError: (error: string | null) => voi
   // General Google Maps error handler
   window.gm_errorHandler = (event: any) => {
     console.error("Google Maps error:", event);
-    setScriptError(`Google Maps error: ${event?.message || 'Unknown error'}`);
+    const errorMessage = event?.message || 'Unknown error';
+    setScriptError(`Google Maps error: ${errorMessage}`);
   };
 
   // Return a cleanup function
