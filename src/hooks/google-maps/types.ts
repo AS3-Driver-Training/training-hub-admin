@@ -1,4 +1,6 @@
 
+import { RefObject } from 'react';
+
 // Google Maps type declarations
 export interface GooglePlaceData {
   place: string;
@@ -14,16 +16,16 @@ export interface UseGooglePlacesProps {
 }
 
 export interface UseGooglePlacesReturn {
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: RefObject<HTMLInputElement>;
   isLoadingScript: boolean;
   scriptError: string | null;
   resetAutocomplete: () => void;
 }
 
-// Define global Google Maps types
+// Define window augmentation correctly
 declare global {
   interface Window {
-    google: any;
+    google: typeof google;
     initGoogleMapsCallback: () => void;
     gm_authFailure: () => void;
   }

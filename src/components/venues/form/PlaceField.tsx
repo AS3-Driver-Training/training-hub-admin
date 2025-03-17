@@ -1,5 +1,5 @@
 
-import { useState, useEffect, RefObject } from "react";
+import { useState, useEffect, RefObject, useLayoutEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GooglePlaceData } from "@/hooks/google-maps/types";
@@ -37,6 +37,24 @@ export function PlaceField({
     }
   }, [value]);
 
+  // Use useLayoutEffect to ensure the input element has the proper stacking context
+  useLayoutEffect(() => {
+    if (inputRef.current) {
+      // Add event listener to stop propagation of click events
+      const handleClick = (e: Event) => {
+        e.stopPropagation();
+      };
+      
+      inputRef.current.addEventListener('click', handleClick);
+      
+      return () => {
+        if (inputRef.current) {
+          inputRef.current.removeEventListener('click', handleClick);
+        }
+      };
+    }
+  }, [inputRef]);
+
   // Listen for manual input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -46,13 +64,8 @@ export function PlaceField({
     }
   };
 
-  // Just to verify if the ref is attached to the input
-  useEffect(() => {
-    console.log("PlaceField inputRef current:", inputRef.current);
-  }, [inputRef.current]);
-
   return (
-    <div className="relative space-y-2">
+    <div className="relative space-y-2 z-50">
       <Label htmlFor="place" className={isRequired ? "after:content-['*'] after:ml-0.5 after:text-red-500" : ""}>
         Place Name
       </Label>

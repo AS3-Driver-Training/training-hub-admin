@@ -1,19 +1,52 @@
 
 import { GooglePlaceData } from './types';
 
+// Higher z-index applied to pac-container
+const applyAutocompleteStyles = () => {
+  // Create a style element for the autocomplete dropdown
+  const styleElement = document.createElement('style');
+  styleElement.id = 'google-places-autocomplete-styles';
+  styleElement.textContent = `
+    .pac-container {
+      z-index: 9999 !important;
+      position: absolute !important;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+    }
+  `;
+  
+  // Remove existing style if it exists
+  const existingStyle = document.getElementById('google-places-autocomplete-styles');
+  if (existingStyle) {
+    document.head.removeChild(existingStyle);
+  }
+  
+  // Add the style to the document head
+  document.head.appendChild(styleElement);
+};
+
 /**
  * Initialize Google Places Autocomplete on an input element
  */
 export function initializeAutocomplete(
   inputElement: HTMLInputElement,
   onPlaceSelect: (data: GooglePlaceData) => void
-): any {
+): google.maps.places.Autocomplete | null {
   if (!inputElement || !window.google?.maps?.places) {
     console.error("Cannot initialize autocomplete: Google Maps not loaded or input not available");
     return null;
   }
 
   try {
+    // Apply custom styles to ensure dropdown appears above other elements
+    applyAutocompleteStyles();
+    
+    // Prevent other click handlers from interfering
+    const clickHandler = (e: Event) => {
+      e.stopPropagation();
+    };
+    
+    inputElement.addEventListener('click', clickHandler);
+    
     // Create the autocomplete object
     const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
       types: ['establishment', 'geocode'],
@@ -21,7 +54,7 @@ export function initializeAutocomplete(
     });
 
     // Set up the place changed listener
-    autocomplete.addListener('place_changed', () => {
+    const listener = autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();
       
       console.log("Place selected:", place);
@@ -67,6 +100,7 @@ export function initializeAutocomplete(
       onPlaceSelect(placeData);
     });
 
+    // Return the autocomplete instance for later cleanup
     return autocomplete;
   } catch (error) {
     console.error("Error initializing autocomplete:", error);

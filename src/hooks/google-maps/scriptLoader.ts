@@ -19,10 +19,22 @@ export function loadGoogleMapsScript(): Promise<void> {
       document.head.removeChild(existingScript);
     }
 
+    // Clean up any existing callback to prevent memory leaks
+    if (window.initGoogleMapsCallback) {
+      delete window.initGoogleMapsCallback;
+    }
+    
+    if (window.gm_authFailure) {
+      delete window.gm_authFailure;
+    }
+
     // Define the callback function that Google Maps will call when loaded
     window.initGoogleMapsCallback = () => {
       console.log("Google Maps loaded successfully");
-      resolve();
+      // Add a small delay to ensure the API is fully initialized
+      setTimeout(() => {
+        resolve();
+      }, 100);
     };
 
     // Set up auth failure handler

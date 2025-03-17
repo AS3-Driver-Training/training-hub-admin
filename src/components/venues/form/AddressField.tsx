@@ -26,7 +26,7 @@ export function AddressField({ form, inputRef, scriptError, resetAutocomplete }:
       control={form.control}
       name="address"
       render={({ field }) => (
-        <FormItem>
+        <FormItem className="z-40">
           <div className="flex items-center justify-between">
             <FormLabel>Address</FormLabel>
             {!scriptError && (
