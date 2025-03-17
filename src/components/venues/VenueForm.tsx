@@ -1,30 +1,16 @@
 
 import { useEffect } from "react";
-import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Loader2, AlertTriangle, HelpCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Form } from "@/components/ui/form";
 import { useGooglePlaces } from "@/hooks/useGooglePlaces";
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
-const venueSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  shortName: z.string().min(1, "Short name is required"),
-  address: z.string().min(1, "Address is required"),
-  googleLocation: z.string(),
-  region: z.string().min(1, "Region is required"),
-});
-
-export type VenueFormValues = z.infer<typeof venueSchema>;
+import { venueSchema, VenueFormValues } from "./form/VenueFormSchema";
+import { VenueDetailsFields } from "./form/VenueDetailsFields";
+import { AddressField } from "./form/AddressField";
+import { LocationFields } from "./form/LocationFields";
+import { GoogleMapsError } from "./form/GoogleMapsError";
+import { LoadingIndicator } from "./form/LoadingIndicator";
+import { SubmitButton } from "./form/SubmitButton";
 
 interface VenueFormProps {
   defaultValues: VenueFormValues;
@@ -77,149 +63,19 @@ export function VenueForm({ defaultValues, onSubmit, isSubmitting, isEditing }: 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {scriptError && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Google Maps Configuration Error</AlertTitle>
-            <AlertDescription className="space-y-2">
-              <p>{scriptError}</p>
-              <p className="text-xs mt-1">
-                To fix this issue, please check the following in your Google Cloud Console:
-              </p>
-              <ul className="list-disc pl-5 text-xs space-y-1">
-                <li>Make sure billing is enabled for your Google Cloud project</li>
-                <li>Enable the Places API in the API Library</li>
-                <li>Ensure your API key has the proper permissions and no restrictions that would block this domain</li>
-                <li>Check that you have sufficient quota and haven't exceeded API limits</li>
-              </ul>
-            </AlertDescription>
-          </Alert>
-        )}
+        <GoogleMapsError scriptError={scriptError} />
+        <LoadingIndicator isLoading={isLoadingScript} />
         
-        {isLoadingScript && (
-          <div className="flex items-center justify-center py-4">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <span className="ml-2">Loading Google Maps...</span>
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Venue name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="shortName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Short Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Short name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        
-        <FormField
-          control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Address</FormLabel>
-                {!scriptError && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 px-2 text-muted-foreground"
-                          onClick={() => resetAutocomplete()}
-                        >
-                          <HelpCircle className="h-4 w-4 mr-1" />
-                          <span className="text-xs">Start typing to search</span>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs text-xs">
-                          Type to search for a venue by name or address.
-                          Select a result to automatically fill in location details.
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </div>
-              <FormControl>
-                <Input 
-                  placeholder={scriptError ? "Enter address manually" : "Search for address or place"} 
-                  {...field} 
-                  ref={(e) => {
-                    inputRef.current = e;
-                    if (e) field.ref(e);
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-              {!scriptError && (
-                <p className="text-xs text-muted-foreground">
-                  Type to search for a place or enter address manually
-                </p>
-              )}
-            </FormItem>
-          )}
+        <VenueDetailsFields form={form} />
+        <AddressField 
+          form={form} 
+          inputRef={inputRef} 
+          scriptError={scriptError} 
+          resetAutocomplete={resetAutocomplete} 
         />
+        <LocationFields form={form} />
         
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="googleLocation"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Google Location</FormLabel>
-                <FormControl>
-                  <Input placeholder="Latitude, Longitude" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="region"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Region</FormLabel>
-                <FormControl>
-                  <Input placeholder="Region" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : isEditing ? "Update Venue" : "Create Venue"}
-          </Button>
-        </div>
+        <SubmitButton isSubmitting={isSubmitting} isEditing={isEditing} />
       </form>
     </Form>
   );
