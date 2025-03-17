@@ -21,12 +21,19 @@ interface PlaceFieldProps {
 }
 
 export function PlaceField({ form, inputRef, scriptError, resetAutocomplete }: PlaceFieldProps) {
+  // Fixed: properly handle input ref assignment without directly modifying the read-only current property
   const handleInputRef = (element: HTMLInputElement | null) => {
     if (element) {
-      // Use this pattern to avoid the read-only property error
-      inputRef.current = element;
-      // Also assign to the field ref
+      // Make ref available to react-hook-form
       form.register("place").ref(element);
+      
+      // Make ref available to Google Maps (without directly assigning to read-only current)
+      if (inputRef && typeof inputRef === 'object' && 'current' in inputRef) {
+        Object.defineProperty(inputRef, 'current', {
+          value: element,
+          writable: true
+        });
+      }
     }
   };
 

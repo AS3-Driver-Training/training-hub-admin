@@ -2,8 +2,9 @@
 export interface Venue {
   id: string;
   name: string;
-  shortName: string;
+  short_name: string;  // Changed from shortName to match DB fields
   address: string;
-  googleLocation: string;
+  google_location: string;  // Changed from googleLocation to match DB fields
   region: string;
 }
+

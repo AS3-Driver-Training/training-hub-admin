@@ -19,6 +19,7 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
   const { toast } = useToast();
   const isEditing = !!venue;
   
+  // Fixed: match property names with Venue type
   const defaultValues: VenueFormValues = venue ? {
     place: venue.name || "",
     name: venue.name || "",

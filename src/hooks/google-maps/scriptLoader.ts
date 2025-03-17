@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { getGoogleMapsScriptUrl, SCRIPT_LOAD_TIMEOUT } from './constants';
 
 /**
@@ -17,21 +17,32 @@ export const useGoogleMapsScript = (
       return;
     }
 
-    // Define callback for when Google Maps script loads
-    window.initGoogleMapsCallback = () => {
-      console.log("Google Maps API loaded successfully");
-      setIsLoadingScript(false);
-      
-      // Short delay to ensure DOM is ready
-      setTimeout(() => {
-        initCallback();
-      }, 100);
-    };
-
     // Check if Google Maps script is already loaded
     if (window.google?.maps?.places) {
       console.log("Google Maps API already loaded");
+      // Call init callback if Google Maps is already loaded
       initCallback();
+      return;
+    }
+
+    // Only define callback if it doesn't exist yet
+    if (!window.initGoogleMapsCallback) {
+      window.initGoogleMapsCallback = () => {
+        console.log("Google Maps API loaded successfully");
+        setIsLoadingScript(false);
+        
+        // Short delay to ensure DOM is ready
+        setTimeout(() => {
+          initCallback();
+        }, 100);
+      };
+    }
+
+    // Check if the script tag already exists to prevent duplicate loading
+    const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
+    if (existingScript) {
+      // Script is already in the DOM but not yet loaded
+      console.log("Google Maps script tag already exists, waiting for it to load");
       return;
     }
 
@@ -43,6 +54,7 @@ export const useGoogleMapsScript = (
     script.src = getGoogleMapsScriptUrl();
     script.async = true;
     script.defer = true;
+    script.id = "google-maps-script"; // Add ID to easily identify the script
     
     // Handle script load error
     script.onerror = () => {
@@ -53,11 +65,9 @@ export const useGoogleMapsScript = (
 
     // Set a timeout for loading the script
     const timeoutId = setTimeout(() => {
-      if (setIsLoadingScript) {
-        console.error("Google Maps script load timeout");
-        setIsLoadingScript(false);
-        setScriptError("Google Maps took too long to load. Please enter address manually.");
-      }
+      console.error("Google Maps script load timeout");
+      setIsLoadingScript(false);
+      setScriptError("Google Maps took too long to load. Please enter address manually.");
     }, SCRIPT_LOAD_TIMEOUT);
 
     document.head.appendChild(script);
@@ -66,16 +76,11 @@ export const useGoogleMapsScript = (
       // Clean up timeout
       clearTimeout(timeoutId);
       
-      // Clean up script if component unmounts before script loads
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
-      }
-      
-      // Clean up global callbacks
+      // We don't remove the script on unmount as it might be used by other components
+      // But we clean up the global callback
       if (window.initGoogleMapsCallback) {
         delete window.initGoogleMapsCallback;
       }
     };
   }, [scriptError, setIsLoadingScript, setScriptError, initCallback]);
 };
-

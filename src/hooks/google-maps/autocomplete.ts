@@ -15,19 +15,32 @@ export const initializeAutocomplete = (
     return;
   }
 
+  // Avoid re-initializing if it already exists
+  if (autoCompleteRef.current) {
+    console.log("Autocomplete already initialized, skipping");
+    return;
+  }
+
   console.log("Initializing Google Places Autocomplete");
   try {
     // Initialize Google Places Autocomplete
-    // Using a non-null assertion because we've checked above that inputRef.current exists
-    autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+    const autocompleteInstance = new window.google.maps.places.Autocomplete(inputRef.current, {
       fields: ["address_components", "formatted_address", "geometry", "name"],
       types: ["establishment", "geocode"],
     });
+    
+    // Set the reference to the autocomplete instance using Object.defineProperty to avoid read-only issues
+    if (autoCompleteRef && typeof autoCompleteRef === 'object' && 'current' in autoCompleteRef) {
+      Object.defineProperty(autoCompleteRef, 'current', {
+        value: autocompleteInstance,
+        writable: true
+      });
+    }
 
     // Add listener for place selection
-    autoCompleteRef.current.addListener("place_changed", () => {
+    autocompleteInstance.addListener("place_changed", () => {
       try {
-        const place = autoCompleteRef.current.getPlace();
+        const place = autocompleteInstance.getPlace();
         console.log("Selected place:", place);
         
         if (!place) {
