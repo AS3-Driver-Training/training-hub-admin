@@ -32,12 +32,16 @@ export default function Venues() {
               node.style.position = 'absolute';
               node.style.pointerEvents = 'auto';
               
+              // Add data attribute to help with detection
+              node.setAttribute('data-google-places-element', 'true');
+              
               // Add click handlers to all pac items with better selector coverage
               node.querySelectorAll('.pac-item, .pac-item *, .pac-item-query, .pac-matched, .pac-icon, div[class^="pac-"]')
                 .forEach((item) => {
                   if (item instanceof HTMLElement) {
                     item.style.pointerEvents = 'auto';
                     item.style.cursor = 'pointer';
+                    item.setAttribute('data-google-places-element', 'true');
                     
                     // Add robust event handlers
                     const handleEvent = (e: Event) => {
@@ -105,6 +109,8 @@ export default function Venues() {
           target.closest('.pac-icon') ||
           target.classList.contains('pac-matched') ||
           target.closest('.pac-matched') ||
+          target.hasAttribute('data-google-places-element') ||
+          target.closest('[data-google-places-element]') ||
           (target.className && target.className.startsWith && target.className.startsWith('pac-'))
         )) {
         // Prevent the event from propagating to Radix UI dialog

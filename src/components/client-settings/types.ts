@@ -22,7 +22,7 @@ export interface ClientSettingsData {
   groups: GroupData[];
 }
 
-// Define common properties for all Group types
+// Base interface for shared properties
 interface GroupBase {
   id: string;
   name: string;
@@ -31,6 +31,7 @@ interface GroupBase {
 }
 
 // GroupData is used in the ClientSettingsData interface
+// Note: client_id is optional in GroupData
 export interface GroupData extends GroupBase {
   client_id?: string;
   teams: TeamData[];
@@ -78,7 +79,7 @@ export interface Team {
   group?: {
     id: string;
     name: string;
-    description?: string;
+    description?: string; // Made optional to match existing usage
     is_default: boolean;
   };
 }

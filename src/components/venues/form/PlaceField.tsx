@@ -107,6 +107,7 @@ export function PlaceField({
           className="pr-8"
           required={isRequired}
           autoComplete="off"
+          data-google-places-element="true"
           style={{ position: 'relative', zIndex: 9999 }}
           onClick={(e) => {
             e.stopPropagation();
