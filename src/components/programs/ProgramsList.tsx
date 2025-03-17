@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,7 @@ export function ProgramsList() {
   };
 
   const handleEditProgram = (program: Program) => {
+    console.log("Editing program:", program);
     setProgramToEdit(program);
     setIsCreateDialogOpen(true);
   };

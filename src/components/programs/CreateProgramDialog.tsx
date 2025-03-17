@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -53,7 +53,7 @@ export function CreateProgramDialog({ open, onClose, program, getLevelNumber }: 
 
   const form = useForm<ProgramFormValues>({
     resolver: zodResolver(programSchema),
-    defaultValues: program || {
+    defaultValues: {
       name: "",
       sku: "",
       description: "",
@@ -64,6 +64,36 @@ export function CreateProgramDialog({ open, onClose, program, getLevelNumber }: 
       lvl: "Basic",
     },
   });
+
+  // Reset form with program data when editing or clear when creating
+  useEffect(() => {
+    if (open) {
+      console.log("Dialog opened with program:", program);
+      if (isEditing && program) {
+        form.reset({
+          name: program.name,
+          sku: program.sku,
+          description: program.description,
+          durationDays: program.durationDays,
+          maxStudents: program.maxStudents,
+          minStudents: program.minStudents,
+          price: program.price,
+          lvl: program.lvl,
+        });
+      } else {
+        form.reset({
+          name: "",
+          sku: "",
+          description: "",
+          durationDays: 1,
+          maxStudents: 20,
+          minStudents: 5,
+          price: 0,
+          lvl: "Basic",
+        });
+      }
+    }
+  }, [open, program, form, isEditing]);
 
   const onSubmit = async (data: ProgramFormValues) => {
     setIsSubmitting(true);
@@ -82,6 +112,7 @@ export function CreateProgramDialog({ open, onClose, program, getLevelNumber }: 
       let result;
       
       if (isEditing && program) {
+        console.log("Updating program with ID:", program.id, "and data:", programData);
         result = await supabase
           .from('programs')
           .update(programData)

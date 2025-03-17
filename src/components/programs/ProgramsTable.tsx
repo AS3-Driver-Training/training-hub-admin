@@ -40,6 +40,11 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
     }
   };
 
+  const handleEditClick = (program: Program) => {
+    console.log("Edit clicked for program:", program);
+    onEdit(program);
+  };
+
   const toggleProgramSelection = (programId: string) => {
     setSelectedPrograms(prev => 
       prev.includes(programId) 
@@ -117,7 +122,7 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => onEdit(program)}>
+                      <Button variant="ghost" size="icon" onClick={() => handleEditClick(program)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(program)}>
