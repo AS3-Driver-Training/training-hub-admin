@@ -1,4 +1,3 @@
-
 export interface ClientSettingsData {
   id: string;
   name: string;
@@ -47,4 +46,18 @@ export interface UserData {
   updated_at: string;
   groups: GroupData[];
   teams: TeamData[];
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  is_default: boolean;
+  description?: string;
+  client_id: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  group_id: string;
 }

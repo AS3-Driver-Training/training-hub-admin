@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { Program } from "@/types/programs";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,38 +39,52 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
     }
   };
 
+  // Helper function to get badge color based on level
+  const getLevelBadgeVariant = (level: string): "default" | "secondary" | "outline" => {
+    switch(level) {
+      case "Basic": return "default";
+      case "Intermediate": return "secondary";
+      case "Advanced": return "outline";
+      default: return "default";
+    }
+  };
+
   return (
     <>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>SKU</TableHead>
-            <TableHead>Level</TableHead>
-            <TableHead>Duration (Days)</TableHead>
-            <TableHead>Min Students</TableHead>
-            <TableHead>Max Students</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="w-1/3">Program</TableHead>
+            <TableHead className="w-1/3">Details</TableHead>
+            <TableHead className="w-1/3 text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {programs.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-6">
+              <TableCell colSpan={3} className="text-center py-6">
                 No programs found. Create your first program to get started.
               </TableCell>
             </TableRow>
           ) : (
             programs.map((program) => (
               <TableRow key={program.id}>
-                <TableCell className="font-medium">{program.name}</TableCell>
-                <TableCell>{program.sku}</TableCell>
-                <TableCell>{program.lvl}</TableCell>
-                <TableCell>{program.durationDays}</TableCell>
-                <TableCell>{program.minStudents}</TableCell>
-                <TableCell>{program.maxStudents}</TableCell>
-                <TableCell>${program.price.toLocaleString()}</TableCell>
+                <TableCell>
+                  <div className="font-medium">{program.name}</div>
+                  <div className="text-sm text-muted-foreground">{program.sku}</div>
+                  <div className="mt-1">
+                    <Badge variant={getLevelBadgeVariant(program.lvl)}>
+                      LVL{program.lvl === "Basic" ? "1" : program.lvl === "Intermediate" ? "2" : "3"}
+                    </Badge>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1 text-sm">
+                    <div>Duration: {program.durationDays} days</div>
+                    <div>Students: {program.minStudents} - {program.maxStudents}</div>
+                    <div>Price: ${program.price.toLocaleString()}</div>
+                  </div>
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button variant="ghost" size="icon" onClick={() => onEdit(program)}>
