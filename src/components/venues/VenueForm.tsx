@@ -72,7 +72,7 @@ export function VenueForm({ defaultValues, onSubmit, isSubmitting, isEditing }: 
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {scriptError && (
-          <Alert variant="warning" className="mb-4">
+          <Alert variant="destructive" className="mb-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Google Maps Error</AlertTitle>
             <AlertDescription>{scriptError}</AlertDescription>
