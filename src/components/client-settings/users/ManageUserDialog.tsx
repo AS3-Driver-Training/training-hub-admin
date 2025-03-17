@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +23,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { UserData, Group } from "../types";
+import { UserData, Group, Team } from "../types";
 
 interface ManageUserDialogProps {
   isOpen: boolean;
@@ -246,4 +245,3 @@ export function ManageUserDialog({
     </Dialog>
   );
 }
-

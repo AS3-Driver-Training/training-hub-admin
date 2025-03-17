@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -28,19 +27,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-
-interface Team {
-  id: string;
-  name: string;
-}
-
-interface Group {
-  id: string;
-  name: string;
-  description: string;
-  is_default: boolean;
-  teams: Team[];
-}
+import { Group, Team } from "../types";
 
 interface GroupsTableProps {
   groups: Group[];

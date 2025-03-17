@@ -41,7 +41,7 @@ export interface Group {
   name: string;
   description: string;  
   is_default: boolean;  
-  teams?: Array<{ id: string; name: string; group_id?: string }>;  
+  teams?: Array<Team>;  
 }
 
 export interface Team {

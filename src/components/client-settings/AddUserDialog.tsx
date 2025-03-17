@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
@@ -17,6 +18,7 @@ import { RoleSelect } from "./add-user/RoleSelect";
 import { GroupSelect } from "./add-user/GroupSelect";
 import { TeamSelect } from "./add-user/TeamSelect";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Group, Team } from "./types";
 
 interface AddUserDialogProps {
   clientId: string;
@@ -48,7 +50,8 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
           is_default,
           teams (
             id,
-            name
+            name,
+            group_id
           )
         `)
         .eq('client_id', clientId)
@@ -60,7 +63,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       }
       
       console.log('Fetched groups:', data);
-      return data || [];
+      return data as Group[] || [];
     },
   });
 

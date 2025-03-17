@@ -8,13 +8,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Group } from "../types";
+import { Team } from "../types";
 
 interface TeamSelectProps {
   selectedGroup: string | null;
   selectedTeam: string | null;
   onTeamChange: (value: string | null) => void;
-  availableTeams: Array<{ id: string; name: string }>;
+  availableTeams: Array<{ id: string; name: string; group_id: string }>;
 }
 
 export function TeamSelect({ 

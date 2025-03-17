@@ -10,7 +10,7 @@ import { useState } from "react";
 import { AddGroupDialog } from "./groups/AddGroupDialog";
 import { GroupsTable } from "./groups/GroupsTable";
 import { AddTeamDialog } from "./groups/AddTeamDialog";
-import { Group } from "./types";
+import { Group, Team } from "./types";
 
 interface ClientGroupsTabProps {
   clientId: string;
@@ -64,7 +64,7 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
         return groupsWithEmptyTeams.map(group => ({
           ...group,
           teams: teams?.filter(team => team.group_id === group.id) || []
-        }));
+        })) as Group[];
       }
 
       return groupsWithEmptyTeams;
