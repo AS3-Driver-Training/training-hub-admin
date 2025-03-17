@@ -1,97 +1,71 @@
 
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { MapPin, Search } from "lucide-react";
-import { UseFormReturn } from "react-hook-form";
-import { VenueFormValues } from "./VenueFormSchema";
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { RefObject, useEffect } from "react";
+import { Label } from "@/components/ui/label";
+import { GooglePlaceData } from "@/hooks/google-maps/types";
+import useGooglePlaces from "@/hooks/useGooglePlaces";
+import { LoadingIndicator } from "./LoadingIndicator";
+import { GoogleMapsError } from "./GoogleMapsError";
 
 interface PlaceFieldProps {
-  form: UseFormReturn<VenueFormValues>;
-  inputRef: RefObject<HTMLInputElement>;
-  scriptError: string | null;
-  resetAutocomplete: () => void;
+  value: string;
+  onChange: (value: string) => void;
+  onPlaceSelect?: (placeData: GooglePlaceData) => void;
+  isRequired?: boolean;
 }
 
-export function PlaceField({ form, inputRef, scriptError, resetAutocomplete }: PlaceFieldProps) {
+export function PlaceField({ value, onChange, onPlaceSelect, isRequired = true }: PlaceFieldProps) {
+  const [inputValue, setInputValue] = useState(value);
+  const { inputRef, isLoadingScript, scriptError, resetAutocomplete } = useGooglePlaces({
+    onPlaceSelect: (data) => {
+      if (onPlaceSelect) {
+        onPlaceSelect(data);
+      }
+      setInputValue(data.place);
+      onChange(data.place);
+    }
+  });
+
+  // When external value changes, update the input value
+  useEffect(() => {
+    setInputValue(value);
+  }, [value]);
+
+  // Listen for manual input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    onChange(newValue);
+  };
+
   return (
-    <FormField
-      control={form.control}
-      name="place"
-      render={({ field }) => (
-        <FormItem>
-          <div className="flex items-center justify-between">
-            <FormLabel>Place</FormLabel>
-            {!scriptError && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-6 px-2 text-muted-foreground"
-                      onClick={() => resetAutocomplete()}
-                    >
-                      <Search className="h-4 w-4 mr-1" />
-                      <span className="text-xs">Start typing to search</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs text-xs">
-                      Type to search for a venue by name or address.
-                      Select a result to automatically fill in location details.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
+    <div className="relative space-y-2">
+      <Label htmlFor="place" className={isRequired ? "after:content-['*'] after:ml-0.5 after:text-red-500" : ""}>
+        Place Name
+      </Label>
+      
+      <div className="relative" style={{ zIndex: 9999 }}>
+        <Input
+          id="place"
+          ref={inputRef}
+          value={inputValue}
+          onChange={handleInputChange}
+          placeholder="Search for a place or venue"
+          className="pr-8"
+          required={isRequired}
+          autoComplete="off"
+        />
+        
+        {/* Loading indicator */}
+        {isLoadingScript && (
+          <div className="absolute inset-y-0 right-2 flex items-center">
+            <LoadingIndicator />
           </div>
-          <FormControl>
-            <div className="relative" style={{ zIndex: 10000 }}>
-              <Input 
-                placeholder={scriptError ? "Enter place name manually" : "Search for a venue or place"} 
-                {...field}
-                ref={(element) => {
-                  // Update the React Hook Form ref
-                  field.ref(element);
-                  
-                  // Update our Google Maps inputRef if both refs exist
-                  if (element && inputRef) {
-                    // We can't directly assign to current as it might be readonly
-                    if (inputRef.current !== element) {
-                      Object.defineProperty(inputRef, 'current', {
-                        value: element,
-                        writable: true
-                      });
-                    }
-                  }
-                }}
-                onFocus={(e) => {
-                  // Ensure the dropdown has room to display
-                  e.currentTarget.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                }}
-                className="bg-background" // Ensure background color is solid
-                autoComplete="off" // Prevent browser autocomplete from interfering
-              />
-              <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            </div>
-          </FormControl>
-          <FormMessage />
-          {!scriptError && (
-            <p className="text-xs text-muted-foreground">
-              Type to search for a place name, venue, or landmark
-            </p>
-          )}
-        </FormItem>
-      )}
-    />
+        )}
+      </div>
+
+      {/* Error message */}
+      {scriptError && <GoogleMapsError error={scriptError} />}
+    </div>
   );
 }

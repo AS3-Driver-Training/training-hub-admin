@@ -1,93 +1,88 @@
 
-import { useRef, useState, useEffect, useCallback } from 'react';
-import { loadGoogleMapsScript } from '@/hooks/google-maps/scriptLoader';
-import { initializeAutocomplete, resetAutocomplete } from '@/hooks/google-maps/autocomplete';
-import { registerErrorHandlers } from '@/hooks/google-maps/errorHandlers';
-import { GooglePlaceData, UseGooglePlacesProps, UseGooglePlacesReturn } from '@/hooks/google-maps/types';
+import { useEffect, useRef, useState } from 'react';
+import { loadGoogleMapsScript } from './google-maps/scriptLoader';
+import { initializeAutocomplete } from './google-maps/autocomplete';
+import { UseGooglePlacesProps, UseGooglePlacesReturn, GooglePlaceData } from './google-maps/types';
+import { setupErrorHandlers } from './google-maps/errorHandlers';
 
 export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): UseGooglePlacesReturn {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [isLoadingScript, setIsLoadingScript] = useState(false);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const [isLoadingScript, setIsLoadingScript] = useState<boolean>(false);
   const [scriptError, setScriptError] = useState<string | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const initCompletedRef = useRef<boolean>(false);
 
-  // Function to handle place selection
-  const handlePlaceSelect = useCallback((placeData: GooglePlaceData) => {
-    if (onPlaceSelect) {
-      onPlaceSelect(placeData);
-    }
-  }, [onPlaceSelect]);
-
-  // Load the Google Maps script
+  // Load Google Maps script
   useEffect(() => {
-    // Register global error handlers
-    registerErrorHandlers(setScriptError);
-
-    // Load the script if not already loaded
-    if (!window.google || !window.google.maps || !window.google.maps.places) {
+    if (!window.google?.maps?.places) {
       setIsLoadingScript(true);
       loadGoogleMapsScript()
         .then(() => {
-          console.info('Google Maps API loaded successfully');
           setIsLoadingScript(false);
           setScriptError(null);
+          initAutocomplete();
         })
         .catch((error) => {
-          console.error('Error loading Google Maps API:', error);
           setIsLoadingScript(false);
-          setScriptError(error.message || 'Failed to load Google Maps API');
+          setScriptError(error.message || 'Failed to load Google Maps');
+          console.error('Error loading Google Maps script:', error);
         });
     } else {
-      console.info('Google Maps API already loaded and ready to use');
+      initAutocomplete();
     }
+
+    // Set up error handlers for Google Maps
+    setupErrorHandlers(setScriptError);
+
+    return () => {
+      // Clean up by removing the global callback
+      if (window.initGoogleMapsCallback) {
+        window.initGoogleMapsCallback = undefined;
+      }
+    };
   }, []);
 
-  // Initialize autocomplete when input ref and Google Maps are available
-  useEffect(() => {
-    // Check if the script is loaded and an input element exists
-    if (
-      !isLoadingScript && 
-      !scriptError && 
-      inputRef.current && 
-      window.google && 
-      window.google.maps && 
-      window.google.maps.places &&
-      !isInitialized
-    ) {
-      console.info('Initializing Google Places Autocomplete');
-      
-      try {
-        initializeAutocomplete(inputRef.current, handlePlaceSelect);
-        setIsInitialized(true);
-      } catch (error) {
-        console.error('Error initializing autocomplete:', error);
-        setScriptError((error as Error).message || 'Failed to initialize Google Places Autocomplete');
-      }
-    }
-  }, [isLoadingScript, scriptError, handlePlaceSelect, isInitialized]);
+  // Initialize autocomplete when input is mounted
+  const initAutocomplete = () => {
+    if (!inputRef.current || initCompletedRef.current || !window.google?.maps?.places) return;
+    
+    console.log("Initializing autocomplete with input:", inputRef.current);
+    
+    // Create a small delay to ensure the DOM is fully rendered
+    setTimeout(() => {
+      if (inputRef.current) {
+        const handlePlaceSelect = (placeData: GooglePlaceData) => {
+          console.log("Place selected:", placeData);
+          if (onPlaceSelect) {
+            onPlaceSelect(placeData);
+          }
+        };
 
-  // Reset autocomplete when needed
-  const resetAutocompleteHandler = useCallback(() => {
-    setIsInitialized(false);
-    if (inputRef.current) {
-      resetAutocomplete(inputRef.current);
-      
-      // Re-initialize autocomplete
-      if (window.google && window.google.maps && window.google.maps.places) {
-        try {
-          initializeAutocomplete(inputRef.current, handlePlaceSelect);
-          setIsInitialized(true);
-        } catch (error) {
-          console.error('Error re-initializing autocomplete:', error);
+        autocompleteRef.current = initializeAutocomplete(inputRef.current, handlePlaceSelect);
+        
+        if (autocompleteRef.current) {
+          initCompletedRef.current = true;
+          console.log("Autocomplete successfully initialized");
         }
       }
+    }, 100);
+  };
+
+  // Reset autocomplete if needed
+  const resetAutocomplete = () => {
+    initCompletedRef.current = false;
+    if (inputRef.current) {
+      inputRef.current.value = '';
+      initAutocomplete();
     }
-  }, [handlePlaceSelect]);
+  };
 
   return {
     inputRef,
     isLoadingScript,
     scriptError,
-    resetAutocomplete: resetAutocompleteHandler,
+    resetAutocomplete
   };
 }
+
+export default useGooglePlaces;

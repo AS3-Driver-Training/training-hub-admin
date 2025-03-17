@@ -1,24 +1,22 @@
 
 // Google Maps type declarations
-declare global {
-  interface Window {
-    google?: {
-      maps: {
-        places: {
-          Autocomplete: new (
-            input: HTMLInputElement,
-            options?: any
-          ) => any;
-        };
-        Map: any;
-        LatLng: any;
-        LatLngBounds: any;
+export interface GoogleMapsWindow extends Window {
+  google?: {
+    maps: {
+      places: {
+        Autocomplete: new (
+          input: HTMLInputElement,
+          options?: any
+        ) => any;
       };
+      Map: any;
+      LatLng: any;
+      LatLngBounds: any;
     };
-    initGoogleMapsCallback?: () => void;
-    gm_authFailure?: () => void;
-    gm_errorHandler?: (event: any) => void;
-  }
+  };
+  initGoogleMapsCallback?: () => void;
+  gm_authFailure?: () => void;
+  gm_errorHandler?: (event: any) => void;
 }
 
 export interface GooglePlaceData {
