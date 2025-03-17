@@ -10,22 +10,64 @@ interface GoogleMapErrorEvent {
   };
 }
 
+// Extend the Window interface to include our custom properties
+declare global {
+  interface Window {
+    gm_errorHandler?: (event: GoogleMapErrorEvent) => void;
+  }
+}
+
 /**
  * Setup a React hook to handle Google Maps API errors.
  */
 export const useGoogleMapsErrorHandler = (
   setError: (error: string) => void,
 ) => {
-  // This now uses MutationObserver to monitor DOM changes instead of deprecated DOMNodeInserted
-  return window.addEventListener('error', (event: ErrorEvent) => {
-    // Only handle Google Maps errors
+  // Use MutationObserver to monitor DOM changes instead of deprecated DOMNodeInserted
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.type === 'childList') {
+        const nodes = Array.from(mutation.addedNodes);
+        for (const node of nodes) {
+          if (node instanceof HTMLElement) {
+            // Look for Google Maps error elements
+            if (node.classList.contains('gm-err-container') || 
+                node.querySelector('.gm-err-container')) {
+              console.error('Google Maps API Error detected in DOM');
+              setError('Google Maps API Error: Please check your API key and permissions.');
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  // Start observing the document body for changes
+  if (typeof document !== 'undefined') {
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+  
+  // Listen for global error events
+  const errorListener = (event: ErrorEvent) => {
     if (event.message && 
         (event.message.includes('Google Maps') || 
          event.message.includes('google is not defined'))) {
       console.error('Google Maps API Error:', event.message);
       setError('Google Maps API Error: Please check your API key and permissions.');
     }
-  });
+  };
+  
+  if (typeof window !== 'undefined') {
+    window.addEventListener('error', errorListener);
+  }
+  
+  // Return a cleanup function
+  return () => {
+    observer.disconnect();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('error', errorListener);
+    }
+  };
 };
 
 /**
@@ -37,7 +79,7 @@ export const setupGlobalAuthErrorHandler = (
 ) => {
   if (typeof window === 'undefined') return () => {};
   
-  // This now uses MutationObserver to monitor DOM changes instead of deprecated events
+  // This now uses MutationObserver to monitor DOM changes
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       if (mutation.type === 'childList') {
@@ -74,16 +116,13 @@ export const setupGlobalAuthErrorHandler = (
     setError('Google Maps Authentication Failed: Please check your API key and billing status.');
   };
   
-  // Setup a global error event listener for Google Maps
-  const errorHandler = (event: GoogleMapErrorEvent) => {
+  // Setup a global error handler for Google Maps
+  window.gm_errorHandler = (event: GoogleMapErrorEvent) => {
     if (event.error && event.error.message) {
       console.error('Google Maps API Error:', event.error.message);
       setError(`Google Maps API Error: ${event.error.message}`);
     }
   };
-  
-  // Add the error handler to window object for Google to call
-  window.gm_errorHandler = errorHandler;
   
   return () => {
     // Clean up

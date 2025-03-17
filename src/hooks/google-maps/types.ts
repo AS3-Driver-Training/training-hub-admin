@@ -15,6 +15,7 @@ declare global {
     };
     initGoogleMapsCallback?: () => void;
     gm_authFailure?: () => void;
+    gm_errorHandler?: (event: any) => void;
   }
 }
 

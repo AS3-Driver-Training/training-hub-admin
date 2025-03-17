@@ -61,7 +61,7 @@ export function VenuesTable({ venues, onEdit, onDelete }: VenuesTableProps) {
             venues.map((venue) => (
               <TableRow key={venue.id}>
                 <TableCell className="font-medium">{venue.name}</TableCell>
-                <TableCell>{venue.shortName}</TableCell>
+                <TableCell>{venue.short_name}</TableCell>
                 <TableCell>{venue.address}</TableCell>
                 <TableCell>{venue.region}</TableCell>
                 <TableCell className="text-right">

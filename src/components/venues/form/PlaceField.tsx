@@ -59,14 +59,19 @@ export function PlaceField({ form, inputRef, scriptError, resetAutocomplete }: P
               <Input 
                 placeholder={scriptError ? "Enter place name manually" : "Search for a venue or place"} 
                 {...field}
-                ref={(e) => {
-                  // Update both React Hook Form and our Google Maps ref
-                  if (e) {
-                    field.ref(e);
-                    // Set the inputRef directly with the input element
-                    if (inputRef) {
-                      inputRef.current = e;
-                    }
+                ref={(element) => {
+                  // Update the React Hook Form ref
+                  field.ref(element);
+                  
+                  // Only update our Google Maps inputRef if it exists and element exists
+                  if (element && inputRef) {
+                    // Use a function call instead of direct assignment
+                    // to avoid modifying the read-only current property
+                    Object.defineProperty(inputRef, 'current', {
+                      value: element,
+                      writable: true,
+                      configurable: true,
+                    });
                   }
                 }}
                 onFocus={(e) => {

@@ -30,15 +30,23 @@ export const initializeAutocomplete = (
     });
     
     // Store reference to input field to prevent duplicate initialization
-    autocompleteInstance.inputField = inputRef.current;
+    Object.defineProperty(autocompleteInstance, 'inputField', {
+      value: inputRef.current,
+      writable: true,
+      configurable: true,
+    });
     
     // Set the reference to the autocomplete instance
     if (autoCompleteRef) {
-      autoCompleteRef.current = autocompleteInstance;
+      Object.defineProperty(autoCompleteRef, 'current', {
+        value: autocompleteInstance,
+        writable: true,
+        configurable: true,
+      });
     }
 
-    // Add listener for place selection
-    window.google.maps.event.addListener(autocompleteInstance, "place_changed", () => {
+    // Add listener for place selection using the correct Google Maps API method
+    autocompleteInstance.addListener("place_changed", () => {
       try {
         const place = autocompleteInstance.getPlace();
         console.log("Selected place:", place);

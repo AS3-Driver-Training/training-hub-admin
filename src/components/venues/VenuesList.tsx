@@ -21,13 +21,13 @@ const fetchVenues = async (): Promise<Venue[]> => {
     throw new Error("Failed to fetch venues");
   }
   
-  // Transform the data to match our frontend model
+  // The data from Supabase already has snake_case property names that match our Venue type
   return (data || []).map(venue => ({
     id: venue.id.toString(),
     name: venue.name,
-    shortName: venue.short_name || "",
+    short_name: venue.short_name || "",
     address: venue.address || "",
-    googleLocation: venue.google_location || "",
+    google_location: venue.google_location || "",
     region: venue.region || "",
   }));
 };

@@ -19,7 +19,7 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
   const { toast } = useToast();
   const isEditing = !!venue;
   
-  // Match property names with Venue type fields
+  // Match property names with Venue type fields (snake_case)
   const defaultValues: VenueFormValues = venue ? {
     place: venue.name || "",
     name: venue.name || "",
@@ -41,6 +41,7 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
   const handleSubmit = async (data: VenueFormValues) => {
     setIsSubmitting(true);
     try {
+      // Convert to snake_case for database
       const venueData = {
         name: data.name || data.place, // Fallback to place if name is empty
         short_name: data.shortName,
@@ -56,7 +57,7 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
         result = await supabase
           .from('venues')
           .update(venueData)
-          .eq('id', venue.id)
+          .eq('id', Number(venue.id))
           .select();
       } else {
         result = await supabase
