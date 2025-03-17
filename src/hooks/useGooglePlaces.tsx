@@ -12,8 +12,8 @@ declare global {
         places: {
           Autocomplete: new (
             input: HTMLInputElement,
-            options?: google.maps.places.AutocompleteOptions
-          ) => google.maps.places.Autocomplete;
+            options?: any
+          ) => any;
         };
         Map: any;
       };
@@ -98,44 +98,54 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}) {
 
       // Add listener for place selection
       autoCompleteRef.current.addListener("place_changed", () => {
-        const place = autoCompleteRef.current.getPlace();
-        console.log("Selected place:", place);
-        
-        if (!place || !place.geometry) {
-          console.warn("No place details available");
-          return;
-        }
+        try {
+          const place = autoCompleteRef.current.getPlace();
+          console.log("Selected place:", place);
+          
+          if (!place || !place.geometry) {
+            console.warn("No place details available");
+            return;
+          }
 
-        // Extract address components
-        let region = "";
-        let formattedAddress = place.formatted_address || "";
-        
-        // Attempt to extract region (administrative_area_level_1)
-        if (place.address_components) {
-          for (const component of place.address_components) {
-            if (component.types.includes("administrative_area_level_1")) {
-              region = component.long_name;
-              break;
+          // Extract address components
+          let region = "";
+          let formattedAddress = place.formatted_address || "";
+          
+          // Attempt to extract region (administrative_area_level_1)
+          if (place.address_components) {
+            for (const component of place.address_components) {
+              if (component.types.includes("administrative_area_level_1")) {
+                region = component.long_name;
+                break;
+              }
             }
           }
-        }
 
-        // Format latitude and longitude
-        const lat = place.geometry.location?.lat();
-        const lng = place.geometry.location?.lng();
-        const googleLocation = lat && lng ? `${lat},${lng}` : "";
+          // Format latitude and longitude
+          const lat = place.geometry.location?.lat();
+          const lng = place.geometry.location?.lng();
+          const googleLocation = lat && lng ? `${lat},${lng}` : "";
 
-        const placeName = place.name || "";
+          const placeName = place.name || "";
 
-        if (onPlaceSelect) {
-          onPlaceSelect({
-            address: formattedAddress,
-            googleLocation,
-            region,
-            placeName
-          });
+          if (onPlaceSelect) {
+            onPlaceSelect({
+              address: formattedAddress,
+              googleLocation,
+              region,
+              placeName
+            });
+          }
+        } catch (error) {
+          console.error("Error processing place selection:", error);
         }
       });
+      
+      // Set up error handler for the Autocomplete instance
+      window.gm_authFailure = () => {
+        setScriptError("Google Maps API key requires billing to be enabled. You can still enter address manually.");
+        console.error("Google Maps authentication error - billing may not be enabled for this API key");
+      };
       
       console.log("Google Places Autocomplete initialized successfully");
     } catch (error) {
@@ -143,6 +153,21 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}) {
       setScriptError("Error initializing Google Places. You can still enter address manually.");
     }
   };
+
+  // Set up global error handler for API key issues
+  useEffect(() => {
+    window.gm_authFailure = () => {
+      setScriptError("Google Maps API key requires billing to be enabled. You can still enter address manually.");
+      console.error("Google Maps authentication error - billing may not be enabled for this API key");
+    };
+    
+    return () => {
+      // Clean up global error handler
+      if (window.gm_authFailure) {
+        delete window.gm_authFailure;
+      }
+    };
+  }, []);
 
   return {
     inputRef,

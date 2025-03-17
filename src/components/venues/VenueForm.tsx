@@ -6,10 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useGooglePlaces } from "@/hooks/useGooglePlaces";
-import { Venue } from "@/types/venues";
 
 const venueSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -73,7 +72,9 @@ export function VenueForm({ defaultValues, onSubmit, isSubmitting, isEditing }: 
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {scriptError && (
-          <Alert className="mb-4">
+          <Alert variant="warning" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Google Maps Error</AlertTitle>
             <AlertDescription>{scriptError}</AlertDescription>
           </Alert>
         )}
@@ -123,7 +124,7 @@ export function VenueForm({ defaultValues, onSubmit, isSubmitting, isEditing }: 
               <FormLabel>Address</FormLabel>
               <FormControl>
                 <Input 
-                  placeholder="Search for address or place" 
+                  placeholder={scriptError ? "Enter address manually" : "Search for address or place"} 
                   {...field} 
                   ref={(e) => {
                     inputRef.current = e;
