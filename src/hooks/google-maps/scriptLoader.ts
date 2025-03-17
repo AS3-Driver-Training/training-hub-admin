@@ -82,15 +82,6 @@ export const useGoogleMapsScript = (
     return () => {
       // Clean up timeout
       clearTimeout(timeoutId);
-      
-      // We don't remove the script on unmount as it might be used by other components
-      // But we clean up the global callback if it's ours
-      if (window.initGoogleMapsCallback) {
-        // Only delete it if it hasn't been replaced by another component
-        if (window.initGoogleMapsCallback.toString().includes("Google Maps API loaded successfully")) {
-          delete window.initGoogleMapsCallback;
-        }
-      }
     };
   }, [scriptError, setIsLoadingScript, setScriptError, initCallback]);
 };

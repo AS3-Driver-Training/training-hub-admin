@@ -2,9 +2,8 @@
 export interface Venue {
   id: string;
   name: string;
-  short_name: string;  // Changed from shortName to match DB fields
+  short_name: string;  // Using snake_case for DB field names
   address: string;
-  google_location: string;  // Changed from googleLocation to match DB fields
+  google_location: string;  // Using snake_case for DB field names 
   region: string;
 }
-

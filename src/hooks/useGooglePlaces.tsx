@@ -28,11 +28,20 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
       return;
     }
 
+    // Prevent continuous reinitializing by checking if this input was already initialized
+    if (autoCompleteRef.current && autoCompleteRef.current.inputField === inputRef.current) {
+      return;
+    }
+
     console.log("Input ref is available, initializing autocomplete with:", inputRef.current);
-    // Initialize or reinitialize autocomplete with the current input
-    initializeAutocomplete(inputRef, autoCompleteRef, onPlaceSelect, setScriptError);
-    setInitialized(true);
     
+    // Add a small delay to ensure the DOM is fully updated
+    const timer = setTimeout(() => {
+      initializeAutocomplete(inputRef, autoCompleteRef, onPlaceSelect, setScriptError);
+      setInitialized(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [inputRef.current, onPlaceSelect, scriptError]);  // Re-run when these dependencies change
 
   // Load Google Maps script
@@ -41,8 +50,12 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
     () => {
       if (!initialized && inputRef.current) {
         console.log("Google Maps script loaded, initializing autocomplete");
-        initializeAutocomplete(inputRef, autoCompleteRef, onPlaceSelect, setScriptError);
-        setInitialized(true);
+        
+        // Add a small delay to ensure DOM is ready
+        setTimeout(() => {
+          initializeAutocomplete(inputRef, autoCompleteRef, onPlaceSelect, setScriptError);
+          setInitialized(true);
+        }, 100);
       }
     },
     setIsLoadingScript,

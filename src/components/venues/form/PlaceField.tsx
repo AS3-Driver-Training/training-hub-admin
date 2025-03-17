@@ -55,20 +55,28 @@ export function PlaceField({ form, inputRef, scriptError, resetAutocomplete }: P
             )}
           </div>
           <FormControl>
-            <div className="relative">
+            <div className="relative" style={{ zIndex: 1000 }}>
               <Input 
                 placeholder={scriptError ? "Enter place name manually" : "Search for a venue or place"} 
                 {...field}
                 ref={(e) => {
-                  field.ref(e);
-                  // Set the inputRef directly with the input element
-                  if (e && inputRef) {
-                    (inputRef as any).current = e;
+                  // Update both React Hook Form and our Google Maps ref
+                  if (e) {
+                    field.ref(e);
+                    // Set the inputRef directly with the input element
+                    if (inputRef) {
+                      inputRef.current = e;
+                    }
                   }
                 }}
+                onFocus={(e) => {
+                  // Ensure the dropdown has room to display
+                  e.currentTarget.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }}
+                className="bg-background" // Ensure background color is solid
                 autoComplete="off" // Prevent browser autocomplete from interfering
               />
-              <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             </div>
           </FormControl>
           <FormMessage />
