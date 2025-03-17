@@ -46,6 +46,11 @@ export function PlaceField({
     }
   };
 
+  // Just to verify if the ref is attached to the input
+  useEffect(() => {
+    console.log("PlaceField inputRef current:", inputRef.current);
+  }, [inputRef.current]);
+
   return (
     <div className="relative space-y-2">
       <Label htmlFor="place" className={isRequired ? "after:content-['*'] after:ml-0.5 after:text-red-500" : ""}>

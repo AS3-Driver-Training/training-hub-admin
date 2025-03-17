@@ -20,11 +20,11 @@ export interface UseGooglePlacesReturn {
   resetAutocomplete: () => void;
 }
 
-// Declare global Google Maps types
+// Define global Google Maps types
 declare global {
   interface Window {
-    google: typeof google;
-    initGoogleMapsCallback?: () => void;
-    gm_authFailure?: () => void;
+    google: any;
+    initGoogleMapsCallback: () => void;
+    gm_authFailure: () => void;
   }
 }

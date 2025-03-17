@@ -2,9 +2,6 @@
 // Google Maps API key - in a real app, this would be from environment variables
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCu7aCPjM539cGuK3ng2TXDvYcVkLJ1Pi4';
 
-// Timeout for loading in milliseconds
-const SCRIPT_LOAD_TIMEOUT = 10000;
-
 /**
  * Load the Google Maps API script
  */
@@ -14,6 +11,12 @@ export function loadGoogleMapsScript(): Promise<void> {
     if (window.google?.maps?.places) {
       console.log("Google Maps script already loaded");
       return resolve();
+    }
+
+    // Remove any existing script to prevent duplicates
+    const existingScript = document.getElementById('google-maps-script');
+    if (existingScript) {
+      document.head.removeChild(existingScript);
     }
 
     // Define the callback function that Google Maps will call when loaded
@@ -41,22 +44,6 @@ export function loadGoogleMapsScript(): Promise<void> {
       const error = new Error("Failed to load Google Maps script");
       console.error(error);
       reject(error);
-    };
-
-    // Set a timeout in case Google never calls our callback
-    const timeoutId = setTimeout(() => {
-      if (!window.google?.maps?.places) {
-        const error = new Error("Google Maps script load timeout");
-        console.error(error);
-        reject(error);
-      }
-    }, SCRIPT_LOAD_TIMEOUT);
-
-    // Clean up the timeout when the script loads
-    script.onload = () => {
-      // The actual initialization happens in the callback
-      // This just clears the timeout
-      clearTimeout(timeoutId);
     };
 
     // Add script to document

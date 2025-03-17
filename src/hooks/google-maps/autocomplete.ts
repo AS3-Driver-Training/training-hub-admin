@@ -7,7 +7,7 @@ import { GooglePlaceData } from './types';
 export function initializeAutocomplete(
   inputElement: HTMLInputElement,
   onPlaceSelect: (data: GooglePlaceData) => void
-): google.maps.places.Autocomplete | null {
+): any {
   if (!inputElement || !window.google?.maps?.places) {
     console.error("Cannot initialize autocomplete: Google Maps not loaded or input not available");
     return null;
@@ -15,7 +15,7 @@ export function initializeAutocomplete(
 
   try {
     // Create the autocomplete object
-    const autocomplete = new google.maps.places.Autocomplete(inputElement, {
+    const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
       types: ['establishment', 'geocode'],
       fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id']
     });
@@ -23,6 +23,8 @@ export function initializeAutocomplete(
     // Set up the place changed listener
     autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();
+      
+      console.log("Place selected:", place);
       
       if (!place.geometry) {
         console.warn("No details available for this place");
@@ -33,7 +35,7 @@ export function initializeAutocomplete(
       const addressComponents: Record<string, string> = {};
       
       if (place.address_components) {
-        place.address_components.forEach(component => {
+        place.address_components.forEach((component: any) => {
           if (component.types.includes('locality')) {
             addressComponents.city = component.long_name;
           }
