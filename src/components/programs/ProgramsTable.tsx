@@ -71,8 +71,8 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead className="w-[70%]">Program</TableHead>
-              <TableHead className="w-[15%]">Details</TableHead>
+              <TableHead className="w-[60%]">Program</TableHead>
+              <TableHead className="w-[25%]">Duration</TableHead>
               <TableHead className="w-[15%] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -87,7 +87,7 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
               programs.map((program) => (
                 <TableRow key={program.id} className="border-t">
                   <TableCell>
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <div className="font-semibold text-base">{program.name}</div>
                       <div className="flex flex-wrap items-center gap-3 text-sm">
                         <Badge 
@@ -98,31 +98,22 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
                                  program.lvl === "Intermediate" ? "2" : "3"}
                         </Badge>
                         <span className="text-muted-foreground">
-                          ID: {program.id.substring(0, 6)}
+                          ${program.price}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {program.minStudents} - {program.maxStudents} students
                         </span>
                         <span className="text-muted-foreground">
                           SKU: {program.sku}
                         </span>
+                        <span className="text-muted-foreground">
+                          ID: {program.id.substring(0, 6)}
+                        </span>
                       </div>
-                      {program.description && (
-                        <div className="text-sm text-muted-foreground line-clamp-1 mt-1">
-                          {program.description}
-                        </div>
-                      )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="space-y-1 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">{program.durationDays} days</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">{program.minStudents} - {program.maxStudents} students</span>
-                      </div>
-                      <div>
-                        <span className="font-medium">${program.price}</span>
-                      </div>
-                    </div>
+                    <div className="font-medium">{program.durationDays} days</div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
