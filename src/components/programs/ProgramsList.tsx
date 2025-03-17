@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -22,6 +21,7 @@ const fetchPrograms = async (): Promise<Program[]> => {
       maxStudents: 20,
       minStudents: 5,
       price: 1500,
+      lvl: "Advanced",
     },
     {
       id: "2",
@@ -32,6 +32,7 @@ const fetchPrograms = async (): Promise<Program[]> => {
       maxStudents: 30,
       minStudents: 10,
       price: 800,
+      lvl: "Basic",
     },
     {
       id: "3",
@@ -42,6 +43,7 @@ const fetchPrograms = async (): Promise<Program[]> => {
       maxStudents: 25,
       minStudents: 8,
       price: 600,
+      lvl: "Intermediate",
     },
   ];
 };

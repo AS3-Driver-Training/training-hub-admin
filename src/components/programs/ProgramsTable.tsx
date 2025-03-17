@@ -45,6 +45,7 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>SKU</TableHead>
+            <TableHead>Level</TableHead>
             <TableHead>Duration (Days)</TableHead>
             <TableHead>Min Students</TableHead>
             <TableHead>Max Students</TableHead>
@@ -55,7 +56,7 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
         <TableBody>
           {programs.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-6">
+              <TableCell colSpan={8} className="text-center py-6">
                 No programs found. Create your first program to get started.
               </TableCell>
             </TableRow>
@@ -64,6 +65,7 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
               <TableRow key={program.id}>
                 <TableCell className="font-medium">{program.name}</TableCell>
                 <TableCell>{program.sku}</TableCell>
+                <TableCell>{program.lvl}</TableCell>
                 <TableCell>{program.durationDays}</TableCell>
                 <TableCell>{program.minStudents}</TableCell>
                 <TableCell>{program.maxStudents}</TableCell>

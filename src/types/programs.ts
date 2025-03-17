@@ -8,4 +8,5 @@ export interface Program {
   maxStudents: number;
   minStudents: number;
   price: number;
+  lvl: string; // Adding the level field
 }

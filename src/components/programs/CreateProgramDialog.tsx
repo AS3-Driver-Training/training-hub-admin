@@ -7,7 +7,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from "@/components/ui/form";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { Program } from "@/types/programs";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,6 +33,7 @@ const programSchema = z.object({
   maxStudents: z.coerce.number().min(1, "Maximum students must be at least 1"),
   minStudents: z.coerce.number().min(1, "Minimum students must be at least 1"),
   price: z.coerce.number().min(0, "Price must be a positive number"),
+  lvl: z.string().min(1, "Level is required"),
 });
 
 type ProgramFormValues = z.infer<typeof programSchema>;
@@ -44,6 +59,7 @@ export function CreateProgramDialog({ open, onClose, program }: CreateProgramDia
       maxStudents: 20,
       minStudents: 5,
       price: 0,
+      lvl: "Basic",
     },
   });
 
@@ -132,6 +148,32 @@ export function CreateProgramDialog({ open, onClose, program }: CreateProgramDia
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
+                name="lvl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Level</FormLabel>
+                    <FormControl>
+                      <Select 
+                        value={field.value} 
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Basic">Basic</SelectItem>
+                          <SelectItem value="Intermediate">Intermediate</SelectItem>
+                          <SelectItem value="Advanced">Advanced</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
                 name="durationDays"
                 render={({ field }) => (
                   <FormItem>
@@ -143,23 +185,9 @@ export function CreateProgramDialog({ open, onClose, program }: CreateProgramDia
                   </FormItem>
                 )}
               />
-              
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price ($)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="minStudents"
@@ -182,6 +210,20 @@ export function CreateProgramDialog({ open, onClose, program }: CreateProgramDia
                     <FormLabel>Maximum Students</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Price ($)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

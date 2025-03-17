@@ -235,6 +235,7 @@ export type Database = {
           description: string | null
           duration_days: number | null
           id: number
+          lvl: string
           max_students: number | null
           min_students: number | null
           name: string
@@ -247,6 +248,7 @@ export type Database = {
           description?: string | null
           duration_days?: number | null
           id?: number
+          lvl?: string
           max_students?: number | null
           min_students?: number | null
           name: string
@@ -259,6 +261,7 @@ export type Database = {
           description?: string | null
           duration_days?: number | null
           id?: number
+          lvl?: string
           max_students?: number | null
           min_students?: number | null
           name?: string
