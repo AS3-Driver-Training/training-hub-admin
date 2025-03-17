@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -15,6 +15,24 @@ import { Loader2 } from "lucide-react";
 
 // This should be loaded from environment variables in a real app
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCu7aCPjM539cGuK3ng2TXDvYcVkLJ1Pi4';
+
+// Add Google Maps type definitions for TypeScript
+declare global {
+  interface Window {
+    google: {
+      maps: {
+        places: {
+          Autocomplete: new (
+            input: HTMLInputElement,
+            options?: google.maps.places.AutocompleteOptions
+          ) => google.maps.places.Autocomplete;
+        };
+        Map: any;
+      };
+    };
+    initGoogleMapsCallback: () => void;
+  }
+}
 
 const venueSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -38,7 +56,7 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
   const [scriptError, setScriptError] = useState<string | null>(null);
   const { toast } = useToast();
   const isEditing = !!venue;
-  const autoCompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const autoCompleteRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<VenueFormValues>({
@@ -56,25 +74,31 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
   useEffect(() => {
     if (!open) return;
 
+    // Define callback for when Google Maps script loads
+    window.initGoogleMapsCallback = () => {
+      console.log("Google Maps API loaded successfully");
+      setIsLoadingScript(false);
+      initializeAutocomplete();
+    };
+
     // Check if Google Maps script is already loaded
     if (window.google && window.google.maps && window.google.maps.places) {
+      console.log("Google Maps API already loaded");
       initializeAutocomplete();
       return;
     }
 
+    console.log("Loading Google Maps API script...");
     setIsLoadingScript(true);
+    
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=initGoogleMapsCallback`;
     script.async = true;
     script.defer = true;
-    script.onload = () => {
-      setIsLoadingScript(false);
-      initializeAutocomplete();
-    };
     script.onerror = () => {
+      console.error("Google Maps script failed to load");
       setIsLoadingScript(false);
       setScriptError("Failed to load Google Maps. You can still enter address manually.");
-      console.error("Google Maps script failed to load");
     };
 
     document.head.appendChild(script);
@@ -84,65 +108,86 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
       if (document.head.contains(script)) {
         document.head.removeChild(script);
       }
+      // Clean up global callback
+      if (window.initGoogleMapsCallback) {
+        delete window.initGoogleMapsCallback;
+      }
     };
   }, [open]);
 
   const initializeAutocomplete = () => {
-    if (!inputRef.current || !window.google) return;
+    if (!inputRef.current || !window.google || !window.google.maps || !window.google.maps.places) {
+      console.warn("Cannot initialize Google Places Autocomplete - dependencies not loaded");
+      return;
+    }
 
-    // Initialize Google Places Autocomplete
-    autoCompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
-      fields: ["address_components", "formatted_address", "geometry", "name"],
-      types: ["establishment", "geocode"],
-    });
+    console.log("Initializing Google Places Autocomplete");
+    try {
+      // Initialize Google Places Autocomplete
+      autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+        fields: ["address_components", "formatted_address", "geometry", "name"],
+        types: ["establishment", "geocode"],
+      });
 
-    // Add listener for place selection
-    autoCompleteRef.current.addListener("place_changed", () => {
-      const place = autoCompleteRef.current?.getPlace();
-      
-      if (!place || !place.geometry) {
-        console.warn("No place details available");
-        return;
-      }
+      // Add listener for place selection
+      autoCompleteRef.current.addListener("place_changed", () => {
+        const place = autoCompleteRef.current.getPlace();
+        console.log("Selected place:", place);
+        
+        if (!place || !place.geometry) {
+          console.warn("No place details available");
+          return;
+        }
 
-      // Extract address components
-      let region = "";
-      let formattedAddress = place.formatted_address || "";
-      
-      // Attempt to extract region (administrative_area_level_1)
-      if (place.address_components) {
-        for (const component of place.address_components) {
-          if (component.types.includes("administrative_area_level_1")) {
-            region = component.long_name;
-            break;
+        // Extract address components
+        let region = "";
+        let formattedAddress = place.formatted_address || "";
+        
+        // Attempt to extract region (administrative_area_level_1)
+        if (place.address_components) {
+          for (const component of place.address_components) {
+            if (component.types.includes("administrative_area_level_1")) {
+              region = component.long_name;
+              break;
+            }
           }
         }
-      }
 
-      // Format latitude and longitude
-      const lat = place.geometry.location?.lat();
-      const lng = place.geometry.location?.lng();
-      const googleLocation = lat && lng ? `${lat},${lng}` : "";
+        // Format latitude and longitude
+        const lat = place.geometry.location?.lat();
+        const lng = place.geometry.location?.lng();
+        const googleLocation = lat && lng ? `${lat},${lng}` : "";
 
-      // Generate a short name if none exists (use first part of name or address)
-      const placeName = place.name || "";
-      const suggestedShortName = form.getValues("shortName") || 
-        placeName.split(" ")[0] || 
-        formattedAddress.split(",")[0] || 
-        "";
+        // Generate a short name if none exists (use first part of name or address)
+        const placeName = place.name || "";
+        const suggestedShortName = form.getValues("shortName") || 
+          placeName.split(" ")[0] || 
+          formattedAddress.split(",")[0] || 
+          "";
 
-      // Update form fields
-      form.setValue("address", formattedAddress);
-      form.setValue("googleLocation", googleLocation);
+        // Update form fields
+        form.setValue("address", formattedAddress);
+        form.setValue("googleLocation", googleLocation);
+        
+        if (region) {
+          form.setValue("region", region);
+        }
+        
+        if (!form.getValues("shortName") && suggestedShortName) {
+          form.setValue("shortName", suggestedShortName);
+        }
+
+        // If venue name is not set and we have a place name, suggest it
+        if (!form.getValues("name") && placeName) {
+          form.setValue("name", placeName);
+        }
+      });
       
-      if (region) {
-        form.setValue("region", region);
-      }
-      
-      if (!form.getValues("shortName") && suggestedShortName) {
-        form.setValue("shortName", suggestedShortName);
-      }
-    });
+      console.log("Google Places Autocomplete initialized successfully");
+    } catch (error) {
+      console.error("Error initializing Google Places Autocomplete:", error);
+      setScriptError("Error initializing Google Places. You can still enter address manually.");
+    }
   };
 
   const onSubmit = async (data: VenueFormValues) => {
@@ -198,6 +243,9 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Edit Venue" : "Create New Venue"}</DialogTitle>
+          <DialogDescription>
+            Search for a venue or enter details manually.
+          </DialogDescription>
         </DialogHeader>
         
         {scriptError && (
@@ -257,7 +305,7 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
                       {...field} 
                       ref={(e) => {
                         inputRef.current = e;
-                        field.ref(e);
+                        if (e) field.ref(e);
                       }}
                     />
                   </FormControl>
