@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 
 interface ProgramsTableProps {
@@ -25,6 +26,7 @@ interface ProgramsTableProps {
 export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [programToDelete, setProgramToDelete] = useState<Program | null>(null);
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
 
   const handleDeleteClick = (program: Program) => {
     setProgramToDelete(program);
@@ -39,7 +41,22 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
     }
   };
 
-  // Helper function to get badge color based on level
+  const toggleProgramSelection = (programId: string) => {
+    setSelectedPrograms(prev => 
+      prev.includes(programId) 
+        ? prev.filter(id => id !== programId) 
+        : [...prev, programId]
+    );
+  };
+
+  const toggleAllPrograms = () => {
+    if (selectedPrograms.length === programs.length) {
+      setSelectedPrograms([]);
+    } else {
+      setSelectedPrograms(programs.map(p => p.id));
+    }
+  };
+
   const getLevelBadgeVariant = (level: string): "default" | "secondary" | "outline" => {
     switch(level) {
       case "Basic": return "default";
@@ -51,55 +68,95 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-1/3">Program</TableHead>
-            <TableHead className="w-1/3">Details</TableHead>
-            <TableHead className="w-1/3 text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {programs.length === 0 ? (
+      <div className="border rounded-md">
+        <Table>
+          <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableCell colSpan={3} className="text-center py-6">
-                No programs found. Create your first program to get started.
-              </TableCell>
+              <TableHead className="w-[50px]">
+                <Checkbox 
+                  checked={selectedPrograms.length === programs.length && programs.length > 0}
+                  indeterminate={selectedPrograms.length > 0 && selectedPrograms.length < programs.length}
+                  onCheckedChange={toggleAllPrograms}
+                  aria-label="Select all programs"
+                />
+              </TableHead>
+              <TableHead className="w-[40%]">Program Information</TableHead>
+              <TableHead className="w-[30%]">Contact</TableHead>
+              <TableHead className="w-[20%]">Organization</TableHead>
+              <TableHead className="w-[70px]">Status</TableHead>
+              <TableHead className="w-[100px] text-right">Actions</TableHead>
             </TableRow>
-          ) : (
-            programs.map((program) => (
-              <TableRow key={program.id}>
-                <TableCell>
-                  <div className="font-medium">{program.name}</div>
-                  <div className="text-sm text-muted-foreground">{program.sku}</div>
-                  <div className="mt-1">
-                    <Badge variant={getLevelBadgeVariant(program.lvl)}>
-                      LVL{program.lvl === "Basic" ? "1" : program.lvl === "Intermediate" ? "2" : "3"}
-                    </Badge>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-col gap-1 text-sm">
-                    <div>Duration: {program.durationDays} days</div>
-                    <div>Students: {program.minStudents} - {program.maxStudents}</div>
-                    <div>Price: ${program.price.toLocaleString()}</div>
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => onEdit(program)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(program)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
+          </TableHeader>
+          <TableBody>
+            {programs.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-6">
+                  No programs found. Create your first program to get started.
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : (
+              programs.map((program) => (
+                <TableRow key={program.id} className="border-t">
+                  <TableCell>
+                    <Checkbox 
+                      checked={selectedPrograms.includes(program.id)} 
+                      onCheckedChange={() => toggleProgramSelection(program.id)}
+                      aria-label={`Select ${program.name}`}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium">{program.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      SKU: {program.sku}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      ID: {program.id.substring(0, 6)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      <div className="font-medium">
+                        Duration: {program.durationDays} days
+                      </div>
+                      <div className="text-muted-foreground">
+                        Students: {program.minStudents} - {program.maxStudents}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <div>
+                        Group: <span className="text-muted-foreground">
+                          {program.lvl === "Basic" ? "Beginner" : 
+                           program.lvl === "Intermediate" ? "Standard" : "Advanced"}
+                        </span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant="secondary" 
+                      className="bg-orange-100 text-orange-800 hover:bg-orange-100 hover:text-orange-800"
+                    >
+                      Active
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => onEdit(program)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(program)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
