@@ -10,15 +10,15 @@ interface LocationFieldsProps {
 
 export function LocationFields({ form }: LocationFieldsProps) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <FormField
         control={form.control}
-        name="googleLocation"
+        name="region"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Google Location</FormLabel>
+            <FormLabel>Region</FormLabel>
             <FormControl>
-              <Input placeholder="Latitude, Longitude" {...field} />
+              <Input placeholder="Region or State" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -27,12 +27,31 @@ export function LocationFields({ form }: LocationFieldsProps) {
       
       <FormField
         control={form.control}
-        name="region"
+        name="country"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Region</FormLabel>
+            <FormLabel>Country</FormLabel>
             <FormControl>
-              <Input placeholder="Region" {...field} />
+              <Input placeholder="Country" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={form.control}
+        name="googleLocation"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Google Location</FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="Latitude, Longitude" 
+                {...field} 
+                className="bg-slate-50"
+                readOnly
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

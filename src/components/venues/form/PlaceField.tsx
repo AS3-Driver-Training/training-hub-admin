@@ -2,7 +2,7 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { HelpCircle } from "lucide-react";
+import { MapPin, Search } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { VenueFormValues } from "./VenueFormSchema";
 import { 
@@ -13,31 +13,31 @@ import {
 } from "@/components/ui/tooltip";
 import { RefObject } from "react";
 
-interface AddressFieldProps {
+interface PlaceFieldProps {
   form: UseFormReturn<VenueFormValues>;
   inputRef: RefObject<HTMLInputElement>;
   scriptError: string | null;
   resetAutocomplete: () => void;
 }
 
-export function AddressField({ form, inputRef, scriptError, resetAutocomplete }: AddressFieldProps) {
+export function PlaceField({ form, inputRef, scriptError, resetAutocomplete }: PlaceFieldProps) {
   const handleInputRef = (element: HTMLInputElement | null) => {
     if (element) {
       // Use this pattern to avoid the read-only property error
       inputRef.current = element;
       // Also assign to the field ref
-      form.register("address").ref(element);
+      form.register("place").ref(element);
     }
   };
 
   return (
     <FormField
       control={form.control}
-      name="address"
+      name="place"
       render={({ field }) => (
         <FormItem>
           <div className="flex items-center justify-between">
-            <FormLabel>Address</FormLabel>
+            <FormLabel>Place</FormLabel>
             {!scriptError && (
               <TooltipProvider>
                 <Tooltip>
@@ -49,14 +49,14 @@ export function AddressField({ form, inputRef, scriptError, resetAutocomplete }:
                       className="h-6 px-2 text-muted-foreground"
                       onClick={() => resetAutocomplete()}
                     >
-                      <HelpCircle className="h-4 w-4 mr-1" />
-                      <span className="text-xs">Auto-populated from Place</span>
+                      <Search className="h-4 w-4 mr-1" />
+                      <span className="text-xs">Start typing to search</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs text-xs">
-                      This field is auto-populated based on the Place selection.
-                      You can edit it manually if needed.
+                      Type to search for a venue by name or address.
+                      Select a result to automatically fill in location details.
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -64,18 +64,19 @@ export function AddressField({ form, inputRef, scriptError, resetAutocomplete }:
             )}
           </div>
           <FormControl>
-            <Input 
-              placeholder={scriptError ? "Enter address manually" : "Address will be auto-populated"} 
-              {...field} 
-              ref={handleInputRef}
-              className="bg-slate-50"
-              readOnly={!scriptError}
-            />
+            <div className="relative">
+              <Input 
+                placeholder={scriptError ? "Enter place name manually" : "Search for a venue or place"} 
+                {...field} 
+                ref={handleInputRef}
+              />
+              <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            </div>
           </FormControl>
           <FormMessage />
           {!scriptError && (
             <p className="text-xs text-muted-foreground">
-              This field is filled automatically from your Place selection
+              Type to search for a place name, venue, or landmark
             </p>
           )}
         </FormItem>

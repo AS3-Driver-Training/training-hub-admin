@@ -10,17 +10,25 @@ interface VenueDetailsFieldsProps {
 
 export function VenueDetailsFields({ form }: VenueDetailsFieldsProps) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <FormField
         control={form.control}
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Name</FormLabel>
+            <FormLabel>Name (Optional)</FormLabel>
             <FormControl>
-              <Input placeholder="Venue name" {...field} />
+              <Input 
+                placeholder="Venue name (auto-populated)" 
+                {...field} 
+                value={field.value || ""}
+                className="bg-slate-50"
+              />
             </FormControl>
             <FormMessage />
+            <p className="text-xs text-muted-foreground">
+              Auto-populated from Place, can be edited
+            </p>
           </FormItem>
         )}
       />

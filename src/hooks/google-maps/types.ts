@@ -19,9 +19,11 @@ declare global {
 }
 
 export interface GooglePlaceData {
+  place: string;
   address: string;
   googleLocation: string;
   region: string;
+  country: string;
   placeName: string;
 }
 
@@ -35,4 +37,3 @@ export interface UseGooglePlacesReturn {
   scriptError: string | null;
   resetAutocomplete: () => void;
 }
-

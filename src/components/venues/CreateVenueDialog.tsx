@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Venue } from "@/types/venues";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { VenueForm, VenueFormValues } from "@/components/venues/VenueForm";
+import { VenueForm } from "@/components/venues/VenueForm";
+import { VenueFormValues } from "@/components/venues/form/VenueFormSchema";
 
 interface CreateVenueDialogProps {
   open: boolean;
@@ -18,23 +19,34 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
   const { toast } = useToast();
   const isEditing = !!venue;
   
-  const defaultValues = venue || {
+  const defaultValues: VenueFormValues = venue ? {
+    place: venue.name || "",
+    name: venue.name || "",
+    shortName: venue.short_name || "",
+    address: venue.address || "",
+    googleLocation: venue.google_location || "",
+    region: venue.region || "",
+    country: ""
+  } : {
+    place: "",
     name: "",
     shortName: "",
     address: "",
     googleLocation: "",
     region: "",
+    country: ""
   };
 
   const handleSubmit = async (data: VenueFormValues) => {
     setIsSubmitting(true);
     try {
       const venueData = {
-        name: data.name,
+        name: data.name || data.place, // Fallback to place if name is empty
         short_name: data.shortName,
         address: data.address,
         google_location: data.googleLocation,
-        region: data.region,
+        region: data.region
+        // We don't save country in the current DB schema
       };
       
       let result;

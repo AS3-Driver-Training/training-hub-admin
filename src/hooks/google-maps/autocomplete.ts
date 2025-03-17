@@ -18,6 +18,7 @@ export const initializeAutocomplete = (
   console.log("Initializing Google Places Autocomplete");
   try {
     // Initialize Google Places Autocomplete
+    // Using a non-null assertion because we've checked above that inputRef.current exists
     autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
       fields: ["address_components", "formatted_address", "geometry", "name"],
       types: ["establishment", "geocode"],
@@ -43,14 +44,19 @@ export const initializeAutocomplete = (
 
         // Extract address components
         let region = "";
+        let country = "";
         let formattedAddress = place.formatted_address || "";
         
-        // Attempt to extract region (administrative_area_level_1)
+        // Extract components from address_components
         if (place.address_components) {
           for (const component of place.address_components) {
+            // Get region (state/province)
             if (component.types.includes("administrative_area_level_1")) {
               region = component.long_name;
-              break;
+            }
+            // Get country
+            if (component.types.includes("country")) {
+              country = component.long_name;
             }
           }
         }
@@ -64,9 +70,11 @@ export const initializeAutocomplete = (
 
         if (onPlaceSelect) {
           onPlaceSelect({
+            place: placeName,
             address: formattedAddress,
             googleLocation,
             region,
+            country,
             placeName
           });
         }
@@ -82,4 +90,3 @@ export const initializeAutocomplete = (
     setScriptError("Error initializing Google Places. Please enter address manually.");
   }
 };
-
