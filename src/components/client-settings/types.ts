@@ -22,11 +22,15 @@ export interface ClientSettingsData {
   groups: GroupData[];
 }
 
-export interface GroupData {
+// Define a common base interface to align both Group types
+interface GroupBase {
   id: string;
   name: string;
   description: string;
   is_default: boolean;
+}
+
+export interface GroupData extends GroupBase {
   client_id?: string;
   teams: TeamData[];
 }
@@ -60,12 +64,8 @@ export interface UserData {
   teams: Team[];
 }
 
-// Make Group and Team compatible with GroupData and TeamData
-export interface Group {
-  id: string;
-  name: string;
-  is_default: boolean;
-  description?: string;
+// Make Group compatible with GroupData
+export interface Group extends GroupBase {
   client_id: string;
   teams?: Team[];
 }

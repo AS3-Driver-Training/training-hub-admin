@@ -8,7 +8,7 @@ const applyAutocompleteStyles = () => {
   styleElement.id = 'google-places-autocomplete-styles';
   styleElement.textContent = `
     .pac-container {
-      z-index: 9999 !important;
+      z-index: 99999 !important;
       position: absolute !important;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
       pointer-events: auto !important;
@@ -20,8 +20,7 @@ const applyAutocompleteStyles = () => {
     .pac-item:hover {
       background-color: #f8f9fa !important;
     }
-    /* Prevent clicks on pac-container from closing dialogs */
-    .pac-container, .pac-item, .pac-item span {
+    .pac-item *, .pac-item-query, .pac-matched, .pac-icon {
       pointer-events: auto !important;
     }
     /* Force the pac-container to appear above dialogs */
@@ -57,30 +56,30 @@ const pacContainerHandler = (e: any) => {
     e.target.style.cssText = 'z-index: 99999 !important; position: absolute !important; pointer-events: auto !important;';
     
     // Make sure clicks on dropdown items work
-    const items = e.target.querySelectorAll('.pac-item');
+    const items = e.target.querySelectorAll('.pac-item, .pac-item-query, .pac-icon, .pac-item *');
     items.forEach((item: HTMLElement) => {
       item.style.cssText = 'pointer-events: auto !important; cursor: pointer !important;';
       
-      // Add direct click handlers to each item to prevent event propagation
-      item.addEventListener('mousedown', (evt) => {
-        evt.stopPropagation();
-      });
-      
-      item.addEventListener('click', (evt) => {
+      // Add direct event listeners to each item
+      const stopEvents = (evt: Event) => {
         evt.stopPropagation();
         evt.preventDefault();
-      });
+      };
+      
+      item.addEventListener('mousedown', stopEvents, true);
+      item.addEventListener('click', stopEvents, true);
+      item.addEventListener('pointerdown', stopEvents, true);
     });
     
-    // Add a global click handler to the container itself
-    e.target.addEventListener('mousedown', (evt: Event) => {
-      evt.stopPropagation();
-    });
-    
-    e.target.addEventListener('click', (evt: Event) => {
+    // Add event listeners to the container itself
+    const stopEvents = (evt: Event) => {
       evt.stopPropagation();
       evt.preventDefault();
-    });
+    };
+    
+    e.target.addEventListener('mousedown', stopEvents, true);
+    e.target.addEventListener('click', stopEvents, true);
+    e.target.addEventListener('pointerdown', stopEvents, true);
   }
 };
 
@@ -103,35 +102,30 @@ export function initializeAutocomplete(
     // Setup DOM observer for pac-container
     setupPacContainerObserver();
     
-    // Prevent other click handlers from interfering
-    const clickHandler = (e: Event) => {
-      e.stopPropagation();
-      e.preventDefault();
-      
-      // Ensure the input retains focus
-      inputElement.focus();
-    };
-    
-    // Clear previous handlers to prevent duplicates
-    inputElement.removeEventListener('click', clickHandler);
-    inputElement.addEventListener('click', clickHandler);
-    
-    // Add mousedown handler to prevent focus stealing
-    const mousedownHandler = (e: Event) => {
-      e.stopPropagation();
-    };
-    
-    inputElement.removeEventListener('mousedown', mousedownHandler);
-    inputElement.addEventListener('mousedown', mousedownHandler);
-    
-    // Create the autocomplete object
+    // Create the autocomplete object with delayed timeout to ensure proper initialization
     const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
       types: ['establishment', 'geocode'],
       fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id']
     });
-
+    
+    // Prevent other click handlers from interfering
+    const preventDialogClose = (e: Event) => {
+      e.stopPropagation();
+      e.preventDefault();
+    };
+    
+    // Clear previous handlers to prevent duplicates
+    inputElement.removeEventListener('click', preventDialogClose, true);
+    inputElement.addEventListener('click', preventDialogClose, true);
+    
+    inputElement.removeEventListener('mousedown', preventDialogClose, true);
+    inputElement.addEventListener('mousedown', preventDialogClose, true);
+    
+    inputElement.removeEventListener('pointerdown', preventDialogClose, true);
+    inputElement.addEventListener('pointerdown', preventDialogClose, true);
+    
     // Set up the place changed listener
-    const listener = autocomplete.addListener('place_changed', () => {
+    autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();
       
       console.log("Place selected:", place);
@@ -177,7 +171,6 @@ export function initializeAutocomplete(
       onPlaceSelect(placeData);
     });
 
-    // Return the autocomplete instance for later cleanup
     return autocomplete;
   } catch (error) {
     console.error("Error initializing autocomplete:", error);

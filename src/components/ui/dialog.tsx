@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
@@ -11,6 +10,21 @@ const DialogTrigger = DialogPrimitive.Trigger
 const DialogPortal = DialogPrimitive.Portal
 const DialogClose = DialogPrimitive.Close
 
+// Function to check if element is part of Google Places autocomplete
+const isGooglePlacesElement = (target: HTMLElement | null): boolean => {
+  if (!target) return false;
+  return (
+    target.classList.contains('pac-container') || 
+    target.closest('.pac-container') ||
+    target.classList.contains('pac-item') || 
+    target.closest('.pac-item') ||
+    target.classList.contains('pac-item-query') ||
+    target.closest('.pac-item-query') ||
+    target.classList.contains('pac-icon') ||
+    target.closest('.pac-icon')
+  );
+};
+
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -22,6 +36,17 @@ const DialogOverlay = React.forwardRef<
       className
     )}
     {...props}
+    onClick={(e) => {
+      // Prevent clicks on Google Places elements from closing the dialog
+      if (isGooglePlacesElement(e.target as HTMLElement)) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+      // Let the original click handler run otherwise
+      if (props.onClick) {
+        props.onClick(e);
+      }
+    }}
   />
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
@@ -30,17 +55,16 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  // Add a click handler for the content that checks if we're clicking on a Google autocomplete element
-  const handleContentClick = (e: React.MouseEvent) => {
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  
+  // Handle clicks on the content to prevent dialog closing when clicking Google autocomplete
+  const handleContentEvent = (e: React.MouseEvent | React.PointerEvent) => {
     const target = e.target as HTMLElement;
-    // Check if the click is on or inside a pac-container
-    if (
-      target.classList.contains('pac-container') || 
-      target.closest('.pac-container') ||
-      target.classList.contains('pac-item') || 
-      target.closest('.pac-item')
-    ) {
+    
+    // Check if the click is on or inside a Google Places element
+    if (isGooglePlacesElement(target)) {
       e.stopPropagation();
+      return false;
     }
   };
 
@@ -48,13 +72,21 @@ const DialogContent = React.forwardRef<
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
-        ref={ref}
+        ref={(el) => {
+          // Pass the ref to both react-hook-form ref and our local ref
+          if (typeof ref === 'function') {
+            ref(el);
+          } else if (ref) {
+            ref.current = el;
+          }
+          contentRef.current = el;
+        }}
         className={cn(
           "fixed left-[50%] top-[50%] z-[9100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg md:w-full",
           className
         )}
-        onClick={handleContentClick}
-        onMouseDown={handleContentClick}
+        onClick={handleContentEvent}
+        onPointerDown={handleContentEvent}
         {...props}
       >
         {children}
@@ -123,7 +155,6 @@ const DialogDescription = React.forwardRef<
 ))
 DialogDescription.displayName = DialogPrimitive.Description.displayName
 
-// Updated DialogProvider to wrap children with proper context
 const DialogProvider = ({ children }: { children: React.ReactNode }) => {
   return children;
 };
@@ -134,7 +165,33 @@ interface DialogProps extends React.ComponentPropsWithoutRef<typeof DialogRoot> 
 }
 
 // Properly implement the Dialog component as a wrapper around DialogRoot
+// with additional Google Places autocomplete handling
 function Dialog({ children, ...props }: DialogProps) {
+  const handleDialogEvents = React.useCallback((e: MouseEvent | KeyboardEvent) => {
+    // Check if event target is a Google Places element
+    const target = e.target as HTMLElement;
+    if (isGooglePlacesElement(target)) {
+      e.stopPropagation();
+      if (e.type === 'click' || e.type === 'mousedown') {
+        e.preventDefault();
+      }
+    }
+  }, []);
+
+  // Add global event listeners when dialog is open
+  React.useEffect(() => {
+    if (props.open) {
+      // Use capture phase to intercept events before they reach radix dialog
+      document.addEventListener('mousedown', handleDialogEvents, true);
+      document.addEventListener('click', handleDialogEvents, true);
+      
+      return () => {
+        document.removeEventListener('mousedown', handleDialogEvents, true);
+        document.removeEventListener('click', handleDialogEvents, true);
+      };
+    }
+  }, [props.open, handleDialogEvents]);
+
   return (
     <DialogRoot {...props}>
       {children}
@@ -142,7 +199,7 @@ function Dialog({ children, ...props }: DialogProps) {
   );
 }
 
-// Export all components, both primitives and our custom wrapper
+// Export all components
 export {
   Dialog,
   DialogRoot,

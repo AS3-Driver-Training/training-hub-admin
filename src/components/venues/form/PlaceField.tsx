@@ -40,47 +40,27 @@ export function PlaceField({
   // Use useLayoutEffect to ensure the input element has the proper stacking context
   useLayoutEffect(() => {
     if (inputRef.current) {
-      // Add event listeners to stop propagation and prevent default
-      const handleClick = (e: Event) => {
+      // Add event listeners to stop propagation and prevent default to avoid dialog closing
+      const handleEvent = (e: Event) => {
         e.stopPropagation();
         e.preventDefault();
       };
       
-      const handleMouseDown = (e: Event) => {
-        e.stopPropagation();
-      };
-      
-      inputRef.current.addEventListener('click', handleClick);
-      inputRef.current.addEventListener('mousedown', handleMouseDown);
-      
-      // Add a global handler for pac-container clicks to prevent dialog close
-      const handleDocumentClick = (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        if (target && (
-            target.classList.contains('pac-container') || 
-            target.closest('.pac-container') || 
-            target.classList.contains('pac-item') || 
-            target.closest('.pac-item')
-          )) {
-          e.stopPropagation();
-          e.preventDefault();
-        }
-      };
-      
-      document.addEventListener('click', handleDocumentClick, true);
-      document.addEventListener('mousedown', handleDocumentClick, true);
+      // Attach all event listeners with capture phase (true) to ensure they run first
+      inputRef.current.addEventListener('click', handleEvent, true);
+      inputRef.current.addEventListener('mousedown', handleEvent, true);
+      inputRef.current.addEventListener('pointerdown', handleEvent, true);
       
       // Add inline styles to ensure proper stacking and event handling
       inputRef.current.style.position = 'relative';
-      inputRef.current.style.zIndex = '9000';
+      inputRef.current.style.zIndex = '9999';
       
       return () => {
         if (inputRef.current) {
-          inputRef.current.removeEventListener('click', handleClick);
-          inputRef.current.removeEventListener('mousedown', handleMouseDown);
+          inputRef.current.removeEventListener('click', handleEvent, true);
+          inputRef.current.removeEventListener('mousedown', handleEvent, true);
+          inputRef.current.removeEventListener('pointerdown', handleEvent, true);
         }
-        document.removeEventListener('click', handleDocumentClick, true);
-        document.removeEventListener('mousedown', handleDocumentClick, true);
       };
     }
   }, [inputRef]);
@@ -94,13 +74,31 @@ export function PlaceField({
     }
   };
 
+  // Explicitly prevent propagation for all input container events
+  const preventPropagation = (e: React.MouseEvent | React.PointerEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
   return (
-    <div className="relative space-y-2 z-[9000]" style={{ position: 'relative' }}>
+    <div 
+      className="relative space-y-2 z-[9999]" 
+      style={{ position: 'relative' }}
+      onClick={preventPropagation}
+      onMouseDown={preventPropagation}
+      onPointerDown={preventPropagation}
+    >
       <Label htmlFor="place" className={isRequired ? "after:content-['*'] after:ml-0.5 after:text-red-500" : ""}>
         Place Name
       </Label>
       
-      <div className="relative" style={{ position: 'relative', zIndex: 9000 }}>
+      <div 
+        className="relative" 
+        style={{ position: 'relative', zIndex: 9999 }}
+        onClick={preventPropagation}
+        onMouseDown={preventPropagation}
+        onPointerDown={preventPropagation}
+      >
         <Input
           id="place"
           ref={inputRef}
@@ -110,7 +108,10 @@ export function PlaceField({
           className="pr-8"
           required={isRequired}
           autoComplete="off"
-          style={{ position: 'relative', zIndex: 9000 }}
+          style={{ position: 'relative', zIndex: 9999 }}
+          onClick={preventPropagation}
+          onMouseDown={preventPropagation}
+          onPointerDown={preventPropagation}
         />
         
         {/* Loading indicator */}

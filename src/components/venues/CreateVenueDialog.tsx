@@ -94,9 +94,21 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
       setIsSubmitting(false);
     }
   };
+  
+  // Prevent dialog from closing when clicking on Google Places elements
+  const handleDialogOpenChange = (open: boolean) => {
+    // Only close the dialog if it's an intentional close action
+    // that doesn't come from clicking on Google Places elements
+    if (!open) {
+      const isGooglePlacesEvent = document.querySelector('.pac-container') !== null;
+      if (!isGooglePlacesEvent) {
+        onClose();
+      }
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Edit Venue" : "Create New Venue"}</DialogTitle>
