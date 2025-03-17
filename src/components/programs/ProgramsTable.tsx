@@ -71,8 +71,8 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead className="w-[60%]">Program</TableHead>
-              <TableHead className="w-[25%]">Duration</TableHead>
+              <TableHead className="w-[70%]">Program</TableHead>
+              <TableHead className="w-[15%]">Duration</TableHead>
               <TableHead className="w-[15%] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -88,8 +88,8 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
                 <TableRow key={program.id} className="border-t">
                   <TableCell>
                     <div className="space-y-2">
-                      <div className="font-semibold text-base">{program.name}</div>
-                      <div className="flex flex-wrap items-center gap-3 text-sm">
+                      <div className="font-semibold text-base truncate max-w-full">{program.name}</div>
+                      <div className="flex flex-wrap items-center gap-2 text-sm">
                         <Badge 
                           variant="secondary" 
                           className={getLevelBadgeColor(program.lvl)}
