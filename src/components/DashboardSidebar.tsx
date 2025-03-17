@@ -28,7 +28,7 @@ const menuItems: MenuItem[] = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
-    path: "/",
+    path: "/dashboard",
   },
   {
     title: "Clients",

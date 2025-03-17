@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import Auth from "@/pages/Auth";
 import Index from "@/pages/Index";
+import Events from "@/pages/Events";
 import Settings from "@/pages/Settings";
 import ClientSettings from "@/pages/ClientSettings";
 import Clients from "@/pages/Clients";
@@ -21,6 +22,7 @@ function App() {
           <Route path="/" element={<Navigate to="/dashboard" />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Index />} />
+          <Route path="/events" element={<Events />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/clients" element={<Clients />} />
