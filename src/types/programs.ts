@@ -8,5 +8,5 @@ export interface Program {
   maxStudents: number;
   minStudents: number;
   price: number;
-  lvl: string; // Adding the level field
+  lvl: string; // Using string type for level values (Basic, Intermediate, Advanced)
 }
