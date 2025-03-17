@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
@@ -15,13 +16,13 @@ const isGooglePlacesElement = (target: HTMLElement | null): boolean => {
   if (!target) return false;
   return (
     target.classList.contains('pac-container') || 
-    target.closest('.pac-container') ||
+    target.closest('.pac-container') !== null ||
     target.classList.contains('pac-item') || 
-    target.closest('.pac-item') ||
+    target.closest('.pac-item') !== null ||
     target.classList.contains('pac-item-query') ||
-    target.closest('.pac-item-query') ||
+    target.closest('.pac-item-query') !== null ||
     target.classList.contains('pac-icon') ||
-    target.closest('.pac-icon')
+    target.closest('.pac-icon') !== null
   );
 };
 
@@ -64,7 +65,7 @@ const DialogContent = React.forwardRef<
     // Check if the click is on or inside a Google Places element
     if (isGooglePlacesElement(target)) {
       e.stopPropagation();
-      return false;
+      return;
     }
   };
 
@@ -154,10 +155,6 @@ const DialogDescription = React.forwardRef<
   />
 ))
 DialogDescription.displayName = DialogPrimitive.Description.displayName
-
-const DialogProvider = ({ children }: { children: React.ReactNode }) => {
-  return children;
-};
 
 // Define Dialog props interface using DialogRoot
 interface DialogProps extends React.ComponentPropsWithoutRef<typeof DialogRoot> {

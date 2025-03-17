@@ -8,8 +8,8 @@ const applyAutocompleteStyles = () => {
   styleElement.id = 'google-places-autocomplete-styles';
   styleElement.textContent = `
     .pac-container {
-      z-index: 99999 !important;
-      position: absolute !important;
+      z-index: 999999 !important; /* Extremely high z-index */
+      position: absolute !important; 
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
       pointer-events: auto !important;
     }
@@ -25,7 +25,7 @@ const applyAutocompleteStyles = () => {
     }
     /* Force the pac-container to appear above dialogs */
     body > .pac-container {
-      z-index: 99999 !important;
+      z-index: 999999 !important;
     }
   `;
   
@@ -52,34 +52,42 @@ const pacContainerHandler = (e: any) => {
       (e.target.className === 'pac-container pac-logo' || 
        e.target.className.includes('pac-container'))) {
     
+    console.log("PAC container inserted into DOM, applying critical styles");
+    
     // Set critical styles directly on the element
-    e.target.style.cssText = 'z-index: 99999 !important; position: absolute !important; pointer-events: auto !important;';
+    e.target.style.cssText = 'z-index: 999999 !important; position: absolute !important; pointer-events: auto !important;';
     
     // Make sure clicks on dropdown items work
-    const items = e.target.querySelectorAll('.pac-item, .pac-item-query, .pac-icon, .pac-item *');
+    const items = e.target.querySelectorAll('.pac-item, .pac-item-query, .pac-icon, .pac-item *, .pac-matched');
     items.forEach((item: HTMLElement) => {
       item.style.cssText = 'pointer-events: auto !important; cursor: pointer !important;';
       
       // Add direct event listeners to each item
       const stopEvents = (evt: Event) => {
         evt.stopPropagation();
-        evt.preventDefault();
+        // Only prevent default for non-input elements
+        if (!(evt.target instanceof HTMLInputElement)) {
+          evt.preventDefault();
+        }
       };
       
-      item.addEventListener('mousedown', stopEvents, true);
-      item.addEventListener('click', stopEvents, true);
-      item.addEventListener('pointerdown', stopEvents, true);
+      ['mousedown', 'click', 'pointerdown', 'touchstart'].forEach(eventType => {
+        item.addEventListener(eventType, stopEvents, true);
+      });
     });
     
     // Add event listeners to the container itself
     const stopEvents = (evt: Event) => {
       evt.stopPropagation();
-      evt.preventDefault();
+      // Only prevent default for non-input elements
+      if (!(evt.target instanceof HTMLInputElement)) {
+        evt.preventDefault();
+      }
     };
     
-    e.target.addEventListener('mousedown', stopEvents, true);
-    e.target.addEventListener('click', stopEvents, true);
-    e.target.addEventListener('pointerdown', stopEvents, true);
+    ['mousedown', 'click', 'pointerdown', 'touchstart'].forEach(eventType => {
+      e.target.addEventListener(eventType, stopEvents, true);
+    });
   }
 };
 
@@ -108,24 +116,19 @@ export function initializeAutocomplete(
       fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id']
     });
     
-    // Prevent other click handlers from interfering
+    // These event listeners will prevent the dialog from closing
     const preventDialogClose = (e: Event) => {
       e.stopPropagation();
-      e.preventDefault();
     };
     
     // Clear previous handlers to prevent duplicates
-    inputElement.removeEventListener('click', preventDialogClose, true);
-    inputElement.addEventListener('click', preventDialogClose, true);
-    
-    inputElement.removeEventListener('mousedown', preventDialogClose, true);
-    inputElement.addEventListener('mousedown', preventDialogClose, true);
-    
-    inputElement.removeEventListener('pointerdown', preventDialogClose, true);
-    inputElement.addEventListener('pointerdown', preventDialogClose, true);
+    ['click', 'mousedown', 'pointerdown', 'touchstart'].forEach(eventType => {
+      inputElement.removeEventListener(eventType, preventDialogClose, true);
+      inputElement.addEventListener(eventType, preventDialogClose, true);
+    });
     
     // Set up the place changed listener
-    autocomplete.addListener('place_changed', () => {
+    const listener = autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();
       
       console.log("Place selected:", place);

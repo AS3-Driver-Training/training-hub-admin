@@ -40,18 +40,18 @@ export function PlaceField({
   // Use useLayoutEffect to ensure the input element has the proper stacking context
   useLayoutEffect(() => {
     if (inputRef.current) {
-      // Add event listeners to stop propagation and prevent default to avoid dialog closing
+      // Ensure that clicking on this input doesn't cause dialog close
       const handleEvent = (e: Event) => {
+        // Always stop propagation and prevent default to isolate this input
         e.stopPropagation();
-        e.preventDefault();
       };
       
-      // Attach all event listeners with capture phase (true) to ensure they run first
+      // Attach event listeners with capture phase (true) to ensure they run first
       inputRef.current.addEventListener('click', handleEvent, true);
       inputRef.current.addEventListener('mousedown', handleEvent, true);
       inputRef.current.addEventListener('pointerdown', handleEvent, true);
       
-      // Add inline styles to ensure proper stacking and event handling
+      // Critical: ensure the input is accessible and visible
       inputRef.current.style.position = 'relative';
       inputRef.current.style.zIndex = '9999';
       
@@ -74,10 +74,9 @@ export function PlaceField({
     }
   };
 
-  // Explicitly prevent propagation for all input container events
+  // Explicitly prevent propagation but don't prevent default for input interactions
   const preventPropagation = (e: React.MouseEvent | React.PointerEvent) => {
     e.stopPropagation();
-    e.preventDefault();
   };
 
   return (
@@ -109,9 +108,16 @@ export function PlaceField({
           required={isRequired}
           autoComplete="off"
           style={{ position: 'relative', zIndex: 9999 }}
-          onClick={preventPropagation}
-          onMouseDown={preventPropagation}
-          onPointerDown={preventPropagation}
+          onClick={(e) => {
+            e.stopPropagation();
+            // Don't prevent default here as we want to focus the input
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+          }}
         />
         
         {/* Loading indicator */}

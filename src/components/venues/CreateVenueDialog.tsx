@@ -94,22 +94,43 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
       setIsSubmitting(false);
     }
   };
-  
-  // Prevent dialog from closing when clicking on Google Places elements
-  const handleDialogOpenChange = (open: boolean) => {
-    // Only close the dialog if it's an intentional close action
-    // that doesn't come from clicking on Google Places elements
-    if (!open) {
-      const isGooglePlacesEvent = document.querySelector('.pac-container') !== null;
-      if (!isGooglePlacesEvent) {
-        onClose();
-      }
-    }
-  };
 
   return (
-    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // Only close if it's an intentional close action
+      if (!isOpen) {
+        // Check if there's a Google Places dropdown active
+        const pacContainer = document.querySelector('.pac-container');
+        if (pacContainer) {
+          // If we're clicking on a Google Places element, don't close the dialog
+          const activeElement = document.activeElement;
+          const googleInput = document.querySelector('input:focus');
+          
+          if (googleInput || 
+              (activeElement && 
+               (activeElement.classList.contains('pac-item') || 
+                activeElement.closest('.pac-container')))) {
+            console.log("Prevented dialog close due to Google Places interaction");
+            return;
+          }
+        }
+        onClose();
+      }
+    }}>
+      <DialogContent className="sm:max-w-[600px]" onPointerDownCapture={(e) => {
+        // Prevent dialog from closing when clicking inside
+        // but specifically on Google Places elements
+        const target = e.target as HTMLElement;
+        if (target && (
+            target.classList.contains('pac-container') ||
+            target.closest('.pac-container') ||
+            target.classList.contains('pac-item') ||
+            target.closest('.pac-item')
+          )) {
+          e.stopPropagation();
+          e.preventDefault();
+        }
+      }}>
         <DialogHeader>
           <DialogTitle>{isEditing ? "Edit Venue" : "Create New Venue"}</DialogTitle>
           <DialogDescription>
