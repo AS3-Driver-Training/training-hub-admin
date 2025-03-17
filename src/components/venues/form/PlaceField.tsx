@@ -52,7 +52,7 @@ export function PlaceField({
         Place Name
       </Label>
       
-      <div className="relative" style={{ zIndex: 9999 }}>
+      <div className="relative">
         <Input
           id="place"
           ref={inputRef}

@@ -1,34 +1,61 @@
 
-import { GoogleMapsWindow, GooglePlaceData } from './types';
+import { GooglePlaceData } from './types';
 
-// Declare global type for Google Maps
-declare global {
-  interface Window extends GoogleMapsWindow {}
-  namespace google.maps.places {
-    class Autocomplete {
-      constructor(inputElement: HTMLInputElement, options?: any);
-      addListener(eventName: string, handler: Function): void;
-      getPlace(): google.maps.places.PlaceResult;
-    }
+export function initializeAutocomplete(
+  inputElement: HTMLInputElement | null,
+  onPlaceSelect: (data: GooglePlaceData) => void
+): google.maps.places.Autocomplete | null {
+  if (!inputElement || !window.google || !window.google.maps || !window.google.maps.places) {
+    console.log("Google Maps not loaded or input element not available");
+    return null;
+  }
+
+  try {
+    console.log("Initializing autocomplete for element:", inputElement);
     
-    interface PlaceResult {
-      address_components?: AddressComponent[];
-      formatted_address?: string;
-      geometry?: {
-        location?: {
-          lat(): number;
-          lng(): number;
-        };
+    // Initialize the autocomplete with the input element
+    const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
+      types: ['establishment', 'geocode'],
+      fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id']
+    });
+
+    // Set up the place changed event
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      console.log("Place selected:", place);
+      
+      if (!place.geometry) {
+        console.log("No place details available for this selection");
+        return;
+      }
+
+      const addressComponents = extractAddressComponents(place);
+      const formatted_address = place.formatted_address || '';
+      
+      // Construct the location string from the coordinates
+      const lat = place.geometry.location?.lat();
+      const lng = place.geometry.location?.lng();
+      const locationString = lat && lng ? `${lat},${lng}` : '';
+
+      // Convert to our app's data format
+      const placeData: GooglePlaceData = {
+        place: place.name || '',
+        address: formatted_address,
+        googleLocation: locationString,
+        region: addressComponents.state || addressComponents.city || '',
+        country: addressComponents.country || '',
+        placeName: place.name || ''
       };
-      name?: string;
-      place_id?: string;
-    }
-    
-    interface AddressComponent {
-      long_name: string;
-      short_name: string;
-      types: string[];
-    }
+
+      console.log("Sending place data to callback:", placeData);
+      // Send the data back via callback
+      onPlaceSelect(placeData);
+    });
+
+    return autocomplete;
+  } catch (error) {
+    console.error("Error initializing Google Places Autocomplete:", error);
+    return null;
   }
 }
 
@@ -66,57 +93,3 @@ const extractAddressComponents = (place: google.maps.places.PlaceResult): Record
   
   return components;
 };
-
-export function initializeAutocomplete(
-  inputElement: HTMLInputElement | null,
-  onPlaceSelect: (data: GooglePlaceData) => void
-): google.maps.places.Autocomplete | null {
-  if (!inputElement || !window.google || !window.google.maps || !window.google.maps.places) {
-    console.log("Google Maps not loaded or input element not available");
-    return null;
-  }
-
-  try {
-    // Initialize the autocomplete with the input element
-    const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
-      types: ['establishment', 'geocode'],
-      fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id']
-    });
-
-    // Set up the place changed event
-    autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace();
-      
-      if (!place.geometry) {
-        console.log("No place details available for this selection");
-        return;
-      }
-
-      const addressComponents = extractAddressComponents(place);
-      const formatted_address = place.formatted_address || '';
-      
-      // Construct the location string from the coordinates
-      const lat = place.geometry.location?.lat();
-      const lng = place.geometry.location?.lng();
-      const locationString = lat && lng ? `${lat},${lng}` : '';
-
-      // Convert to our app's data format
-      const placeData: GooglePlaceData = {
-        place: place.name || '',
-        address: formatted_address,
-        googleLocation: locationString,
-        region: addressComponents.state || addressComponents.city || '',
-        country: addressComponents.country || '',
-        placeName: place.name || ''
-      };
-
-      // Send the data back via callback
-      onPlaceSelect(placeData);
-    });
-
-    return autocomplete;
-  } catch (error) {
-    console.error("Error initializing Google Places Autocomplete:", error);
-    return null;
-  }
-}

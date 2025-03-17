@@ -4,10 +4,7 @@ export interface GoogleMapsWindow {
   google?: {
     maps: {
       places: {
-        Autocomplete: new (
-          input: HTMLInputElement,
-          options?: any
-        ) => google.maps.places.Autocomplete;
+        Autocomplete: any;
       };
       Map: any;
       LatLng: any;

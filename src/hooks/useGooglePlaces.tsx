@@ -30,12 +30,12 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
         await loadGoogleMapsScript();
         console.log("Google Maps script loaded successfully");
         setScriptError(null);
+        initAutocomplete();
       } catch (error) {
         console.error('Error loading Google Maps script:', error);
         setScriptError(error instanceof Error ? error.message : 'Failed to load Google Maps');
       } finally {
         setIsLoadingScript(false);
-        initAutocomplete();
       }
     };
     
@@ -59,7 +59,8 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
 
   // Initialize autocomplete when input is mounted
   const initAutocomplete = useCallback(() => {
-    if (!inputRef.current || initCompletedRef.current || !window.google?.maps?.places) {
+    if (!inputRef.current || !window.google?.maps?.places) {
+      console.log("Cannot initialize autocomplete: Google Maps not loaded or input not available");
       return;
     }
     
@@ -76,11 +77,20 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
         };
 
         try {
+          // Reset the previous autocomplete if exists
+          if (autocompleteRef.current) {
+            // No direct way to destroy autocomplete, but we can create a new one
+            console.log("Replacing existing autocomplete instance");
+          }
+          
           autocompleteRef.current = initializeAutocomplete(inputRef.current, handlePlaceSelect);
           
           if (autocompleteRef.current) {
             initCompletedRef.current = true;
             console.log("Autocomplete successfully initialized");
+          } else {
+            console.error("Failed to initialize autocomplete");
+            setScriptError("Failed to initialize Google Places Autocomplete");
           }
         } catch (error) {
           console.error("Error initializing autocomplete:", error);
@@ -98,6 +108,14 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
       initAutocomplete();
     }
   }, [initAutocomplete]);
+
+  // Re-initialize when the input reference changes
+  useEffect(() => {
+    if (inputRef.current && window.google?.maps?.places && !initCompletedRef.current) {
+      console.log("Input ref changed, reinitializing autocomplete");
+      initAutocomplete();
+    }
+  }, [inputRef.current, initAutocomplete]);
 
   return {
     inputRef,
