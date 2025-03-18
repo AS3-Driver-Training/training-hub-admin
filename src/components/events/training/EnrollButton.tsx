@@ -8,9 +8,12 @@ interface EnrollButtonProps {
 }
 
 export function EnrollButton({ event }: EnrollButtonProps) {
+  // Calculate if the event is fully booked
+  const isFullyBooked = event.capacity && event.enrolledCount >= event.capacity;
+  
   return (
     <div className="flex items-center">
-      {event.enrolledCount === event.capacity ? (
+      {isFullyBooked ? (
         <span className="text-sm text-muted-foreground">Fully Booked</span>
       ) : (
         <Button variant="ghost" size="sm" className="p-0 h-auto">

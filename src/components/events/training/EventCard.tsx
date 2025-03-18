@@ -1,12 +1,19 @@
 
 import { TrainingEvent } from "@/types/events";
 import { format } from "date-fns";
-import { MapPin, Clock, Users, ArrowRight } from "lucide-react";
+import { MapPin, Clock, Users, ArrowRight, MoreVertical, Edit, XOctagon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EnrollButton } from "./EnrollButton";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 interface EventCardProps {
   event: TrainingEvent;
@@ -15,7 +22,7 @@ interface EventCardProps {
 export function EventCard({ event }: EventCardProps) {
   const navigate = useNavigate();
   const startDate = new Date(event.startDate);
-  const endDate = new Date(event.endDate);
+  const endDate = event.endDate ? new Date(event.endDate) : new Date(startDate);
   
   const dayName = format(startDate, "EEE");
   
@@ -39,6 +46,12 @@ export function EventCard({ event }: EventCardProps) {
     navigate(`/events/${event.id}/edit`);
   };
   
+  const handleCancelEvent = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // This would typically call an API to cancel the event
+    toast.info(`Event ${event.id} would be cancelled here`);
+  };
+  
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow" onClick={handleEditEvent}>
       <div className="flex flex-col sm:flex-row">
@@ -50,9 +63,30 @@ export function EventCard({ event }: EventCardProps) {
         <div className="flex-1 p-4">
           <div className="flex justify-between items-start">
             <h3 className="text-lg font-semibold">{event.title}</h3>
-            <Badge variant="outline" className={event.status === "scheduled" ? "bg-primary/10 text-primary" : ""}>
-              {event.status === "scheduled" ? "Scheduled" : event.status === "completed" ? "Completed" : "Cancelled"}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className={event.status === "scheduled" ? "bg-primary/10 text-primary" : ""}>
+                {event.status === "scheduled" ? "Scheduled" : event.status === "completed" ? "Completed" : "Cancelled"}
+              </Badge>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4" />
+                    <span className="sr-only">More options</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleEditEvent}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleCancelEvent} className="text-destructive">
+                    <XOctagon className="mr-2 h-4 w-4" />
+                    Cancel
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
           
           <div className="mt-2 space-y-1">
@@ -69,7 +103,7 @@ export function EventCard({ event }: EventCardProps) {
           <div className="mt-4 flex justify-between items-center">
             <div className="flex items-center text-sm">
               <Users className="h-4 w-4 mr-2" />
-              <span>{event.enrolledCount}/{event.capacity}</span>
+              <span>{event.enrolledCount || 0}/{event.capacity || 0}</span>
             </div>
             
             <div className="flex gap-2">

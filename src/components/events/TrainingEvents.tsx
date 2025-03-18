@@ -40,18 +40,26 @@ export function TrainingEvents() {
       // Transform database data into TrainingEvent format
       const trainingEvents: TrainingEvent[] = data.map(instance => {
         // Calculate enrolled count based on allocated seats
-        // For now we're setting it to 0 as we'll fetch this separately in a real application
-        const enrolledCount = 0;
+        // For now we're setting it to a random number between 0 and capacity for demonstration
+        const capacity = instance.private_seats_allocated || 20; // Default capacity if not set
+        const enrolledCount = Math.floor(Math.random() * capacity); // Random enrollment for demo
+        
+        // Ensure end_date is set, default to start_date + 1 day if null
+        const startDate = new Date(instance.start_date);
+        let endDate = instance.end_date ? new Date(instance.end_date) : new Date(startDate);
+        if (!instance.end_date) {
+          endDate.setDate(startDate.getDate() + 1); // Default to next day if no end date
+        }
         
         return {
           id: instance.id.toString(),
           title: instance.programs?.name || "Unnamed Course",
           location: instance.venues?.name || "Unknown Location",
           startDate: instance.start_date,
-          endDate: instance.end_date || instance.start_date,
+          endDate: endDate.toISOString(),
           status: new Date(instance.start_date) > new Date() ? 'scheduled' : 'completed',
-          capacity: instance.private_seats_allocated || 0,
-          enrolledCount
+          capacity: capacity,
+          enrolledCount: enrolledCount
         };
       });
       
