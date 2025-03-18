@@ -70,6 +70,7 @@ export function CourseAllocations() {
         maxStudents={maxStudents}
         saveAllocationsMutation={saveAllocationsMutation}
         clients={clients}
+        courseInstance={courseInstance}
       />
     </div>
   );

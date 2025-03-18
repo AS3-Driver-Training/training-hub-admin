@@ -1,5 +1,5 @@
 
-import { AlertCircle, Info, Plus } from "lucide-react";
+import { AlertCircle, Info, Plus, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/hooks/use-toast";
-
 import { AllocationForm } from "./AllocationForm";
 import { AllocationsTable } from "./AllocationsTable";
 
@@ -30,6 +29,7 @@ interface AllocationsContentProps {
   maxStudents: number;
   saveAllocationsMutation: any;
   clients: any[] | undefined;
+  courseInstance: any;
 }
 
 export function AllocationsContent({
@@ -42,9 +42,11 @@ export function AllocationsContent({
   totalAllocated,
   maxStudents,
   saveAllocationsMutation,
-  clients
+  clients,
+  courseInstance
 }: AllocationsContentProps) {
   const navigate = useNavigate();
+  const isPrivateCourse = courseInstance && !courseInstance.is_open_enrollment;
   
   // Set up form with React Hook Form - using explicit type parameter
   const form = useForm<{clientId: string; seatsAllocated: number;}>({
@@ -57,7 +59,7 @@ export function AllocationsContent({
 
   // Save all allocations
   const handleSaveAllocations = () => {
-    if (allocations.length === 0) {
+    if (allocations.length === 0 && !isPrivateCourse) {
       toast({
         title: "Warning",
         description: "There are no seat allocations to save",
@@ -91,6 +93,58 @@ export function AllocationsContent({
     form.getValues("clientId") === client.id
   );
 
+  // For private courses, display a different UI
+  if (isPrivateCourse) {
+    return (
+      <Card className="border shadow-sm mb-8">
+        <CardHeader className="border-b bg-slate-50">
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-xl">Private Course</CardTitle>
+              <CardDescription>
+                This is a private course for {courseInstance.host_client?.name}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="p-6">
+          <div className="text-center py-8 border rounded-md bg-slate-50 mb-6">
+            <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <h3 className="text-base font-medium mb-1">Private Course Allocation</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              This course has been allocated {courseInstance.private_seats_allocated} seats 
+              for {courseInstance.host_client?.name}
+            </p>
+            <Button 
+              onClick={() => navigate("/events")}
+              className="mt-2"
+            >
+              Return to Events
+            </Button>
+          </div>
+
+          {/* Show a message explaining that students can be managed by the client administrators */}
+          <Alert className="mb-4 bg-blue-50 text-blue-800 border-blue-200">
+            <AlertCircle className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="font-medium text-blue-800">
+              Students for this private course are managed by {courseInstance.host_client?.name} administrators.
+            </AlertDescription>
+          </Alert>
+
+          <div className="flex items-center justify-end mt-4 pt-4 border-t">
+            <Button
+              onClick={() => navigate("/events")}
+            >
+              Back to Events
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Standard UI for open enrollment courses
   return (
     <Card className="border shadow-sm mb-8">
       <CardHeader className="border-b bg-slate-50">

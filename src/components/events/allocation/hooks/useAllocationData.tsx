@@ -43,6 +43,10 @@ export function useAllocationData() {
             address, 
             region, 
             google_location
+          ),
+          host_client:host_client_id(
+            id,
+            name
           )
         `)
         .eq("id", parseInt(id || '0', 10))
@@ -93,7 +97,7 @@ export function useAllocationData() {
     enabled: !!id
   });
 
-  // Fetch clients for allocation
+  // Fetch clients for allocation (only needed for open enrollment courses)
   const { 
     data: clients, 
     isLoading: clientsLoading, 
@@ -112,7 +116,9 @@ export function useAllocationData() {
       
       console.log("Clients data:", data);
       return data;
-    }
+    },
+    // Only fetch clients for open enrollment courses
+    enabled: !!courseInstance && courseInstance.is_open_enrollment
   });
 
   // Save allocations mutation
@@ -173,8 +179,8 @@ export function useAllocationData() {
     existingAllocations,
     clients,
     saveAllocationsMutation,
-    isLoading: courseLoading || allocationsLoading || clientsLoading,
-    error: error || courseError || allocationsError || clientsError,
+    isLoading: courseLoading || allocationsLoading || (courseInstance?.is_open_enrollment ? clientsLoading : false),
+    error: error || courseError || allocationsError || (courseInstance?.is_open_enrollment ? clientsError : null),
     id
   };
 }
