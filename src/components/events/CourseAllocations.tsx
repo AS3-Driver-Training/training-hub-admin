@@ -6,7 +6,19 @@ import { format } from "date-fns";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, AlertCircle, Plus, Trash2, Users, Calendar, MapPin, UserPlus } from "lucide-react";
+import { 
+  ArrowLeft, 
+  AlertCircle, 
+  Plus, 
+  Trash2, 
+  Users, 
+  Calendar, 
+  MapPin, 
+  UserPlus,
+  Clock,
+  Info,
+  ExternalLink
+} from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -19,6 +31,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 // Define allocation form schema
 const allocationSchema = z.object({
@@ -65,11 +78,15 @@ export function CourseAllocations() {
             id,
             name,
             max_students,
-            min_students
+            min_students,
+            description
           ),
           venue:venue_id(
             id,
-            name
+            name,
+            address,
+            city,
+            state
           )
         `)
         .eq("id", parseInt(id || '0', 10))
@@ -286,275 +303,353 @@ export function CourseAllocations() {
     form.getValues("clientId") === client.id
   );
 
+  const progressColorClass = 
+    allocationPercentage >= 90 ? "bg-red-500" : 
+    allocationPercentage >= 70 ? "bg-amber-500" : 
+    "bg-emerald-500";
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate("/events")}
-          className="mr-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back
-        </Button>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Seat Allocations
-        </h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      {/* Header with back button */}
+      <div className="mb-8">
+        <div className="flex items-center mb-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/events")}
+            className="mr-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {courseInstance?.program?.name || "Course Details"}
+          </h1>
+        </div>
+        <p className="text-muted-foreground">
+          {courseInstance?.start_date && format(new Date(courseInstance.start_date), "MMMM d, yyyy")} - 
+          {courseInstance?.end_date && format(new Date(courseInstance.end_date), " MMMM d, yyyy")}
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Course Details Card */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              Course Details
-            </CardTitle>
-            <CardDescription>
-              Program and venue information
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      {/* Course Details Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        {/* Status Card */}
+        <Card className="border shadow-sm">
+          <CardContent className="p-6">
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">Status</h3>
+            <p className="text-lg font-semibold mb-4">Current event status</p>
+            <Badge className="bg-primary text-white">Scheduled</Badge>
+          </CardContent>
+        </Card>
+
+        {/* Available Seats Card */}
+        <Card className="border shadow-sm">
+          <CardContent className="p-6">
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">Available Seats</h3>
+            <p className="text-sm text-muted-foreground mb-2">Seats remaining for this session</p>
+            
+            <div className="flex items-baseline mb-2">
+              <span className="text-3xl font-bold">{remainingSeats}</span>
+              <span className="text-lg text-muted-foreground ml-1">/{maxStudents}</span>
+            </div>
+            
+            <Progress 
+              value={allocationPercentage} 
+              className={`h-2 bg-muted`} 
+              // Fix the error by applying styles directly to the component
+              style={{ 
+                '--progress-color': allocationPercentage >= 90 ? '#ef4444' : 
+                                  allocationPercentage >= 70 ? '#f59e0b' : 
+                                  '#10b981'
+              } as React.CSSProperties}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Duration Card */}
+        <Card className="border shadow-sm">
+          <CardContent className="p-6">
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">Duration</h3>
+            <p className="text-sm text-muted-foreground mb-2">Length of training</p>
+            
             {courseInstance && (
               <>
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-muted-foreground">Program</h3>
-                  <p className="font-medium">{courseInstance.program?.name}</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-muted-foreground">Venue</h3>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <p>{courseInstance.venue?.name}</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-muted-foreground">Date</h3>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <p>{format(new Date(courseInstance.start_date), "PPP")}</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-muted-foreground">Capacity</h3>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <p className="font-medium">{courseInstance.program?.max_students} seats</p>
-                  </div>
-                </div>
-                
-                <div className="pt-2">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="font-medium">Allocated</span>
-                    <span>{totalAllocated} / {maxStudents} seats</span>
-                  </div>
-                  <Progress 
-                    value={allocationPercentage} 
-                    className="h-2"
-                    indicatorClassName={allocationPercentage >= 90 ? "bg-red-500" : allocationPercentage >= 70 ? "bg-amber-500" : "bg-emerald-500"}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1 text-right">
-                    {remainingSeats} seats remaining
-                  </p>
+                <p className="text-3xl font-bold mb-2">
+                  {Math.ceil((new Date(courseInstance.end_date).getTime() - new Date(courseInstance.start_date).getTime()) / (1000 * 60 * 60 * 24)) || 1} Days
+                </p>
+                <div className="flex items-center text-muted-foreground">
+                  <Clock className="h-4 w-4 mr-2" />
+                  <span>08:00 - 17:00</span>
                 </div>
               </>
             )}
           </CardContent>
         </Card>
+      </div>
 
-        {/* Allocations Card */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-start">
+      {/* Program Details & Location Details */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Program Details Card */}
+        <Card className="border shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center mb-4">
+              <div className="w-4 h-4 rounded-full bg-primary mr-2"></div>
+              <h3 className="text-xl font-semibold">Program Details</h3>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  Seat Allocations
-                </CardTitle>
-                <CardDescription>
-                  Assign seats to clients for this course
-                </CardDescription>
+                <h4 className="text-sm font-medium text-muted-foreground">Start Date</h4>
+                <p className="font-medium">
+                  {courseInstance?.start_date && format(new Date(courseInstance.start_date), "MMMM d, yyyy")}
+                </p>
               </div>
               
-              {remainingSeats > 0 && !showAddForm && (
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground">Location</h4>
+                <p className="font-medium">
+                  {courseInstance?.venue?.city}, {courseInstance?.venue?.state || 'California'}
+                </p>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground mb-2">Course Description</h4>
+              <p className="text-muted-foreground">
+                {courseInstance?.program?.description || 
+                  "Advanced Evasive Skill and Heuristic Development Course for students that have gone through the Lvl 1 course within the past 2 years."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Location Details Card */}
+        <Card className="border shadow-sm">
+          <CardContent className="p-6">
+            <h3 className="text-xl font-semibold mb-4">Location Details</h3>
+            
+            <p className="font-medium mb-2">
+              {courseInstance?.venue?.name || "Weather Tech Laguna Seca International Raceway"}
+            </p>
+            
+            <p className="text-muted-foreground mb-1">
+              {courseInstance?.venue?.address || "1021 Monterey Salinas Hwy"}
+            </p>
+            <p className="text-muted-foreground mb-4">
+              {courseInstance?.venue?.city || "Monterey"}, {courseInstance?.venue?.state || "California"} 93908
+            </p>
+            
+            <div className="p-3 bg-muted/20 rounded-md border mb-4">
+              <h4 className="text-sm font-medium mb-1">Meeting Point:</h4>
+              <p className="text-sm text-muted-foreground">
+                Main paddock next to the gas pumps 15 prior to starting hour.
+              </p>
+            </div>
+            
+            <Button variant="outline" size="sm" className="w-full">
+              <MapPin className="h-4 w-4 mr-2" />
+              View on Google Maps
+              <ExternalLink className="h-3 w-3 ml-1" />
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Enrolled Students / Seat Allocations Section */}
+      <Card className="border shadow-sm mb-8">
+        <CardHeader className="border-b bg-muted/10">
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-xl">Seat Allocations</CardTitle>
+              <CardDescription>Assign available seats to clients for this course</CardDescription>
+            </div>
+            
+            {remainingSeats > 0 && !showAddForm && (
+              <Button 
+                onClick={() => setShowAddForm(true)}
+                size="sm"
+                className="bg-primary text-primary-foreground"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Assign Seats
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        
+        <CardContent className="p-6">
+          {/* Add Allocation Form */}
+          {showAddForm && (
+            <Card className="border shadow-sm mb-6">
+              <CardHeader className="py-3 px-4 border-b bg-muted/10">
+                <CardTitle className="text-base flex items-center">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Assign Seats to Client
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 py-4">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleAddAllocation)} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="clientId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a client" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {availableClients?.map((client) => (
+                                  <SelectItem key={client.id} value={client.id}>
+                                    {client.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="seatsAllocated"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="1"
+                                max={remainingSeats.toString()}
+                                placeholder={`Seats (max: ${remainingSeats})`}
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          form.reset();
+                          setShowAddForm(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="submit" size="sm">Assign</Button>
+                    </div>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Allocations Table */}
+          {allocations.length > 0 ? (
+            <div className="border rounded-md overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead className="font-medium">Client</TableHead>
+                    <TableHead className="text-right font-medium">Seats</TableHead>
+                    <TableHead className="w-[80px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allocations.map((allocation, index) => (
+                    <TableRow key={index} className="hover:bg-muted/10">
+                      <TableCell className="font-medium">{allocation.clientName}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="outline" className="font-medium">
+                          {allocation.seatsAllocated}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveAllocation(index)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                          <span className="sr-only">Remove</span>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-12 border rounded-md bg-muted/5">
+              <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              <h3 className="text-base font-medium mb-1">No seat allocations yet</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Assign available seats to clients for this course
+              </p>
+              {!showAddForm && remainingSeats > 0 && (
                 <Button 
                   onClick={() => setShowAddForm(true)}
                   size="sm"
-                  className="mt-1"
+                  variant="outline"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Allocation
+                  Assign Seats
                 </Button>
               )}
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Add Allocation Form */}
-            {showAddForm && (
-              <Card className="border shadow-sm">
-                <CardHeader className="py-3 px-4">
-                  <CardTitle className="text-base flex items-center">
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Add Client Allocation
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 pb-4 pt-0">
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleAddAllocation)} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="clientId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <Select
-                                onValueChange={field.onChange}
-                                value={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select a client" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {availableClients?.map((client) => (
-                                    <SelectItem key={client.id} value={client.id}>
-                                      {client.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+          )}
 
-                        <FormField
-                          control={form.control}
-                          name="seatsAllocated"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  max={remainingSeats.toString()}
-                                  placeholder={`Seats (max: ${remainingSeats})`}
-                                  {...field}
-                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+          {allocations.length > 0 && remainingSeats === 0 && (
+            <Alert className="mt-4 bg-emerald-50 text-emerald-800 border-emerald-200">
+              <AlertCircle className="h-4 w-4 text-emerald-600" />
+              <AlertDescription className="font-medium text-emerald-800">
+                All available seats have been allocated.
+              </AlertDescription>
+            </Alert>
+          )}
 
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            form.reset();
-                            setShowAddForm(false);
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button type="submit" size="sm">Add</Button>
-                      </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Allocations Table */}
-            {allocations.length > 0 ? (
-              <div className="border rounded-md overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead>Client</TableHead>
-                      <TableHead className="text-right">Seats</TableHead>
-                      <TableHead className="w-[80px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allocations.map((allocation, index) => (
-                      <TableRow key={index} className="hover:bg-muted/30">
-                        <TableCell className="font-medium">{allocation.clientName}</TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant="outline" className="font-medium">
-                            {allocation.seatsAllocated}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveAllocation(index)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                            <span className="sr-only">Remove</span>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+          {allocations.length > 0 && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Info className="h-4 w-4 mr-2" />
+                <span>Total {totalAllocated} of {maxStudents} seats allocated</span>
               </div>
-            ) : (
-              <div className="text-center py-12 border rounded-md bg-muted/10">
-                <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <h3 className="text-base font-medium mb-1">No allocations yet</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Assign seats to clients for this course
-                </p>
-                {!showAddForm && remainingSeats > 0 && (
-                  <Button 
-                    onClick={() => setShowAddForm(true)}
-                    size="sm"
-                    variant="outline"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Client Allocation
-                  </Button>
-                )}
+              
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/events")}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSaveAllocations}
+                  disabled={allocations.length === 0}
+                >
+                  Save Allocations
+                </Button>
               </div>
-            )}
-
-            {allocations.length > 0 && remainingSeats === 0 && (
-              <Alert className="bg-emerald-50 text-emerald-800 border-emerald-200">
-                <AlertCircle className="h-4 w-4 text-emerald-600" />
-                <AlertDescription className="font-medium text-emerald-800">
-                  All available seats have been allocated.
-                </AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-          <CardFooter className="flex justify-end gap-3 pt-2">
-            <Button
-              variant="outline"
-              onClick={() => navigate("/events")}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSaveAllocations}
-              disabled={allocations.length === 0}
-            >
-              Save Allocations
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
