@@ -7,7 +7,7 @@ export const setupPacContainerObserver = (): MutationObserver => {
   // Fix styling for any existing pac containers
   const pacContainer = document.querySelector('.pac-container') as HTMLElement;
   if (pacContainer) {
-    pacContainer.style.zIndex = "10000";
+    pacContainer.style.zIndex = "99999";
     pacContainer.style.position = "absolute";
     pacContainer.style.pointerEvents = "auto";
     // Add a data attribute to help with detection
@@ -146,21 +146,17 @@ export const initializeAutocomplete = (
               // Add this attribute for detection
               node.setAttribute('data-google-places-container', 'true');
               
-              // CRITICAL: Remove any existing click handlers that might interfere
-              const pacItems = node.querySelectorAll('.pac-item');
-              pacItems.forEach(item => {
-                if (item instanceof HTMLElement) {
-                  // Clone and replace to remove all event listeners
-                  const newItem = item.cloneNode(true);
-                  item.parentNode?.replaceChild(newItem, item);
-                  
-                  // Add our own click handler
-                  newItem.addEventListener('click', (e) => {
-                    console.log('PAC item clicked via our handler');
-                    // Don't stop propagation here
+              // Add click listeners directly to pac-items
+              setTimeout(() => {
+                const pacItems = document.querySelectorAll('.pac-item');
+                pacItems.forEach(item => {
+                  item.addEventListener('mousedown', (e) => {
+                    // Don't stop propagation or prevent default
+                    // Just log for debugging
+                    console.log('Pac item clicked directly');
                   });
-                }
-              });
+                });
+              }, 300);
             }
           });
         }

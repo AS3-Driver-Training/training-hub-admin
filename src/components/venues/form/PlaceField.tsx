@@ -1,5 +1,5 @@
 
-import { useState, useEffect, RefObject, useLayoutEffect } from "react";
+import { useState, useEffect, RefObject } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GooglePlaceData } from "@/hooks/google-maps/types";

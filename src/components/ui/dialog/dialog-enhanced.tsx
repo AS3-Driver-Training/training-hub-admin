@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { DialogRoot } from "./dialog-primitives"
 import { isGooglePlacesElement, isGooglePlacesInput } from "./google-places-utils"
@@ -12,40 +11,49 @@ interface DialogProps extends React.ComponentPropsWithoutRef<typeof DialogRoot> 
  * Enhanced Dialog component with special handling for Google Places elements
  */
 export function Dialog({ children, ...props }: DialogProps) {
-  const dialogRef = React.useRef<any>(null);
+  // Add a ref to track if we're currently selecting a place
+  const isSelectingPlaceRef = React.useRef(false);
   
-  // Modified dialog props with explicit handlers to prevent closing
-  const dialogProps = {
-    ...props,
-    // Force the dialog to be modal (prevents outside clicks from closing)
-    modal: true
+  // Create a modified onOpenChange handler that prevents closing during Google Places interaction
+  const handleOpenChange = (open: boolean) => {
+    // If trying to close the dialog but we're selecting a place, block it
+    if (!open && isSelectingPlaceRef.current) {
+      console.log('Blocked dialog close during Google Places interaction');
+      return; // Don't propagate the close event
+    }
+    
+    // Otherwise use the provided onOpenChange handler
+    if (props.onOpenChange) {
+      props.onOpenChange(open);
+    }
   };
   
-  // Simplified event capture that focuses only on preventing dialog closure
-  const captureDialogCloseEvents = React.useCallback((e: Event) => {
-    const target = e.target as HTMLElement;
-    
-    // Only block external clicks when they're on PAC elements
-    if (target.closest('.pac-container') || 
-        target.classList.contains('pac-item') ||
-        target.classList.contains('pac-item-query')) {
-      
-      console.log('Preventing dialog close from PAC element click');
-      e.stopPropagation();
-      // IMPORTANT: Don't prevent default on these elements
-    }
-  }, []);
-
-  // Add global event listeners when dialog is open - but only for mousedown
+  // Set up a global click capture to detect clicks on Google Places elements
   React.useEffect(() => {
-    if (props.open) {
-      // Use capture phase, but for fewer events
-      document.addEventListener('mousedown', captureDialogCloseEvents, true);
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
       
-      // Only handle Escape key specially, allow other keyboard events
+      // Check if clicking on a Google Places dropdown element
+      if (isGooglePlacesElement(target)) {
+        console.log('Google Places element clicked - setting flag');
+        isSelectingPlaceRef.current = true;
+        
+        // Reset the flag after a delay (after selection is processed)
+        setTimeout(() => {
+          isSelectingPlaceRef.current = false;
+          console.log('Reset Google Places selection flag');
+        }, 300);
+      }
+    };
+    
+    // Only add listener when dialog is open
+    if (props.open) {
+      // Use capture phase to get the event first
+      document.addEventListener('click', handleGlobalClick, true);
+      
+      // Handle Escape key specially for Google Places
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
-          // Check if the target is a Google Places element
           const target = e.target as HTMLElement;
           if (isGooglePlacesElement(target) || isGooglePlacesInput(target)) {
             console.log('Preventing Escape from closing dialog when in Google Places context');
@@ -58,14 +66,17 @@ export function Dialog({ children, ...props }: DialogProps) {
       document.addEventListener('keydown', handleKeyDown, true);
       
       return () => {
-        document.removeEventListener('mousedown', captureDialogCloseEvents, true);
+        document.removeEventListener('click', handleGlobalClick, true);
         document.removeEventListener('keydown', handleKeyDown, true);
       };
     }
-  }, [props.open, captureDialogCloseEvents]);
-
+  }, [props.open]);
+  
+  // Pass everything to DialogRoot except onOpenChange which we handle specially
+  const { onOpenChange, ...otherProps } = props;
+  
   return (
-    <DialogRoot {...dialogProps}>
+    <DialogRoot {...otherProps} onOpenChange={handleOpenChange}>
       {children}
     </DialogRoot>
   );

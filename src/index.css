@@ -36,7 +36,7 @@
 
 /* Google Places Autocomplete Styling */
 .pac-container {
-  z-index: 10000 !important;
+  z-index: 99999 !important;
   background-color: white !important;
   position: absolute !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
