@@ -50,7 +50,7 @@ export function PlaceField({
       
       inputRef.current.addEventListener('click', stopPropagation);
       inputRef.current.addEventListener('mousedown', stopPropagation);
-      inputRef.current.addEventListener('pointerdown', stopPropagation);
+      // Removed pointerdown event listener - causing conflicts
       
       // Also prevent default behavior on keydown to ensure typing works
       const preventDefaultOnEsc = (e: KeyboardEvent) => {
@@ -67,7 +67,6 @@ export function PlaceField({
         if (inputRef.current) {
           inputRef.current.removeEventListener('click', stopPropagation);
           inputRef.current.removeEventListener('mousedown', stopPropagation);
-          inputRef.current.removeEventListener('pointerdown', stopPropagation);
           inputRef.current.removeEventListener('keydown', preventDefaultOnEsc);
         }
       };
@@ -105,11 +104,10 @@ export function PlaceField({
           className="pr-8 z-[1]"
           required={isRequired}
           autoComplete="off"
-          // Remove data-google-places-element attribute
-          // Add these to ensure the input works properly
+          // Only stop propagation, don't prevent default
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
+          // Remove onPointerDown handler completely
         />
         
         {/* Loading indicator */}

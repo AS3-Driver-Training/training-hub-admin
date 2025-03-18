@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VenueForm } from "@/components/venues/VenueForm";
 import { VenueFormValues } from "@/components/venues/form/VenueFormSchema";
+import { isGooglePlacesElement } from "@/components/ui/dialog/google-places-utils";
 
 interface CreateVenueDialogProps {
   open: boolean;
@@ -24,17 +25,14 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
     const target = e.target as HTMLElement;
     
     // More specific targeting of Google Places elements
-    if (
-      target.closest('.pac-container') || 
-      target.closest('.pac-item') ||
-      target.classList.contains('pac-item') ||
-      target.classList.contains('pac-item-query') ||
-      target.classList.contains('pac-icon') ||
-      target.closest('.pac-icon')
-    ) {
+    if (isGooglePlacesElement(target)) {
       // Critical: stop event propagation completely
       e.stopPropagation();
-      e.preventDefault();
+      
+      // Only prevent default for non-click events to allow click functionality
+      if (e.type !== 'click') {
+        e.preventDefault();
+      }
       
       console.log('Google Places element interaction intercepted');
       setIsSelectingPlace(true);
@@ -59,15 +57,14 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
   
   // Enhanced handler to block all automatic closing behavior
   const handleOpenChange = (open: boolean) => {
-    // Prevent auto-closing completely when selecting a place
-    if (!open) {
-      if (isSelectingPlace) {
-        console.log('Preventing dialog close during place selection');
-        return; // Don't close the dialog
-      }
-      // Otherwise, proceed with closing
-      onClose();
+    // Only prevent closing when specifically interacting with Google Places
+    if (!open && isSelectingPlace) {
+      console.log('Preventing dialog close during place selection');
+      return; // Don't close the dialog
     }
+    
+    // Otherwise, proceed with closing
+    onClose();
   };
   
   const defaultValues: VenueFormValues = venue ? {

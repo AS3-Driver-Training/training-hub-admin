@@ -32,12 +32,20 @@ export function Dialog({ children, ...props }: DialogProps) {
       return true; // Let the event continue for input fields
     }
     
-    // Only block events for dropdown elements
+    // Most importantly - for dropdown items, we need to prevent dialog closing
+    // BUT we should NOT prevent the click from working
     if (isGooglePlacesElement(target)) {
-      console.log('Dialog captured Google Places dropdown event');
-      // Block these events to prevent dialog closing
+      console.log('Dialog intercepted Google Places dropdown event');
+      
+      // Stop propagation to prevent dialog from closing
       e.stopPropagation();
-      e.preventDefault();
+      
+      // CRITICAL: For click events, don't call preventDefault()
+      // This allows the actual click to be processed by Google's handlers
+      if (e.type !== 'click') {
+        e.preventDefault();
+      }
+      
       return false;
     }
   }, []);

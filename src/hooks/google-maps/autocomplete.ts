@@ -127,6 +127,19 @@ export const initializeAutocomplete = (
       handlePlaceSelect(placeData);
     });
     
+    // Add special handling for the pac-container elements
+    setTimeout(() => {
+      const pacContainer = document.querySelector('.pac-container');
+      if (pacContainer) {
+        // Add this critical event handler to the container
+        pacContainer.addEventListener('click', (e) => {
+          // Let the click work normally, but prevent it from closing the dialog
+          e.stopPropagation();
+          console.log('Click on pac-container intercepted');
+        });
+      }
+    }, 200);
+    
     return autocomplete;
   } catch (error) {
     console.error('Error initializing autocomplete:', error);
