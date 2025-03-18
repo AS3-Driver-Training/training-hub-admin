@@ -1,12 +1,14 @@
 
 import { useState } from "react";
-import { List, Calendar, Search, MapPin, Clock, Users } from "lucide-react";
+import { List, Calendar, Search, MapPin, Clock, Users, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { TrainingEvent } from "@/types/events";
 import { format } from "date-fns";
+import { Link, useNavigate } from "react-router-dom";
 
 // Mock data for the events
 const MOCK_EVENTS: TrainingEvent[] = [
@@ -45,6 +47,7 @@ const MOCK_EVENTS: TrainingEvent[] = [
 export function TrainingEvents() {
   const [view, setView] = useState<"list" | "calendar">("list");
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
   
   // Filter events based on search query
   const filteredEvents = MOCK_EVENTS.filter(event => 
@@ -71,7 +74,16 @@ export function TrainingEvents() {
           </p>
         </div>
         
-        <div className="mt-4 sm:mt-0">
+        <div className="mt-4 sm:mt-0 flex items-center gap-3">
+          <Button 
+            size="sm" 
+            onClick={() => navigate("/events/create")}
+            className="flex items-center gap-1"
+          >
+            <Plus className="h-4 w-4" />
+            Create Course
+          </Button>
+          
           <ToggleGroup type="single" value={view} onValueChange={(value) => value && setView(value as "list" | "calendar")}>
             <ToggleGroupItem value="list" aria-label="List view">
               <List className="h-4 w-4 mr-2" />

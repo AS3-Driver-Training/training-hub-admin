@@ -108,6 +108,112 @@ export type Database = {
         }
         Relationships: []
       }
+      course_allocations: {
+        Row: {
+          client_id: string
+          course_instance_id: number
+          created_at: string
+          id: number
+          seats_allocated: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          course_instance_id: number
+          created_at?: string
+          id?: number
+          seats_allocated: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          course_instance_id?: number
+          created_at?: string
+          id?: number
+          seats_allocated?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_allocations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_allocations_course_instance_id_fkey"
+            columns: ["course_instance_id"]
+            isOneToOne: false
+            referencedRelation: "course_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_instances: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          host_client_id: string | null
+          id: number
+          is_open_enrollment: boolean
+          private_seats_allocated: number | null
+          program_id: number
+          start_date: string
+          updated_at: string
+          venue_id: number
+          visibility_type: number
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          host_client_id?: string | null
+          id?: number
+          is_open_enrollment?: boolean
+          private_seats_allocated?: number | null
+          program_id: number
+          start_date: string
+          updated_at?: string
+          venue_id: number
+          visibility_type?: number
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          host_client_id?: string | null
+          id?: number
+          is_open_enrollment?: boolean
+          private_seats_allocated?: number | null
+          program_id?: number
+          start_date?: string
+          updated_at?: string
+          venue_id?: number
+          visibility_type?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_instances_host_client_id_fkey"
+            columns: ["host_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_instances_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_instances_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       groups: {
         Row: {
           client_id: string

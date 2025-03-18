@@ -24,7 +24,7 @@ function App() {
           <Route path="/" element={<Navigate to="/dashboard" />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Index />} />
-          <Route path="/events" element={<Events />} />
+          <Route path="/events/*" element={<Events />} />
           <Route path="/programs" element={<Programs />} />
           <Route path="/venues" element={<Venues />} />
           <Route path="/settings" element={<Settings />} />
