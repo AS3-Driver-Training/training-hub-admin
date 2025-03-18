@@ -39,6 +39,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
       name: "Marketing",
       description: "Marketing department",
       is_default: false,
+      client_id: clientId,
       teams: [
         {
           id: "social-team-id",
@@ -58,6 +59,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
       name: "Sales",
       description: "Sales department",
       is_default: true,
+      client_id: clientId,
       teams: [
         {
           id: "direct-sales-team-id",

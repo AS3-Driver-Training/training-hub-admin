@@ -70,7 +70,7 @@ export function CourseAllocations() {
             name
           )
         `)
-        .eq("id", id)
+        .eq("id", parseInt(id || '0')) // Convert string to number
         .single();
       
       if (error) throw error;
@@ -93,14 +93,18 @@ export function CourseAllocations() {
             name
           )
         `)
-        .eq("course_instance_id", id);
+        .eq("course_instance_id", parseInt(id || '0')); // Convert string to number
       
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
-    onSuccess: (data) => {
-      const formattedAllocations = data.map(allocation => ({
+    enabled: !!id
+  });
+
+  // Update allocations state when existing allocations are fetched
+  useState(() => {
+    if (existingAllocations) {
+      const formattedAllocations = existingAllocations.map(allocation => ({
         id: allocation.id,
         clientId: allocation.client?.id || '',
         clientName: allocation.client?.name || '',
@@ -110,7 +114,7 @@ export function CourseAllocations() {
       setAllocations(formattedAllocations);
       updateRemainingSeats(formattedAllocations);
     }
-  });
+  }, [existingAllocations]);
 
   // Fetch clients for allocation
   const { data: clients, isLoading: clientsLoading } = useQuery({
@@ -140,7 +144,7 @@ export function CourseAllocations() {
       const { error: deleteError } = await supabase
         .from("course_allocations")
         .delete()
-        .eq("course_instance_id", id);
+        .eq("course_instance_id", parseInt(id || '0')); // Convert string to number
       
       if (deleteError) throw deleteError;
 

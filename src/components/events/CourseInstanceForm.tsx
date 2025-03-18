@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -79,7 +79,7 @@ export function CourseInstanceForm() {
       const { data, error } = await supabase
         .from("course_instances")
         .select("*")
-        .eq("id", id)
+        .eq("id", parseInt(id)) // Convert string to number
         .single();
       if (error) throw error;
       return data;
@@ -162,7 +162,7 @@ export function CourseInstanceForm() {
           private_seats_allocated: values.isOpenEnrollment ? null : values.privateSeatsAllocated,
           visibility_type: values.visibilityType,
         })
-        .eq("id", id)
+        .eq("id", parseInt(id || '0')) // Convert string to number
         .select();
 
       if (error) throw error;
@@ -192,7 +192,7 @@ export function CourseInstanceForm() {
   });
 
   // Populate form with existing data when in edit mode
-  useState(() => {
+  useEffect(() => {
     if (isEditMode && courseInstance && !courseInstanceLoading) {
       const program = programs?.find(p => p.id === courseInstance.program_id);
       setSelectedProgram(program);
