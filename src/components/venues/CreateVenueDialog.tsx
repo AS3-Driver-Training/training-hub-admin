@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -130,21 +131,6 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
     <Dialog 
       open={open} 
       onOpenChange={handleDialogOpenChange}
-      onPointerDownOutside={(event) => {
-        const target = event.target as HTMLElement;
-        if (
-          target.closest('.pac-container') ||
-          target.closest('.pac-item') ||
-          target.hasAttribute('data-google-places-element') ||
-          target.classList.contains('pac-item') ||
-          target.classList.contains('pac-item-query') ||
-          target.classList.contains('pac-matched') ||
-          target.classList.contains('pac-icon')
-        ) {
-          event.preventDefault();
-          console.log('Prevented dialog close on Google Places element');
-        }
-      }}
     >
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>

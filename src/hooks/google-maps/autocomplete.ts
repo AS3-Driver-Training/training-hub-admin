@@ -39,56 +39,71 @@ const applyAutocompleteStyles = () => {
   document.head.appendChild(styleElement);
 };
 
-// Setup direct DOM monitoring for pac-container
+// Setup observer for pac-container using modern MutationObserver
 const setupPacContainerObserver = () => {
-  // Remove any existing listener to prevent duplicates
-  document.removeEventListener('DOMNodeInserted', pacContainerHandler);
-  document.addEventListener('DOMNodeInserted', pacContainerHandler);
-};
-
-// Handler for when pac-container is inserted into the DOM
-const pacContainerHandler = (e: any) => {
-  if (e.target && e.target.className && 
-      (e.target.className === 'pac-container pac-logo' || 
-       e.target.className.includes('pac-container'))) {
-    
-    console.log("PAC container inserted into DOM, applying critical styles");
-    
-    // Set critical styles directly on the element
-    e.target.style.cssText = 'z-index: 999999 !important; position: absolute !important; pointer-events: auto !important;';
-    
-    // Make sure clicks on dropdown items work
-    const items = e.target.querySelectorAll('.pac-item, .pac-item-query, .pac-icon, .pac-item *, .pac-matched');
-    items.forEach((item: HTMLElement) => {
-      item.style.cssText = 'pointer-events: auto !important; cursor: pointer !important;';
-      
-      // Add direct event listeners to each item
-      const stopEvents = (evt: Event) => {
-        evt.stopPropagation();
-        // Only prevent default for non-input elements
-        if (!(evt.target instanceof HTMLInputElement)) {
-          evt.preventDefault();
-        }
-      };
-      
-      ['mousedown', 'click', 'pointerdown', 'touchstart'].forEach(eventType => {
-        item.addEventListener(eventType, stopEvents, true);
-      });
-    });
-    
-    // Add event listeners to the container itself
-    const stopEvents = (evt: Event) => {
-      evt.stopPropagation();
-      // Only prevent default for non-input elements
-      if (!(evt.target instanceof HTMLInputElement)) {
-        evt.preventDefault();
+  // Create a mutation observer to watch for pac-container being added to DOM
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.type === 'childList') {
+        mutation.addedNodes.forEach((node) => {
+          if (node instanceof HTMLElement && 
+              (node.className === 'pac-container pac-logo' || 
+              node.className.includes('pac-container'))) {
+            
+            console.log("PAC container inserted into DOM, applying critical styles");
+            
+            // Set critical styles directly on the element
+            node.style.cssText = 'z-index: 999999 !important; position: absolute !important; pointer-events: auto !important;';
+            
+            // Add data attribute to help with detection
+            node.setAttribute('data-google-places-element', 'true');
+            
+            // Make sure clicks on dropdown items work
+            const items = node.querySelectorAll('.pac-item, .pac-item-query, .pac-icon, .pac-item *, .pac-matched');
+            items.forEach((item: HTMLElement) => {
+              item.style.cssText = 'pointer-events: auto !important; cursor: pointer !important;';
+              item.setAttribute('data-google-places-element', 'true');
+              
+              // Add direct event listeners to each item
+              const stopEvents = (evt: Event) => {
+                evt.stopPropagation();
+                // Only prevent default for non-input elements
+                if (!(evt.target instanceof HTMLInputElement)) {
+                  evt.preventDefault();
+                }
+              };
+              
+              ['mousedown', 'click', 'pointerdown', 'touchstart'].forEach(eventType => {
+                item.addEventListener(eventType, stopEvents, true);
+              });
+            });
+            
+            // Add event listeners to the container itself
+            const stopEvents = (evt: Event) => {
+              evt.stopPropagation();
+              // Only prevent default for non-input elements
+              if (!(evt.target instanceof HTMLInputElement)) {
+                evt.preventDefault();
+              }
+            };
+            
+            ['mousedown', 'click', 'pointerdown', 'touchstart'].forEach(eventType => {
+              node.addEventListener(eventType, stopEvents, true);
+            });
+          }
+        });
       }
-    };
-    
-    ['mousedown', 'click', 'pointerdown', 'touchstart'].forEach(eventType => {
-      e.target.addEventListener(eventType, stopEvents, true);
-    });
-  }
+    }
+  });
+  
+  // Start observing the document body for pac-container additions
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
+  // Store the observer on window to allow cleanup later
+  (window as any).__pacContainerObserver = observer;
 };
 
 /**
@@ -107,10 +122,10 @@ export function initializeAutocomplete(
     // Apply custom styles to ensure dropdown appears above other elements
     applyAutocompleteStyles();
     
-    // Setup DOM observer for pac-container
+    // Setup modern DOM observer for pac-container
     setupPacContainerObserver();
     
-    // Create the autocomplete object with delayed timeout to ensure proper initialization
+    // Create the autocomplete object
     const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
       types: ['establishment', 'geocode'],
       fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id']
@@ -120,6 +135,9 @@ export function initializeAutocomplete(
     const preventDialogClose = (e: Event) => {
       e.stopPropagation();
     };
+    
+    // Add data attribute for easier selection
+    inputElement.setAttribute('data-google-places-element', 'true');
     
     // Clear previous handlers to prevent duplicates
     ['click', 'mousedown', 'pointerdown', 'touchstart'].forEach(eventType => {
@@ -181,9 +199,13 @@ export function initializeAutocomplete(
   }
 }
 
-// Cleanup function to remove event listeners
+// Cleanup function to remove event listeners and observer
 export function cleanupAutocomplete() {
-  document.removeEventListener('DOMNodeInserted', pacContainerHandler);
+  // Clean up the mutation observer
+  if ((window as any).__pacContainerObserver) {
+    (window as any).__pacContainerObserver.disconnect();
+    delete (window as any).__pacContainerObserver;
+  }
   
   // Remove the style element
   const styleElement = document.getElementById('google-places-autocomplete-styles');

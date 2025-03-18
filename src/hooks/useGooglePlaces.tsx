@@ -97,6 +97,9 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
       // Initialize autocomplete with a slight delay to ensure DOM is ready
       setTimeout(() => {
         if (inputRef.current && window.google?.maps?.places) {
+          // Mark the input with an attribute to help detect Google Places elements
+          inputRef.current.setAttribute('data-google-places-element', 'true');
+          
           // Initialize autocomplete
           autocompleteInstanceRef.current = initializeAutocomplete(
             inputRef.current,

@@ -46,6 +46,9 @@ export function PlaceField({
         e.stopPropagation();
       };
       
+      // Add data attribute to help with detection
+      inputRef.current.setAttribute('data-google-places-element', 'true');
+      
       // Attach event listeners with capture phase (true) to ensure they run first
       inputRef.current.addEventListener('click', handleEvent, true);
       inputRef.current.addEventListener('mousedown', handleEvent, true);
@@ -86,6 +89,7 @@ export function PlaceField({
       onClick={preventPropagation}
       onMouseDown={preventPropagation}
       onPointerDown={preventPropagation}
+      data-google-places-element="true"
     >
       <Label htmlFor="place" className={isRequired ? "after:content-['*'] after:ml-0.5 after:text-red-500" : ""}>
         Place Name
@@ -97,6 +101,7 @@ export function PlaceField({
         onClick={preventPropagation}
         onMouseDown={preventPropagation}
         onPointerDown={preventPropagation}
+        data-google-places-element="true"
       >
         <Input
           id="place"

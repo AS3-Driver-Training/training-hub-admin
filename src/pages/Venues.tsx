@@ -13,7 +13,7 @@ export default function Venues() {
     // This flag will prevent duplicate listeners
     if (observerActive) return;
     
-    // Locate and track the pac-container when it's added to the DOM
+    // Create MutationObserver to detect pac-container elements
     const pacContainerObserver = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
