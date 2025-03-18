@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -73,7 +74,13 @@ export function CourseAllocations() {
             min_students,
             description
           ),
-          venue:venue_id(id, name, address, city, state)
+          venue:venue_id(
+            id, 
+            name, 
+            address, 
+            region, 
+            google_location
+          )
         `)
         .eq("id", parseInt(id || '0', 10))
         .single();

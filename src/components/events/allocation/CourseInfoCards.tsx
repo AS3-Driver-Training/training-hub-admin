@@ -34,7 +34,7 @@ export function CourseInfoCards({ courseInstance }: CourseInfoCardsProps) {
             <div>
               <h4 className="text-sm font-medium text-muted-foreground">Location</h4>
               <p className="font-medium">
-                {courseInstance?.venue?.city || 'Monterey'}, {courseInstance?.venue?.state || 'California'}
+                {courseInstance?.venue?.region || 'California'}
               </p>
             </div>
           </div>
@@ -62,7 +62,7 @@ export function CourseInfoCards({ courseInstance }: CourseInfoCardsProps) {
             {courseInstance?.venue?.address || "1021 Monterey Salinas Hwy"}
           </p>
           <p className="text-muted-foreground mb-6">
-            {courseInstance?.venue?.city || "Monterey"}, {courseInstance?.venue?.state || "California"} 93908
+            {courseInstance?.venue?.region || "California"}
           </p>
           
           <div className="p-4 bg-slate-50 rounded-md border mb-4">
