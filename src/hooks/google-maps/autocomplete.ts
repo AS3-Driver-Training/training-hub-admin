@@ -1,4 +1,3 @@
-
 import { GooglePlaceData } from './types';
 
 // Fix the error with PlacesService
@@ -22,7 +21,7 @@ export const setupPacContainerObserver = (): MutationObserver => {
         mutation.addedNodes.forEach((node) => {
           if (node instanceof HTMLElement && node.classList.contains('pac-container')) {
             console.log('pac-container found, setting z-index');
-            node.style.zIndex = "10000";
+            node.style.zIndex = "99999";
             node.style.position = "absolute";
             node.style.pointerEvents = "auto";
             // Add a data attribute to help with detection
@@ -74,7 +73,7 @@ export const initializeAutoComplete = (
   loadGoogleMapsScript();
 };
 
-// Add the missing initializeAutocomplete function
+// Updated initializeAutocomplete function with simplified event handling
 export const initializeAutocomplete = (
   inputElement: HTMLInputElement,
   handlePlaceSelect: (placeData: GooglePlaceData) => void
@@ -95,6 +94,7 @@ export const initializeAutocomplete = (
     // Add place_changed listener
     autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();
+      console.log('Place changed event fired!');
       
       if (!place.geometry) {
         console.warn('No geometry data for selected place');
@@ -127,18 +127,51 @@ export const initializeAutocomplete = (
       handlePlaceSelect(placeData);
     });
     
-    // Add special handling for the pac-container elements
-    setTimeout(() => {
-      const pacContainer = document.querySelector('.pac-container');
-      if (pacContainer) {
-        // Add this critical event handler to the container
-        pacContainer.addEventListener('click', (e) => {
-          // Let the click work normally, but prevent it from closing the dialog
-          e.stopPropagation();
-          console.log('Click on pac-container intercepted');
-        });
-      }
-    }, 200);
+    // Set up a MutationObserver to watch for the pac-container
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach(mutation => {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach(node => {
+            if (node instanceof HTMLElement && (
+                node.classList.contains('pac-container') || 
+                node.className.includes('pac-container'))) {
+              
+              console.log('PAC Container found and being modified');
+              
+              // Apply critical styles for visibility and interaction
+              node.style.zIndex = "99999";
+              node.style.position = "absolute"; 
+              node.style.pointerEvents = "auto";
+              
+              // Add this attribute for detection
+              node.setAttribute('data-google-places-container', 'true');
+              
+              // CRITICAL: Remove any existing click handlers that might interfere
+              const pacItems = node.querySelectorAll('.pac-item');
+              pacItems.forEach(item => {
+                if (item instanceof HTMLElement) {
+                  // Clone and replace to remove all event listeners
+                  const newItem = item.cloneNode(true);
+                  item.parentNode?.replaceChild(newItem, item);
+                  
+                  // Add our own click handler
+                  newItem.addEventListener('click', (e) => {
+                    console.log('PAC item clicked via our handler');
+                    // Don't stop propagation here
+                  });
+                }
+              });
+            }
+          });
+        }
+      });
+    });
+    
+    // Start observing
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
     
     return autocomplete;
   } catch (error) {
@@ -147,7 +180,6 @@ export const initializeAutocomplete = (
   }
 };
 
-// Add the missing cleanupAutocomplete function
 export const cleanupAutocomplete = (): void => {
   // Clean up any Google Maps related elements
   const pacContainers = document.querySelectorAll('.pac-container');
@@ -208,7 +240,6 @@ export const extractPlaceData = (place: google.maps.places.PlaceResult): GoogleP
   };
 };
 
-// Simplify fillAddressFields to avoid type errors
 export const fillAddressFields = (
   place: google.maps.places.PlaceResult,
   form: any

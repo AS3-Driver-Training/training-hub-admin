@@ -9,38 +9,22 @@
 export const isGooglePlacesElement = (target: HTMLElement | null): boolean => {
   if (!target) return false;
   
-  // Only consider dropdown elements as Google Places elements
-  // NOT the input field itself
-  const result = (
-    // Check for PAC container and items
+  // Target specific dropdown elements 
+  const isPacElement = (
     target.classList.contains('pac-container') || 
     target.closest('.pac-container') !== null ||
     target.classList.contains('pac-item') || 
     target.closest('.pac-item') !== null ||
     target.classList.contains('pac-item-query') ||
-    target.closest('.pac-item-query') !== null ||
-    target.classList.contains('pac-icon') ||
-    target.closest('.pac-icon') !== null ||
-    // Only check for container data attribute, not the input element
-    target.hasAttribute('data-google-places-container') ||
-    target.closest('[data-google-places-container]') !== null
+    target.classList.contains('pac-icon')
   );
   
-  // Add enhanced event debugging
-  if (result) {
-    console.log('Google Places dropdown element detected:', target);
-    
-    // Log detailed information for better debugging
-    if (target.classList.contains('pac-container')) {
-      console.log('Direct pac-container detected');
-    } else if (target.closest('.pac-container')) {
-      console.log('Parent pac-container detected');
-    } else if (target.hasAttribute('data-google-places-container')) {
-      console.log('Data attribute detected on container');
-    }
+  // Add debugging only when needed
+  if (isPacElement) {
+    console.log('Google Places element detected:', target.className);
   }
   
-  return result;
+  return isPacElement;
 };
 
 /**

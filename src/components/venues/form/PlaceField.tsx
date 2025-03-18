@@ -37,42 +37,6 @@ export function PlaceField({
     }
   }, [value]);
 
-  // Use useLayoutEffect to ensure the input element has the proper setup before any interactions
-  useLayoutEffect(() => {
-    if (inputRef.current) {
-      // Remove the problematic data attribute
-      // Instead, use ID and other properties for identification
-      
-      // Ensure clicking on this input doesn't close the dialog but allows typing
-      const stopPropagation = (e: Event) => {
-        e.stopPropagation();
-      };
-      
-      inputRef.current.addEventListener('click', stopPropagation);
-      inputRef.current.addEventListener('mousedown', stopPropagation);
-      // Removed pointerdown event listener - causing conflicts
-      
-      // Also prevent default behavior on keydown to ensure typing works
-      const preventDefaultOnEsc = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          e.stopPropagation();
-          e.preventDefault();
-        }
-      };
-      
-      inputRef.current.addEventListener('keydown', preventDefaultOnEsc);
-      
-      // Clean up
-      return () => {
-        if (inputRef.current) {
-          inputRef.current.removeEventListener('click', stopPropagation);
-          inputRef.current.removeEventListener('mousedown', stopPropagation);
-          inputRef.current.removeEventListener('keydown', preventDefaultOnEsc);
-        }
-      };
-    }
-  }, [inputRef]);
-
   // Listen for manual input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -106,8 +70,7 @@ export function PlaceField({
           autoComplete="off"
           // Only stop propagation, don't prevent default
           onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-          // Remove onPointerDown handler completely
+          // Remove other event handlers to avoid conflicts
         />
         
         {/* Loading indicator */}

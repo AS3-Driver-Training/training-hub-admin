@@ -21,42 +21,26 @@ export function Dialog({ children, ...props }: DialogProps) {
     modal: true
   };
   
-  // More selective event handling for Google Places elements
-  const captureAllEvents = React.useCallback((e: Event) => {
-    // Check if event target is a Google Places dropdown element
+  // Simplified event capture that focuses only on preventing dialog closure
+  const captureDialogCloseEvents = React.useCallback((e: Event) => {
     const target = e.target as HTMLElement;
     
-    // Allow normal interaction with the input field
-    if (isGooglePlacesInput(target)) {
-      console.log('Allowing event on Google Places input field');
-      return true; // Let the event continue for input fields
-    }
-    
-    // Most importantly - for dropdown items, we need to prevent dialog closing
-    // BUT we should NOT prevent the click from working
-    if (isGooglePlacesElement(target)) {
-      console.log('Dialog intercepted Google Places dropdown event');
+    // Only block external clicks when they're on PAC elements
+    if (target.closest('.pac-container') || 
+        target.classList.contains('pac-item') ||
+        target.classList.contains('pac-item-query')) {
       
-      // Stop propagation to prevent dialog from closing
+      console.log('Preventing dialog close from PAC element click');
       e.stopPropagation();
-      
-      // CRITICAL: For click events, don't call preventDefault()
-      // This allows the actual click to be processed by Google's handlers
-      if (e.type !== 'click') {
-        e.preventDefault();
-      }
-      
-      return false;
+      // IMPORTANT: Don't prevent default on these elements
     }
   }, []);
 
-  // Add global event listeners when dialog is open
+  // Add global event listeners when dialog is open - but only for mousedown
   React.useEffect(() => {
     if (props.open) {
-      // Use capture phase to intercept events before they reach radix dialog
-      document.addEventListener('mousedown', captureAllEvents, true);
-      document.addEventListener('pointerdown', captureAllEvents, true); 
-      document.addEventListener('click', captureAllEvents, true);
+      // Use capture phase, but for fewer events
+      document.addEventListener('mousedown', captureDialogCloseEvents, true);
       
       // Only handle Escape key specially, allow other keyboard events
       const handleKeyDown = (e: KeyboardEvent) => {
@@ -74,13 +58,11 @@ export function Dialog({ children, ...props }: DialogProps) {
       document.addEventListener('keydown', handleKeyDown, true);
       
       return () => {
-        document.removeEventListener('mousedown', captureAllEvents, true);
-        document.removeEventListener('pointerdown', captureAllEvents, true);
-        document.removeEventListener('click', captureAllEvents, true);
+        document.removeEventListener('mousedown', captureDialogCloseEvents, true);
         document.removeEventListener('keydown', handleKeyDown, true);
       };
     }
-  }, [props.open, captureAllEvents]);
+  }, [props.open, captureDialogCloseEvents]);
 
   return (
     <DialogRoot {...dialogProps}>
