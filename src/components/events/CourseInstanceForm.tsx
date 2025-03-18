@@ -79,7 +79,7 @@ export function CourseInstanceForm() {
       const { data, error } = await supabase
         .from("course_instances")
         .select("*")
-        .eq("id", parseInt(id, 10)) // Convert string to number properly
+        .eq("id", parseInt(id, 10))
         .single();
       if (error) throw error;
       return data;
@@ -101,6 +101,12 @@ export function CourseInstanceForm() {
     },
   });
 
+  // Function to calculate end date (fixed to include start date in duration)
+  const calculateEndDate = (startDate: Date, durationDays: number) => {
+    // Subtract 1 from duration to fix calculation (if duration is 2 days and starts on 22nd, ends on 23rd)
+    return addDays(startDate, durationDays - 1);
+  };
+
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (values: FormValues) => {
@@ -111,7 +117,7 @@ export function CourseInstanceForm() {
           start_date: values.startDate.toISOString(),
           end_date: values.isOpenEnrollment
             ? null
-            : addDays(values.startDate, selectedProgram?.duration_days || 1).toISOString(),
+            : calculateEndDate(values.startDate, selectedProgram?.duration_days || 1).toISOString(),
           is_open_enrollment: values.isOpenEnrollment,
           host_client_id: values.isOpenEnrollment ? null : values.hostClientId,
           private_seats_allocated: values.isOpenEnrollment ? null : values.privateSeatsAllocated,
@@ -151,18 +157,18 @@ export function CourseInstanceForm() {
       const { data, error } = await supabase
         .from("course_instances")
         .update({
-          program_id: parseInt(values.programId, 10), // Convert string to number properly
-          venue_id: parseInt(values.venueId, 10), // Convert string to number properly
+          program_id: parseInt(values.programId, 10),
+          venue_id: parseInt(values.venueId, 10),
           start_date: values.startDate.toISOString(),
           end_date: values.isOpenEnrollment
             ? null
-            : addDays(values.startDate, selectedProgram?.duration_days || 1).toISOString(),
+            : calculateEndDate(values.startDate, selectedProgram?.duration_days || 1).toISOString(),
           is_open_enrollment: values.isOpenEnrollment,
           host_client_id: values.isOpenEnrollment ? null : values.hostClientId,
           private_seats_allocated: values.isOpenEnrollment ? null : values.privateSeatsAllocated,
           visibility_type: values.visibilityType,
         })
-        .eq("id", parseInt(id || '0', 10)) // Convert string to number properly
+        .eq("id", parseInt(id || '0', 10))
         .select();
 
       if (error) throw error;
@@ -275,7 +281,14 @@ export function CourseInstanceForm() {
     clientsLoading || 
     (isEditMode && courseInstanceLoading)
   ) {
-    return <div className="flex justify-center p-8">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center p-8 h-[50vh]">
+        <div className="animate-pulse flex flex-col items-center gap-2">
+          <div className="h-8 w-48 bg-muted rounded-md"></div>
+          <div className="text-muted-foreground text-sm">Loading course data...</div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -295,145 +308,170 @@ export function CourseInstanceForm() {
         </h1>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{isEditMode ? "Edit Course Details" : "Course Details"}</CardTitle>
-          <CardDescription>
+      <Card className="border-muted shadow-sm">
+        <CardHeader className="bg-muted/20 rounded-t-lg pb-3">
+          <CardTitle className="text-2xl text-primary">{isEditMode ? "Edit Course Details" : "Course Details"}</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Configure the course program, venue, date, and enrollment type
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Program Selection */}
-              <FormField
-                control={form.control}
-                name="programId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Program</FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        handleProgramChange(value);
-                      }}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a program" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {programs?.map((program) => (
-                          <SelectItem key={program.id} value={program.id.toString()}>
-                            {program.name} ({program.min_students}-{program.max_students} students)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      {selectedProgram && (
-                        <>
-                          Duration: {selectedProgram.duration_days} day(s) | 
-                          Capacity: {selectedProgram.min_students}-{selectedProgram.max_students} students
-                        </>
-                      )}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Venue Selection */}
-              <FormField
-                control={form.control}
-                name="venueId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Venue</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a venue" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {venues?.map((venue) => (
-                          <SelectItem key={venue.id} value={venue.id.toString()}>
-                            {venue.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Select the location where the course will be held
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Start Date Selection */}
-              <FormField
-                control={form.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Start Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Program Selection */}
+                <FormField
+                  control={form.control}
+                  name="programId"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="text-base font-medium">Program</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          handleProgramChange(value);
+                        }}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={
-                              "w-full pl-3 text-left font-normal flex justify-between items-center"
-                            }
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <Calendar className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
+                          <SelectTrigger className="h-12">
+                            <SelectValue placeholder="Select a program" />
+                          </SelectTrigger>
                         </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <CalendarComponent
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) => date < new Date()}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormDescription>
-                      {selectedProgram && field.value && (
-                        <>
-                          End Date: {format(addDays(field.value, selectedProgram.duration_days || 1), "PPP")}
-                        </>
+                        <SelectContent>
+                          {programs?.map((program) => (
+                            <SelectItem key={program.id} value={program.id.toString()}>
+                              {program.name} ({program.min_students}-{program.max_students} students)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {selectedProgram && (
+                        <FormDescription className="mt-2 flex items-center gap-2 bg-secondary/10 p-2 rounded-md text-sm">
+                          <span className="font-medium text-secondary-foreground">Duration:</span> {selectedProgram.duration_days} day(s) | 
+                          <span className="font-medium text-secondary-foreground">Capacity:</span> {selectedProgram.min_students}-{selectedProgram.max_students} students
+                        </FormDescription>
                       )}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Venue Selection */}
+                <FormField
+                  control={form.control}
+                  name="venueId"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="text-base font-medium">Venue</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-12">
+                            <SelectValue placeholder="Select a venue" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {venues?.map((venue) => (
+                            <SelectItem key={venue.id} value={venue.id.toString()}>
+                              {venue.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription className="text-muted-foreground italic">
+                        Select the location where the course will be held
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Start Date Selection */}
+                <FormField
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="text-base font-medium">Start Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className="h-12 w-full pl-3 text-left font-normal flex justify-between items-center"
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span className="text-muted-foreground">Pick a date</span>
+                              )}
+                              <Calendar className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < new Date()}
+                            initialFocus
+                            className="p-3 pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      {selectedProgram && field.value && (
+                        <FormDescription className="mt-2 bg-secondary/10 p-2 rounded-md text-sm">
+                          <span className="font-medium text-secondary-foreground">End Date:</span> {format(calculateEndDate(field.value, selectedProgram.duration_days || 1), "PPP")}
+                        </FormDescription>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Visibility Type */}
+                <FormField
+                  control={form.control}
+                  name="visibilityType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base font-medium">Visibility</FormLabel>
+                      <Select
+                        onValueChange={(value) => field.onChange(parseInt(value))}
+                        value={field.value.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-12">
+                            <SelectValue placeholder="Select visibility" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="0">Public</SelectItem>
+                          <SelectItem value="1">Invite Only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription className="text-muted-foreground italic">
+                        Control who can see and enroll in this course
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               {/* Enrollment Type */}
               <FormField
                 control={form.control}
                 name="isOpenEnrollment"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm bg-background hover:bg-muted/10 transition-colors">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Open Enrollment</FormLabel>
-                      <FormDescription>
+                      <FormLabel className="text-base font-medium">Open Enrollment</FormLabel>
+                      <FormDescription className="text-muted-foreground">
                         Allow multiple clients to allocate seats for this course
                       </FormDescription>
                     </div>
@@ -449,19 +487,20 @@ export function CourseInstanceForm() {
 
               {/* Client and Seat Allocation (for Private Courses) */}
               {!form.watch("isOpenEnrollment") && (
-                <>
+                <div className="rounded-lg border p-4 pt-3 space-y-4 bg-tertiary/5">
+                  <h3 className="text-sm font-semibold text-tertiary mb-2">Private Course Settings</h3>
                   <FormField
                     control={form.control}
                     name="hostClientId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Host Client</FormLabel>
+                        <FormLabel className="text-base font-medium">Host Client</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}
                         >
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="h-12">
                               <SelectValue placeholder="Select a client" />
                             </SelectTrigger>
                           </FormControl>
@@ -473,7 +512,7 @@ export function CourseInstanceForm() {
                             ))}
                           </SelectContent>
                         </Select>
-                        <FormDescription>
+                        <FormDescription className="text-muted-foreground italic">
                           The client hosting this private course
                         </FormDescription>
                         <FormMessage />
@@ -486,66 +525,37 @@ export function CourseInstanceForm() {
                     name="privateSeatsAllocated"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Seats Allocated</FormLabel>
+                        <FormLabel className="text-base font-medium">Seats Allocated</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
+                            className="h-12"
                             {...field}
                             onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                           />
                         </FormControl>
-                        <FormDescription>
-                          {selectedProgram && (
-                            <>
-                              Number of seats for this private course (min: {selectedProgram.min_students}, max: {selectedProgram.max_students})
-                            </>
-                          )}
-                        </FormDescription>
+                        {selectedProgram && (
+                          <FormDescription className="text-muted-foreground italic">
+                            Number of seats for this private course (min: {selectedProgram.min_students}, max: {selectedProgram.max_students})
+                          </FormDescription>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </>
+                </div>
               )}
 
-              {/* Visibility Type */}
-              <FormField
-                control={form.control}
-                name="visibilityType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Visibility</FormLabel>
-                    <Select
-                      onValueChange={(value) => field.onChange(parseInt(value))}
-                      value={field.value.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select visibility" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="0">Public</SelectItem>
-                        <SelectItem value="1">Invite Only</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Control who can see and enroll in this course
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-end gap-3 pt-2">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => navigate("/events")}
+                  className="h-11"
                 >
                   Cancel
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="h-11 px-8 font-medium">
                   {isEditMode ? "Update Course" : "Create Course"}
                 </Button>
               </div>
@@ -556,3 +566,4 @@ export function CourseInstanceForm() {
     </div>
   );
 }
+
