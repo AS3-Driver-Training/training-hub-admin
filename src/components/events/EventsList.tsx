@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar as CalendarIcon, PlusCircle } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 interface Event {
   id: string;
@@ -82,6 +83,3 @@ export function EventsList() {
     </div>
   );
 }
-
-// Missing import
-import { Badge } from "@/components/ui/badge";

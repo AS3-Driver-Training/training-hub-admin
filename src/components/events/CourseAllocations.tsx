@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -70,7 +70,7 @@ export function CourseAllocations() {
             name
           )
         `)
-        .eq("id", parseInt(id || '0')) // Convert string to number
+        .eq("id", parseInt(id || '0', 10)) // Convert string to number properly
         .single();
       
       if (error) throw error;
@@ -93,7 +93,7 @@ export function CourseAllocations() {
             name
           )
         `)
-        .eq("course_instance_id", parseInt(id || '0')); // Convert string to number
+        .eq("course_instance_id", parseInt(id || '0', 10)); // Convert string to number properly
       
       if (error) throw error;
       return data;
@@ -102,7 +102,7 @@ export function CourseAllocations() {
   });
 
   // Update allocations state when existing allocations are fetched
-  useState(() => {
+  useEffect(() => {
     if (existingAllocations) {
       const formattedAllocations = existingAllocations.map(allocation => ({
         id: allocation.id,
@@ -144,7 +144,7 @@ export function CourseAllocations() {
       const { error: deleteError } = await supabase
         .from("course_allocations")
         .delete()
-        .eq("course_instance_id", parseInt(id || '0')); // Convert string to number
+        .eq("course_instance_id", parseInt(id || '0', 10)); // Convert string to number properly
       
       if (deleteError) throw deleteError;
 
@@ -154,7 +154,7 @@ export function CourseAllocations() {
           .from("course_allocations")
           .insert(
             allocations.map(a => ({
-              course_instance_id: parseInt(id || '0'),
+              course_instance_id: parseInt(id || '0', 10),
               client_id: a.clientId,
               seats_allocated: a.seatsAllocated
             }))

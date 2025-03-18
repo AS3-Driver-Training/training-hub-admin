@@ -36,7 +36,7 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
           name: "Marketing",
           description: "Marketing department",
           is_default: false,
-          client_id: clientId, // Add the missing client_id
+          client_id: clientId, // Added the missing client_id
           teams: [
             {
               id: "social-team-id",
@@ -55,7 +55,7 @@ export function UsersTable({ users, clientId }: UsersTableProps) {
           name: "Sales",
           description: "Sales department",
           is_default: true,
-          client_id: clientId, // Add the missing client_id
+          client_id: clientId, // Added the missing client_id
           teams: [
             {
               id: "direct-sales-team-id",

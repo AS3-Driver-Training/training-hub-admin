@@ -79,7 +79,7 @@ export function CourseInstanceForm() {
       const { data, error } = await supabase
         .from("course_instances")
         .select("*")
-        .eq("id", parseInt(id)) // Convert string to number
+        .eq("id", parseInt(id, 10)) // Convert string to number properly
         .single();
       if (error) throw error;
       return data;
@@ -151,8 +151,8 @@ export function CourseInstanceForm() {
       const { data, error } = await supabase
         .from("course_instances")
         .update({
-          program_id: parseInt(values.programId),
-          venue_id: parseInt(values.venueId),
+          program_id: parseInt(values.programId, 10), // Convert string to number properly
+          venue_id: parseInt(values.venueId, 10), // Convert string to number properly
           start_date: values.startDate.toISOString(),
           end_date: values.isOpenEnrollment
             ? null
@@ -162,7 +162,7 @@ export function CourseInstanceForm() {
           private_seats_allocated: values.isOpenEnrollment ? null : values.privateSeatsAllocated,
           visibility_type: values.visibilityType,
         })
-        .eq("id", parseInt(id || '0')) // Convert string to number
+        .eq("id", parseInt(id || '0', 10)) // Convert string to number properly
         .select();
 
       if (error) throw error;

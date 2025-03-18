@@ -1,16 +1,14 @@
-
 import { useState } from "react";
 import { List, Calendar, Search, MapPin, Clock, Users, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button as UIButton } from "@/components/ui/button";
 import { TrainingEvent } from "@/types/events";
 import { format } from "date-fns";
 import { Link, useNavigate } from "react-router-dom";
 
-// Mock data for the events
 const MOCK_EVENTS: TrainingEvent[] = [
   {
     id: "1",
@@ -49,13 +47,11 @@ export function TrainingEvents() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   
-  // Filter events based on search query
   const filteredEvents = MOCK_EVENTS.filter(event => 
     event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     event.location.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  // Split events into upcoming and past
   const currentDate = new Date();
   const upcomingEvents = filteredEvents.filter(
     event => new Date(event.startDate) > currentDate
@@ -75,14 +71,14 @@ export function TrainingEvents() {
         </div>
         
         <div className="mt-4 sm:mt-0 flex items-center gap-3">
-          <Button 
+          <UIButton 
             size="sm" 
             onClick={() => navigate("/events/create")}
             className="flex items-center gap-1"
           >
             <Plus className="h-4 w-4" />
             Create Course
-          </Button>
+          </UIButton>
           
           <ToggleGroup type="single" value={view} onValueChange={(value) => value && setView(value as "list" | "calendar")}>
             <ToggleGroupItem value="list" aria-label="List view">
@@ -175,22 +171,17 @@ function EventCalendarView({ events }: { events: TrainingEvent[] }) {
 }
 
 function EventCard({ event }: { event: TrainingEvent }) {
-  // Format dates
   const startDate = new Date(event.startDate);
   const endDate = new Date(event.endDate);
   
-  // Get day name (e.g., "Mon", "Tue")
   const dayName = format(startDate, "EEE");
   
-  // Check if it's a multi-day event
   const isSameDay = format(startDate, "yyyy-MM-dd") === format(endDate, "yyyy-MM-dd");
   
-  // Format the date range
   const dateRangeText = isSameDay
     ? format(startDate, "MMM d, yyyy")
     : `${format(startDate, "MMM d")} - ${format(endDate, "MMM d, yyyy")}`;
   
-  // Format date for display in the date box
   const monthDay = format(startDate, "MMM d");
   const dateRangeForBox = isSameDay 
     ? monthDay 
@@ -228,7 +219,7 @@ function EventCard({ event }: { event: TrainingEvent }) {
               <Users className="h-4 w-4 mr-2" />
               <span>{event.enrolledCount}/{event.capacity}</span>
             </div>
-            <Button event={event} />
+            <EnrollButton event={event} />
           </div>
         </div>
       </div>
@@ -236,7 +227,7 @@ function EventCard({ event }: { event: TrainingEvent }) {
   );
 }
 
-function Button({ event }: { event: TrainingEvent }) {
+function EnrollButton({ event }: { event: TrainingEvent }) {
   return (
     <div className="flex items-center">
       {event.enrolledCount === event.capacity ? (
