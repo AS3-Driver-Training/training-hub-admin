@@ -80,13 +80,9 @@ const SelectContent = React.forwardRef<
         className
       )}
       position={position}
-      // Remove aria-hidden to fix accessibility
+      // Fix accessibility by removing aria-hidden
       aria-hidden={undefined}
-      style={{
-        backgroundColor: 'var(--popover)',
-        zIndex: 9999
-      }}
-      // Add proper focus management
+      // Ensure proper focus management
       onOpenAutoFocus={props.onOpenAutoFocus}
       onCloseAutoFocus={props.onCloseAutoFocus}
       {...props}

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TrainingEventsHeader } from "./training/TrainingEventsHeader";
 import { EventSearch } from "./training/EventSearch";
 import { EventListView } from "./training/EventListView";
@@ -11,6 +11,7 @@ import { TrainingEvent } from "@/types/events";
 export function TrainingEvents() {
   const [view, setView] = useState<"list" | "calendar">("list");
   const [searchQuery, setSearchQuery] = useState("");
+  const queryClient = useQueryClient();
   
   const { data: events = [], isLoading, error } = useQuery({
     queryKey: ['training-events'],
@@ -90,6 +91,12 @@ export function TrainingEvents() {
     }
   });
   
+  // Function to handle event deletion
+  const handleEventDeleted = () => {
+    // Invalidate the query to refetch the events
+    queryClient.invalidateQueries({ queryKey: ['training-events'] });
+  };
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -132,9 +139,16 @@ export function TrainingEvents() {
       <EventSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       
       {view === "list" ? (
-        <EventListView upcomingEvents={upcomingEvents} pastEvents={pastEvents} />
+        <EventListView 
+          upcomingEvents={upcomingEvents} 
+          pastEvents={pastEvents} 
+          onEventDeleted={handleEventDeleted}
+        />
       ) : (
-        <EventCalendarView events={filteredEvents} />
+        <EventCalendarView 
+          events={filteredEvents} 
+          onEventDeleted={handleEventDeleted}
+        />
       )}
     </div>
   );

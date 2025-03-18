@@ -8,9 +8,10 @@ import { EventCard } from "./EventCard";
 
 interface EventCalendarViewProps {
   events: TrainingEvent[];
+  onEventDeleted?: () => void;
 }
 
-export function EventCalendarView({ events }: EventCalendarViewProps) {
+export function EventCalendarView({ events, onEventDeleted }: EventCalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   
   // Get the dates that have events
@@ -69,7 +70,7 @@ export function EventCalendarView({ events }: EventCalendarViewProps) {
             <ScrollArea className="h-[calc(100%-3rem)]">
               <div className="space-y-4">
                 {eventsOnSelectedDate.map(event => (
-                  <EventCard key={event.id} event={event} />
+                  <EventCard key={event.id} event={event} onDelete={onEventDeleted} />
                 ))}
               </div>
             </ScrollArea>

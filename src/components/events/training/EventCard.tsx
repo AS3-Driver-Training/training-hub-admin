@@ -29,9 +29,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface EventCardProps {
   event: TrainingEvent;
+  onDelete?: () => void;
 }
 
-export function EventCard({ event }: EventCardProps) {
+export function EventCard({ event, onDelete }: EventCardProps) {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -83,14 +84,23 @@ export function EventCard({ event }: EventCardProps) {
       // Show success message
       toast.success("Event deleted successfully");
       
-      // Navigate back to the events list
-      navigate('/events');
+      // Close the dialog first
+      setDeleteDialogOpen(false);
+      
+      // Call the onDelete callback if provided
+      if (onDelete) {
+        onDelete();
+      } else {
+        // Navigate back to the events list if no callback provided
+        navigate('/events', { replace: true });
+      }
     } catch (error) {
       console.error("Error deleting event:", error);
       toast.error("Failed to delete event. Please try again.");
+      // Ensure dialog is closed even on error
+      setDeleteDialogOpen(false);
     } finally {
       setIsDeleting(false);
-      setDeleteDialogOpen(false);
     }
   };
   
