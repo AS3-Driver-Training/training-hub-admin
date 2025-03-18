@@ -16,45 +16,8 @@ interface CreateVenueDialogProps {
 
 export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGooglePlacesInteraction, setIsGooglePlacesInteraction] = useState(false);
   const { toast } = useToast();
   const isEditing = !!venue;
-  
-  useEffect(() => {
-    const handleGooglePlacesInteraction = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (
-        target.closest('.pac-container') || 
-        target.closest('.pac-item') ||
-        target.hasAttribute('data-google-places-element') ||
-        target.classList.contains('pac-item') ||
-        target.classList.contains('pac-item-query') ||
-        target.classList.contains('pac-matched') ||
-        target.classList.contains('pac-icon')
-      ) {
-        setIsGooglePlacesInteraction(true);
-        event.stopPropagation();
-      }
-    };
-    
-    document.addEventListener('mousedown', handleGooglePlacesInteraction, true);
-    document.addEventListener('click', handleGooglePlacesInteraction, true);
-    return () => {
-      document.removeEventListener('mousedown', handleGooglePlacesInteraction, true);
-      document.removeEventListener('click', handleGooglePlacesInteraction, true);
-    };
-  }, []);
-  
-  const handleDialogOpenChange = (open: boolean) => {
-    if (!open && isGooglePlacesInteraction) {
-      setIsGooglePlacesInteraction(false);
-      return;
-    }
-    
-    if (!open) {
-      onClose();
-    }
-  };
   
   const defaultValues: VenueFormValues = venue ? {
     place: venue.name || "",
@@ -130,7 +93,8 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
   return (
     <Dialog 
       open={open} 
-      onOpenChange={handleDialogOpenChange}
+      onOpenChange={onClose}
+      modal={false}
     >
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>

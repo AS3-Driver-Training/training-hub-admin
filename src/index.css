@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -31,4 +32,27 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+/* Google Places Autocomplete Styling */
+.pac-container {
+  z-index: 10000 !important;
+  background-color: white !important;
+  position: absolute !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+  pointer-events: auto !important;
+}
+
+.pac-item {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  background-color: white !important;
+}
+
+.pac-item:hover {
+  background-color: #f8f9fa !important;
+}
+
+.pac-item-query, .pac-matched, .pac-icon {
+  pointer-events: auto !important;
 }

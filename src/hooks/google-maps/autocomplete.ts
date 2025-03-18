@@ -8,9 +8,9 @@ const applyAutocompleteStyles = () => {
   styleElement.id = 'google-places-autocomplete-styles';
   styleElement.textContent = `
     .pac-container {
-      z-index: 9999 !important;
+      z-index: 10000 !important;
       background-color: white !important;
-      position: fixed !important; 
+      position: absolute !important; 
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
       pointer-events: auto !important;
     }
@@ -109,6 +109,17 @@ export function initializeAutocomplete(
       onPlaceSelect(placeData);
     });
 
+    // Apply direct styling to the pac-container after a short delay
+    setTimeout(() => {
+      const pacContainer = document.querySelector('.pac-container');
+      if (pacContainer) {
+        pacContainer.setAttribute('data-google-places-container', 'true');
+        pacContainer.style.zIndex = "10000";
+        pacContainer.style.position = "absolute";
+        pacContainer.style.pointerEvents = "auto";
+      }
+    }, 300);
+
     return autocomplete;
   } catch (error) {
     console.error("Error initializing autocomplete:", error);
@@ -116,7 +127,7 @@ export function initializeAutocomplete(
   }
 }
 
-// Setup observer for pac-container
+// Simple observer setup to detect PAC container
 export function setupPacContainerObserver(): MutationObserver {
   // Create a mutation observer to watch for pac-container being added to DOM
   const observer = new MutationObserver((mutations) => {
@@ -128,24 +139,13 @@ export function setupPacContainerObserver(): MutationObserver {
               node.className.includes('pac-container'))) {
             
             // Set critical styles directly on the element
-            node.style.zIndex = '9999';
+            node.style.zIndex = '10000';
             node.style.backgroundColor = 'white';
-            node.style.position = 'fixed';
+            node.style.position = 'absolute';
             node.style.pointerEvents = 'auto';
             
             // Add data attribute to help with detection
-            node.setAttribute('data-google-places-element', 'true');
-            
-            // Make sure clicks on dropdown items work
-            node.querySelectorAll('.pac-item, .pac-item-query, .pac-matched, .pac-icon')
-              .forEach(item => {
-                if (item instanceof HTMLElement) {
-                  item.style.pointerEvents = 'auto';
-                  item.style.cursor = 'pointer';
-                  item.style.backgroundColor = 'white';
-                  item.setAttribute('data-google-places-element', 'true');
-                }
-              });
+            node.setAttribute('data-google-places-container', 'true');
           }
         });
       }

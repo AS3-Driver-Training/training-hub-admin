@@ -55,7 +55,7 @@ export function PlaceField({
   };
 
   return (
-    <div className="relative space-y-2 z-50">
+    <div className="relative space-y-2">
       <Label htmlFor="place" className={isRequired ? "after:content-['*'] after:ml-0.5 after:text-red-500" : ""}>
         Place Name
       </Label>
@@ -67,14 +67,9 @@ export function PlaceField({
           value={inputValue}
           onChange={handleInputChange}
           placeholder="Search for a place or venue"
-          className="pr-8"
+          className="pr-8 z-[1]"
           required={isRequired}
           autoComplete="off"
-          data-google-places-element="true"
-          style={{ position: 'relative', zIndex: 50 }}
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
         />
         
         {/* Loading indicator */}
