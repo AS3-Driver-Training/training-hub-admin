@@ -81,7 +81,7 @@ export function CourseDetailsCards({
           
           {courseInstance ? (
             <>
-              <p className="text-3xl font-bold mb-2">
+              <p className="text-4xl font-bold mb-2">
                 {durationDays} {durationDays === 1 ? 'Day' : 'Days'}
               </p>
               <div className="flex items-center text-muted-foreground">
