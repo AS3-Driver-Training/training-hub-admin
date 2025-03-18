@@ -13,8 +13,6 @@ export default function Venues() {
     // Setup the observer for styling Google Places containers
     observerRef.current = setupPacContainerObserver();
     
-    // No additional event handling needed here as it's now handled in the Dialog component
-    
     return () => {
       // Clean up observer
       if (observerRef.current) {
