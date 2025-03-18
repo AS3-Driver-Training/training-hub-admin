@@ -8,24 +8,22 @@ const applyAutocompleteStyles = () => {
   styleElement.id = 'google-places-autocomplete-styles';
   styleElement.textContent = `
     .pac-container {
-      z-index: 999999 !important; /* Extremely high z-index */
-      position: absolute !important; 
+      z-index: 9999 !important;
+      background-color: white !important;
+      position: fixed !important; 
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
       pointer-events: auto !important;
     }
     .pac-item {
       pointer-events: auto !important;
       cursor: pointer !important;
+      background-color: white !important;
     }
     .pac-item:hover {
       background-color: #f8f9fa !important;
     }
     .pac-item *, .pac-item-query, .pac-matched, .pac-icon {
       pointer-events: auto !important;
-    }
-    /* Force the pac-container to appear above dialogs */
-    body > .pac-container {
-      z-index: 999999 !important;
     }
   `;
   
@@ -37,73 +35,6 @@ const applyAutocompleteStyles = () => {
   
   // Add the style to the document head
   document.head.appendChild(styleElement);
-};
-
-// Setup observer for pac-container using modern MutationObserver
-const setupPacContainerObserver = () => {
-  // Create a mutation observer to watch for pac-container being added to DOM
-  const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      if (mutation.type === 'childList') {
-        mutation.addedNodes.forEach((node) => {
-          if (node instanceof HTMLElement && 
-              (node.className === 'pac-container pac-logo' || 
-              node.className.includes('pac-container'))) {
-            
-            console.log("PAC container inserted into DOM, applying critical styles");
-            
-            // Set critical styles directly on the element
-            node.style.cssText = 'z-index: 999999 !important; position: absolute !important; pointer-events: auto !important;';
-            
-            // Add data attribute to help with detection
-            node.setAttribute('data-google-places-element', 'true');
-            
-            // Make sure clicks on dropdown items work
-            const items = node.querySelectorAll('.pac-item, .pac-item-query, .pac-icon, .pac-item *, .pac-matched');
-            items.forEach((item: HTMLElement) => {
-              item.style.cssText = 'pointer-events: auto !important; cursor: pointer !important;';
-              item.setAttribute('data-google-places-element', 'true');
-              
-              // Add direct event listeners to each item
-              const stopEvents = (evt: Event) => {
-                evt.stopPropagation();
-                // Only prevent default for non-input elements
-                if (!(evt.target instanceof HTMLInputElement)) {
-                  evt.preventDefault();
-                }
-              };
-              
-              ['mousedown', 'click', 'pointerdown', 'touchstart'].forEach(eventType => {
-                item.addEventListener(eventType, stopEvents, true);
-              });
-            });
-            
-            // Add event listeners to the container itself
-            const stopEvents = (evt: Event) => {
-              evt.stopPropagation();
-              // Only prevent default for non-input elements
-              if (!(evt.target instanceof HTMLInputElement)) {
-                evt.preventDefault();
-              }
-            };
-            
-            ['mousedown', 'click', 'pointerdown', 'touchstart'].forEach(eventType => {
-              node.addEventListener(eventType, stopEvents, true);
-            });
-          }
-        });
-      }
-    }
-  });
-  
-  // Start observing the document body for pac-container additions
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
-  
-  // Store the observer on window to allow cleanup later
-  (window as any).__pacContainerObserver = observer;
 };
 
 /**
@@ -122,28 +53,14 @@ export function initializeAutocomplete(
     // Apply custom styles to ensure dropdown appears above other elements
     applyAutocompleteStyles();
     
-    // Setup modern DOM observer for pac-container
-    setupPacContainerObserver();
-    
     // Create the autocomplete object
     const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
       types: ['establishment', 'geocode'],
       fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id']
     });
     
-    // These event listeners will prevent the dialog from closing
-    const preventDialogClose = (e: Event) => {
-      e.stopPropagation();
-    };
-    
     // Add data attribute for easier selection
     inputElement.setAttribute('data-google-places-element', 'true');
-    
-    // Clear previous handlers to prevent duplicates
-    ['click', 'mousedown', 'pointerdown', 'touchstart'].forEach(eventType => {
-      inputElement.removeEventListener(eventType, preventDialogClose, true);
-      inputElement.addEventListener(eventType, preventDialogClose, true);
-    });
     
     // Set up the place changed listener
     const listener = autocomplete.addListener('place_changed', () => {
@@ -199,14 +116,53 @@ export function initializeAutocomplete(
   }
 }
 
+// Setup observer for pac-container
+export function setupPacContainerObserver(): MutationObserver {
+  // Create a mutation observer to watch for pac-container being added to DOM
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach(mutation => {
+      if (mutation.type === 'childList') {
+        mutation.addedNodes.forEach(node => {
+          if (node instanceof HTMLElement && 
+              (node.classList.contains('pac-container') || 
+              node.className.includes('pac-container'))) {
+            
+            // Set critical styles directly on the element
+            node.style.zIndex = '9999';
+            node.style.backgroundColor = 'white';
+            node.style.position = 'fixed';
+            node.style.pointerEvents = 'auto';
+            
+            // Add data attribute to help with detection
+            node.setAttribute('data-google-places-element', 'true');
+            
+            // Make sure clicks on dropdown items work
+            node.querySelectorAll('.pac-item, .pac-item-query, .pac-matched, .pac-icon')
+              .forEach(item => {
+                if (item instanceof HTMLElement) {
+                  item.style.pointerEvents = 'auto';
+                  item.style.cursor = 'pointer';
+                  item.style.backgroundColor = 'white';
+                  item.setAttribute('data-google-places-element', 'true');
+                }
+              });
+          }
+        });
+      }
+    });
+  });
+  
+  // Start observing the document body for pac-container additions
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
+  return observer;
+}
+
 // Cleanup function to remove event listeners and observer
 export function cleanupAutocomplete() {
-  // Clean up the mutation observer
-  if ((window as any).__pacContainerObserver) {
-    (window as any).__pacContainerObserver.disconnect();
-    delete (window as any).__pacContainerObserver;
-  }
-  
   // Remove the style element
   const styleElement = document.getElementById('google-places-autocomplete-styles');
   if (styleElement) {

@@ -40,31 +40,8 @@ export function PlaceField({
   // Use useLayoutEffect to ensure the input element has the proper stacking context
   useLayoutEffect(() => {
     if (inputRef.current) {
-      // Ensure that clicking on this input doesn't cause dialog close
-      const handleEvent = (e: Event) => {
-        // Always stop propagation and prevent default to isolate this input
-        e.stopPropagation();
-      };
-      
       // Add data attribute to help with detection
       inputRef.current.setAttribute('data-google-places-element', 'true');
-      
-      // Attach event listeners with capture phase (true) to ensure they run first
-      inputRef.current.addEventListener('click', handleEvent, true);
-      inputRef.current.addEventListener('mousedown', handleEvent, true);
-      inputRef.current.addEventListener('pointerdown', handleEvent, true);
-      
-      // Critical: ensure the input is accessible and visible
-      inputRef.current.style.position = 'relative';
-      inputRef.current.style.zIndex = '9999';
-      
-      return () => {
-        if (inputRef.current) {
-          inputRef.current.removeEventListener('click', handleEvent, true);
-          inputRef.current.removeEventListener('mousedown', handleEvent, true);
-          inputRef.current.removeEventListener('pointerdown', handleEvent, true);
-        }
-      };
     }
   }, [inputRef]);
 
@@ -77,32 +54,13 @@ export function PlaceField({
     }
   };
 
-  // Explicitly prevent propagation but don't prevent default for input interactions
-  const preventPropagation = (e: React.MouseEvent | React.PointerEvent) => {
-    e.stopPropagation();
-  };
-
   return (
-    <div 
-      className="relative space-y-2 z-[9999]" 
-      style={{ position: 'relative' }}
-      onClick={preventPropagation}
-      onMouseDown={preventPropagation}
-      onPointerDown={preventPropagation}
-      data-google-places-element="true"
-    >
+    <div className="relative space-y-2 z-50">
       <Label htmlFor="place" className={isRequired ? "after:content-['*'] after:ml-0.5 after:text-red-500" : ""}>
         Place Name
       </Label>
       
-      <div 
-        className="relative" 
-        style={{ position: 'relative', zIndex: 9999 }}
-        onClick={preventPropagation}
-        onMouseDown={preventPropagation}
-        onPointerDown={preventPropagation}
-        data-google-places-element="true"
-      >
+      <div className="relative">
         <Input
           id="place"
           ref={inputRef}
@@ -113,17 +71,10 @@ export function PlaceField({
           required={isRequired}
           autoComplete="off"
           data-google-places-element="true"
-          style={{ position: 'relative', zIndex: 9999 }}
-          onClick={(e) => {
-            e.stopPropagation();
-            // Don't prevent default here as we want to focus the input
-          }}
-          onMouseDown={(e) => {
-            e.stopPropagation();
-          }}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-          }}
+          style={{ position: 'relative', zIndex: 50 }}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
         />
         
         {/* Loading indicator */}

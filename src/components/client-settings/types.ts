@@ -32,7 +32,7 @@ interface GroupBase {
 
 // GroupData is used in the ClientSettingsData interface
 export interface GroupData extends GroupBase {
-  client_id: string; // Changed from optional to required
+  client_id: string; // Required in GroupData
   teams: TeamData[];
 }
 
@@ -43,7 +43,7 @@ export interface TeamData {
   group?: {
     id: string;
     name: string;
-    description: string; // Ensure this is required, not optional
+    description: string;
     is_default: boolean;
   };
 }
@@ -65,10 +65,10 @@ export interface UserData {
   teams: TeamData[];
 }
 
-// Group is used elsewhere in the application and requires client_id
+// Group is used elsewhere in the application
 export interface Group extends GroupBase {
-  client_id: string;
-  teams?: TeamData[]; // Changed from Team[] to TeamData[]
+  client_id: string; // Required in Group
+  teams?: TeamData[]; // Optional in Group
 }
 
 export interface Team {
@@ -78,7 +78,7 @@ export interface Team {
   group?: {
     id: string;
     name: string;
-    description: string; // Changed from optional to required
+    description: string;
     is_default: boolean;
   };
 }
