@@ -1,7 +1,7 @@
 
 import { TrainingEvent } from "@/types/events";
 import { format } from "date-fns";
-import { MapPin, Clock, Users, ArrowRight, MoreVertical, Edit, XOctagon } from "lucide-react";
+import { MapPin, Clock, Users, ArrowRight, MoreVertical, Edit, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EnrollButton } from "./EnrollButton";
@@ -46,10 +46,10 @@ export function EventCard({ event }: EventCardProps) {
     navigate(`/events/${event.id}/edit`);
   };
   
-  const handleCancelEvent = (e: React.MouseEvent) => {
+  const handleDeleteEvent = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // This would typically call an API to cancel the event
-    toast.info(`Event ${event.id} would be cancelled here`);
+    // This would typically call an API to delete the event
+    toast.info(`Event ${event.id} would be deleted here`);
   };
   
   return (
@@ -80,9 +80,9 @@ export function EventCard({ event }: EventCardProps) {
                     <Edit className="mr-2 h-4 w-4" />
                     Edit
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleCancelEvent} className="text-destructive">
-                    <XOctagon className="mr-2 h-4 w-4" />
-                    Cancel
+                  <DropdownMenuItem onClick={handleDeleteEvent} className="text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Event
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -106,7 +106,7 @@ export function EventCard({ event }: EventCardProps) {
               <span>{event.enrolledCount || 0}/{event.capacity || 0}</span>
             </div>
             
-            <div className="flex gap-2">
+            <div>
               <Button 
                 variant="outline" 
                 size="sm"
@@ -116,7 +116,6 @@ export function EventCard({ event }: EventCardProps) {
                 Allocations
                 <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
-              <EnrollButton event={event} />
             </div>
           </div>
         </div>
