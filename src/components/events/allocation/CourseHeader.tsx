@@ -14,19 +14,34 @@ export function CourseHeader({ courseInstance }: CourseHeaderProps) {
   // Get course name from the program
   const courseName = courseInstance?.program?.name || "Loading...";
 
-  // Format dates for display
-  const startDate = courseInstance?.start_date 
-    ? format(new Date(courseInstance.start_date), "MMMM d, yyyy") 
-    : "";
-    
-  const endDate = courseInstance?.end_date 
-    ? format(new Date(courseInstance.end_date), "MMMM d, yyyy") 
-    : "";
-
-  // Format date display
-  const dateDisplay = startDate && endDate 
-    ? `${startDate} - ${endDate}` 
-    : startDate || "Date not available";
+  // Format dates for display - using proper error handling for date parsing
+  let startDateFormatted = "Date not available";
+  let endDateFormatted = "";
+  
+  // Format start date if available
+  if (courseInstance?.start_date) {
+    try {
+      const startDate = new Date(courseInstance.start_date);
+      startDateFormatted = format(startDate, "MMMM d, yyyy");
+    } catch (error) {
+      console.error("Error formatting start date:", error);
+    }
+  }
+  
+  // Format end date if available
+  if (courseInstance?.end_date) {
+    try {
+      const endDate = new Date(courseInstance.end_date);
+      endDateFormatted = format(endDate, "MMMM d, yyyy");
+    } catch (error) {
+      console.error("Error formatting end date:", error);
+    }
+  }
+  
+  // Create final date display string
+  const dateDisplay = endDateFormatted 
+    ? `${startDateFormatted} - ${endDateFormatted}` 
+    : startDateFormatted;
 
   return (
     <div className="mb-8">
