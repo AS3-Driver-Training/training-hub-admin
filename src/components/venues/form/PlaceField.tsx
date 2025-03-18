@@ -40,8 +40,8 @@ export function PlaceField({
   // Use useLayoutEffect to ensure the input element has the proper setup before any interactions
   useLayoutEffect(() => {
     if (inputRef.current) {
-      // Add data attribute to help with detection
-      inputRef.current.setAttribute('data-google-places-element', 'true');
+      // Remove the problematic data attribute
+      // Instead, use ID and other properties for identification
       
       // Ensure clicking on this input doesn't close the dialog but allows typing
       const stopPropagation = (e: Event) => {
@@ -105,7 +105,7 @@ export function PlaceField({
           className="pr-8 z-[1]"
           required={isRequired}
           autoComplete="off"
-          data-google-places-element="true"
+          // Remove data-google-places-element attribute
           // Add these to ensure the input works properly
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
