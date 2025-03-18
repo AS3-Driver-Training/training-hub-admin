@@ -1,6 +1,6 @@
 
 import { Clock } from "lucide-react";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -18,6 +18,26 @@ export function CourseDetailsCards({
   maxStudents, 
   allocationPercentage 
 }: CourseDetailsCardsProps) {
+  // Calculate course duration properly
+  const calculateDuration = () => {
+    if (!courseInstance) return 1; // Default to 1 day if no course instance
+
+    const startDate = new Date(courseInstance.start_date);
+    
+    // If end_date is null, default to 1 day
+    if (!courseInstance.end_date) {
+      return 1;
+    }
+    
+    const endDate = new Date(courseInstance.end_date);
+    
+    // Calculate the difference in days and add 1 (to include both start and end day)
+    const days = differenceInDays(endDate, startDate);
+    return Math.max(1, days + 1); // Ensure minimum of 1 day
+  };
+
+  const durationDays = calculateDuration();
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       {/* Status Card */}
@@ -62,7 +82,7 @@ export function CourseDetailsCards({
           {courseInstance ? (
             <>
               <p className="text-3xl font-bold mb-2">
-                {Math.ceil((new Date(courseInstance.end_date).getTime() - new Date(courseInstance.start_date).getTime()) / (1000 * 60 * 60 * 24)) || 1} Days
+                {durationDays} {durationDays === 1 ? 'Day' : 'Days'}
               </p>
               <div className="flex items-center text-muted-foreground">
                 <Clock className="h-4 w-4 mr-2" />
