@@ -114,7 +114,7 @@ export function initializeAutocomplete(
 
     // Apply direct styling to the pac-container after a short delay
     setTimeout(() => {
-      const pacContainer = document.querySelector('.pac-container');
+      const pacContainer = document.querySelector('.pac-container') as HTMLElement;
       if (pacContainer) {
         pacContainer.setAttribute('data-google-places-container', 'true');
         pacContainer.style.zIndex = "10000";

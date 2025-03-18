@@ -10,11 +10,11 @@ export default function Venues() {
 
   // Set up a global observer for Google Places dropdowns
   useEffect(() => {
-    // Setup the observer
+    // Setup the observer for styling Google Places containers
     observerRef.current = setupPacContainerObserver();
     
-    // Apply additional global handlers for Google Places elements
-    const handleDocumentClick = (e: MouseEvent) => {
+    // Global debug logger for Google Places elements
+    const handleGooglePlacesDebug = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       
       // Check if clicking on Google Places element
@@ -24,12 +24,13 @@ export default function Venues() {
         target.classList.contains('pac-item') ||
         target.classList.contains('pac-item-query')
       ) {
-        console.log('Google Places element clicked');
-        // Don't stop propagation, but log for debugging
+        console.log('Google Places element interaction detected at page level');
+        // Don't interfere with event propagation here - just logging
       }
     };
     
-    document.addEventListener('click', handleDocumentClick, true);
+    // Use capture phase for debugging only
+    document.addEventListener('click', handleGooglePlacesDebug, true);
     
     return () => {
       // Clean up observer
@@ -37,7 +38,7 @@ export default function Venues() {
         observerRef.current.disconnect();
       }
       
-      document.removeEventListener('click', handleDocumentClick, true);
+      document.removeEventListener('click', handleGooglePlacesDebug, true);
     };
   }, []);
 

@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Venue } from "@/types/venues";
@@ -20,30 +19,53 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
   const { toast } = useToast();
   const isEditing = !!venue;
   
-  // Track Google Places element interactions
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (
-        target.closest('.pac-container') || 
-        target.closest('.pac-item') ||
-        target.classList.contains('pac-item') ||
-        target.classList.contains('pac-item-query')
-      ) {
-        setIsSelectingPlace(true);
-        // Reset after a short delay
-        setTimeout(() => setIsSelectingPlace(false), 300);
-      }
-    };
+  // Consolidated event handler for preventing dialog close
+  const preventDialogClose = useCallback((e: MouseEvent) => {
+    const target = e.target as HTMLElement;
     
-    document.addEventListener('mousedown', handleMouseDown, true);
-    return () => document.removeEventListener('mousedown', handleMouseDown, true);
+    // More specific targeting of Google Places elements
+    if (
+      target.closest('.pac-container') || 
+      target.closest('.pac-item') ||
+      target.classList.contains('pac-item') ||
+      target.classList.contains('pac-item-query') ||
+      target.classList.contains('pac-icon') ||
+      target.closest('.pac-icon')
+    ) {
+      // Critical: stop event propagation completely
+      e.stopPropagation();
+      e.preventDefault();
+      
+      console.log('Google Places element interaction intercepted');
+      setIsSelectingPlace(true);
+      
+      // Keep the flag active longer to ensure dialog doesn't close
+      setTimeout(() => setIsSelectingPlace(false), 500);
+    }
   }, []);
   
-  // Create a handler function instead of passing onClose directly
+  // Use capture phase to ensure this runs before Dialog handlers
+  useEffect(() => {
+    if (open) {
+      document.addEventListener('mousedown', preventDialogClose, true);
+      document.addEventListener('click', preventDialogClose, true);
+      
+      return () => {
+        document.removeEventListener('mousedown', preventDialogClose, true);
+        document.removeEventListener('click', preventDialogClose, true);
+      };
+    }
+  }, [open, preventDialogClose]);
+  
+  // Enhanced handler to block all automatic closing behavior
   const handleOpenChange = (open: boolean) => {
-    // Only close if not selecting a place
-    if (!open && !isSelectingPlace) {
+    // Prevent auto-closing completely when selecting a place
+    if (!open) {
+      if (isSelectingPlace) {
+        console.log('Preventing dialog close during place selection');
+        return; // Don't close the dialog
+      }
+      // Otherwise, proceed with closing
       onClose();
     }
   };

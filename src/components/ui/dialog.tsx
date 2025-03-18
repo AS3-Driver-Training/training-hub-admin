@@ -11,9 +11,11 @@ const DialogTrigger = DialogPrimitive.Trigger
 const DialogPortal = DialogPrimitive.Portal
 const DialogClose = DialogPrimitive.Close
 
-// Function to check if element is part of Google Places autocomplete
+// Enhanced function to check if element is part of Google Places autocomplete
 const isGooglePlacesElement = (target: HTMLElement | null): boolean => {
   if (!target) return false;
+  
+  // More comprehensive check for Google Places elements
   return (
     target.classList.contains('pac-container') || 
     target.closest('.pac-container') !== null ||
@@ -22,7 +24,11 @@ const isGooglePlacesElement = (target: HTMLElement | null): boolean => {
     target.classList.contains('pac-item-query') ||
     target.closest('.pac-item-query') !== null ||
     target.classList.contains('pac-icon') ||
-    target.closest('.pac-icon') !== null
+    target.closest('.pac-icon') !== null ||
+    target.hasAttribute('data-google-places-element') ||
+    target.closest('[data-google-places-element]') !== null ||
+    target.hasAttribute('data-google-places-container') ||
+    target.closest('[data-google-places-container]') !== null
   );
 };
 
@@ -40,8 +46,10 @@ const DialogOverlay = React.forwardRef<
     onClick={(e) => {
       // Prevent clicks on Google Places elements from closing the dialog
       if (isGooglePlacesElement(e.target as HTMLElement)) {
+        console.log('Preventing dialog close from overlay click on Google Places element');
         e.stopPropagation();
         e.preventDefault();
+        return;
       }
       // Let the original click handler run otherwise
       if (props.onClick) {
@@ -64,6 +72,7 @@ const DialogContent = React.forwardRef<
     
     // Check if the click is on or inside a Google Places element
     if (isGooglePlacesElement(target)) {
+      console.log('Intercepted Google Places event in Dialog content');
       e.stopPropagation();
       return;
     }
@@ -168,6 +177,8 @@ function Dialog({ children, ...props }: DialogProps) {
     // Check if event target is a Google Places element
     const target = e.target as HTMLElement;
     if (isGooglePlacesElement(target)) {
+      console.log('Dialog intercepted Google Places event globally');
+      // This is crucial - completely block these events
       e.stopPropagation();
       if (e.type === 'click' || e.type === 'mousedown') {
         e.preventDefault();
