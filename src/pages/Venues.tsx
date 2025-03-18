@@ -13,11 +13,31 @@ export default function Venues() {
     // Setup the observer
     observerRef.current = setupPacContainerObserver();
     
+    // Apply additional global handlers for Google Places elements
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      
+      // Check if clicking on Google Places element
+      if (
+        target.closest('.pac-container') || 
+        target.closest('.pac-item') ||
+        target.classList.contains('pac-item') ||
+        target.classList.contains('pac-item-query')
+      ) {
+        console.log('Google Places element clicked');
+        // Don't stop propagation, but log for debugging
+      }
+    };
+    
+    document.addEventListener('click', handleDocumentClick, true);
+    
     return () => {
       // Clean up observer
       if (observerRef.current) {
         observerRef.current.disconnect();
       }
+      
+      document.removeEventListener('click', handleDocumentClick, true);
     };
   }, []);
 

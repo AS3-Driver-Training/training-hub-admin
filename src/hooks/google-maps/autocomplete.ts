@@ -105,8 +105,11 @@ export function initializeAutocomplete(
         placeName: place.name || ''
       };
 
-      // Call the callback with the place data
-      onPlaceSelect(placeData);
+      // Delay the callback to prevent dialog closing
+      setTimeout(() => {
+        // Call the callback with the place data
+        onPlaceSelect(placeData);
+      }, 100);
     });
 
     // Apply direct styling to the pac-container after a short delay

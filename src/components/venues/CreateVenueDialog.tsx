@@ -16,8 +16,37 @@ interface CreateVenueDialogProps {
 
 export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSelectingPlace, setIsSelectingPlace] = useState(false);
   const { toast } = useToast();
   const isEditing = !!venue;
+  
+  // Track Google Places element interactions
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.closest('.pac-container') || 
+        target.closest('.pac-item') ||
+        target.classList.contains('pac-item') ||
+        target.classList.contains('pac-item-query')
+      ) {
+        setIsSelectingPlace(true);
+        // Reset after a short delay
+        setTimeout(() => setIsSelectingPlace(false), 300);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleMouseDown, true);
+    return () => document.removeEventListener('mousedown', handleMouseDown, true);
+  }, []);
+  
+  // Create a handler function instead of passing onClose directly
+  const handleOpenChange = (open: boolean) => {
+    // Only close if not selecting a place
+    if (!open && !isSelectingPlace) {
+      onClose();
+    }
+  };
   
   const defaultValues: VenueFormValues = venue ? {
     place: venue.name || "",
@@ -93,7 +122,7 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
   return (
     <Dialog 
       open={open} 
-      onOpenChange={onClose}
+      onOpenChange={handleOpenChange}
       modal={false}
     >
       <DialogContent className="sm:max-w-[600px]">
