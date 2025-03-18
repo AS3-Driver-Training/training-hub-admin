@@ -38,6 +38,7 @@ export function TrainingEvents() {
       console.log("Enrollment by instance:", enrollmentByInstance);
       
       // Then fetch the course instances with related data including client information
+      // Fixed: Use host_client_id instead of client_id for the clients relationship
       const { data, error } = await supabase
         .from('course_instances')
         .select(`
@@ -48,7 +49,7 @@ export function TrainingEvents() {
           private_seats_allocated,
           programs:program_id(name, max_students),
           venues:venue_id(name),
-          clients:client_id(name)
+          clients:host_client_id(name)
         `)
         .order('start_date', { ascending: true });
       
