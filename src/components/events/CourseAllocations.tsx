@@ -7,6 +7,7 @@ import { ErrorDisplay } from "./allocation/ErrorDisplay";
 import { AllocationsContent } from "./allocation/AllocationsContent";
 import { useAllocationData } from "./allocation/hooks/useAllocationData";
 import { useSeatAllocation } from "./allocation/useSeatAllocation";
+import { StudentsContent } from "./allocation/StudentsContent";
 
 export function CourseAllocations() {
   // Use our custom hooks to get data and manage seat allocations
@@ -39,6 +40,9 @@ export function CourseAllocations() {
     return <ErrorDisplay error={error} />;
   }
 
+  // Check if this is a private course
+  const isPrivateCourse = courseInstance && !courseInstance.is_open_enrollment;
+
   // Calculate totals for allocation stats
   const { totalAllocated, maxStudents, allocationPercentage } = calculateTotals();
 
@@ -58,20 +62,29 @@ export function CourseAllocations() {
       {/* Program Details & Location Details */}
       <CourseInfoCards courseInstance={courseInstance} />
 
-      {/* Enrolled Students / Seat Allocations Section */}
-      <AllocationsContent 
-        allocations={allocations}
-        remainingSeats={remainingSeats}
-        showAddForm={showAddForm}
-        setShowAddForm={setShowAddForm}
-        handleAddAllocation={handleAddAllocation}
-        handleRemoveAllocation={handleRemoveAllocation}
-        totalAllocated={totalAllocated}
-        maxStudents={maxStudents}
-        saveAllocationsMutation={saveAllocationsMutation}
-        clients={clients}
-        courseInstance={courseInstance}
-      />
+      {/* Show different content based on course type */}
+      {isPrivateCourse ? (
+        // Private Course: Show Students Management Component
+        <StudentsContent 
+          courseInstance={courseInstance}
+          maxStudents={maxStudents}
+        />
+      ) : (
+        // Open Enrollment Course: Show Allocations Component
+        <AllocationsContent 
+          allocations={allocations}
+          remainingSeats={remainingSeats}
+          showAddForm={showAddForm}
+          setShowAddForm={setShowAddForm}
+          handleAddAllocation={handleAddAllocation}
+          handleRemoveAllocation={handleRemoveAllocation}
+          totalAllocated={totalAllocated}
+          maxStudents={maxStudents}
+          saveAllocationsMutation={saveAllocationsMutation}
+          clients={clients}
+          courseInstance={courseInstance}
+        />
+      )}
     </div>
   );
 }

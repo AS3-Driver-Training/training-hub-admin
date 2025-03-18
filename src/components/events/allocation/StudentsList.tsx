@@ -147,7 +147,7 @@ export function StudentsList({ clientId, clientName, seatsAllocated, onClose }: 
         <DialogHeader>
           <DialogTitle>Manage Students for {clientName}</DialogTitle>
           <DialogDescription>
-            Add, view or enroll students for this course allocation.
+            Add, view or enroll students for this course.
             <div className="mt-2 flex items-center justify-between">
               <Badge variant="outline" className="bg-slate-100">
                 {enrolledCount} of {seatsAllocated} seats filled
