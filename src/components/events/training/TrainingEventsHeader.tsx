@@ -14,24 +14,26 @@ export function TrainingEventsHeader({ view, setView }: TrainingEventsHeaderProp
   const navigate = useNavigate();
   
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Upcoming Training Events</h1>
-        <p className="text-muted-foreground mt-1">
-          View and enroll in available training sessions
-        </p>
-      </div>
-      
-      <div className="mt-4 sm:mt-0 flex items-center gap-3">
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Upcoming Training Events</h1>
+          <p className="text-muted-foreground mt-1">
+            View and enroll in available training sessions
+          </p>
+        </div>
+        
         <Button 
           size="sm" 
           onClick={() => navigate("/events/create")}
-          className="flex items-center gap-1"
+          className="mt-4 sm:mt-0 flex items-center gap-1"
         >
           <Plus className="h-4 w-4" />
           Create Course
         </Button>
-        
+      </div>
+      
+      <div className="flex justify-end">
         <ToggleGroup type="single" value={view} onValueChange={(value) => value && setView(value as "list" | "calendar")}>
           <ToggleGroupItem value="list" aria-label="List view">
             <List className="h-4 w-4 mr-2" />
