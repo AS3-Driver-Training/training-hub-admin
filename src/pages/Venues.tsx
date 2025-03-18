@@ -13,32 +13,13 @@ export default function Venues() {
     // Setup the observer for styling Google Places containers
     observerRef.current = setupPacContainerObserver();
     
-    // Global debug logger for Google Places elements
-    const handleGooglePlacesDebug = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      
-      // Check if clicking on Google Places element
-      if (
-        target.closest('.pac-container') || 
-        target.closest('.pac-item') ||
-        target.classList.contains('pac-item') ||
-        target.classList.contains('pac-item-query')
-      ) {
-        console.log('Google Places element interaction detected at page level');
-        // Don't interfere with event propagation here - just logging
-      }
-    };
-    
-    // Use capture phase for debugging only
-    document.addEventListener('click', handleGooglePlacesDebug, true);
+    // No additional event handling needed here as it's now handled in the Dialog component
     
     return () => {
       // Clean up observer
       if (observerRef.current) {
         observerRef.current.disconnect();
       }
-      
-      document.removeEventListener('click', handleGooglePlacesDebug, true);
     };
   }, []);
 

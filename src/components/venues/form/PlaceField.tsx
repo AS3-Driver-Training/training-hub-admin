@@ -42,6 +42,20 @@ export function PlaceField({
     if (inputRef.current) {
       // Add data attribute to help with detection
       inputRef.current.setAttribute('data-google-places-element', 'true');
+      
+      // Ensure clicking on this input doesn't close the dialog
+      inputRef.current.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+      
+      // Clean up
+      return () => {
+        if (inputRef.current) {
+          inputRef.current.removeEventListener('click', (e) => {
+            e.stopPropagation();
+          });
+        }
+      };
     }
   }, [inputRef]);
 
@@ -70,6 +84,7 @@ export function PlaceField({
           className="pr-8 z-[1]"
           required={isRequired}
           autoComplete="off"
+          data-google-places-element="true"
         />
         
         {/* Loading indicator */}

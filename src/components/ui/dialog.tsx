@@ -173,16 +173,41 @@ interface DialogProps extends React.ComponentPropsWithoutRef<typeof DialogRoot> 
 // Properly implement the Dialog component as a wrapper around DialogRoot
 // with additional Google Places autocomplete handling
 function Dialog({ children, ...props }: DialogProps) {
-  const handleDialogEvents = React.useCallback((e: MouseEvent | KeyboardEvent) => {
+  const dialogRef = React.useRef<any>(null);
+  
+  // Create enhanced dialog props with explicit handlers to prevent closing
+  const dialogProps = {
+    ...props,
+    // Force the dialog to be modal (prevents outside clicks from closing)
+    modal: true,
+    // Override Radix's default handler that closes the dialog
+    onPointerDownOutside: (e: any) => {
+      const target = e.target as HTMLElement;
+      // Check if clicking on Google element
+      if (isGooglePlacesElement(target)) {
+        console.log('Prevented dialog close via onPointerDownOutside');
+        e.preventDefault();
+      }
+    },
+    // Prevent Escape key from closing during place selection
+    onEscapeKeyDown: (e: any) => {
+      // Allow escape key to close normally
+      if (props.onEscapeKeyDown) {
+        props.onEscapeKeyDown(e);
+      }
+    }
+  };
+  
+  // More aggressive event handling for Google Places elements
+  const captureAllEvents = React.useCallback((e: Event) => {
     // Check if event target is a Google Places element
     const target = e.target as HTMLElement;
     if (isGooglePlacesElement(target)) {
-      console.log('Dialog intercepted Google Places event globally');
+      console.log('Dialog captured Google Places event globally');
       // This is crucial - completely block these events
       e.stopPropagation();
-      if (e.type === 'click' || e.type === 'mousedown') {
-        e.preventDefault();
-      }
+      e.preventDefault();
+      return false;
     }
   }, []);
 
@@ -190,18 +215,22 @@ function Dialog({ children, ...props }: DialogProps) {
   React.useEffect(() => {
     if (props.open) {
       // Use capture phase to intercept events before they reach radix dialog
-      document.addEventListener('mousedown', handleDialogEvents, true);
-      document.addEventListener('click', handleDialogEvents, true);
+      document.addEventListener('mousedown', captureAllEvents, true);
+      document.addEventListener('pointerdown', captureAllEvents, true); 
+      document.addEventListener('click', captureAllEvents, true);
+      document.addEventListener('keydown', captureAllEvents, true);
       
       return () => {
-        document.removeEventListener('mousedown', handleDialogEvents, true);
-        document.removeEventListener('click', handleDialogEvents, true);
+        document.removeEventListener('mousedown', captureAllEvents, true);
+        document.removeEventListener('pointerdown', captureAllEvents, true);
+        document.removeEventListener('click', captureAllEvents, true);
+        document.removeEventListener('keydown', captureAllEvents, true);
       };
     }
-  }, [props.open, handleDialogEvents]);
+  }, [props.open, captureAllEvents]);
 
   return (
-    <DialogRoot {...props}>
+    <DialogRoot {...dialogProps} ref={dialogRef}>
       {children}
     </DialogRoot>
   );

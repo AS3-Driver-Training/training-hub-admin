@@ -145,7 +145,7 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
     <Dialog 
       open={open} 
       onOpenChange={handleOpenChange}
-      modal={false}
+      modal={true}
     >
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>

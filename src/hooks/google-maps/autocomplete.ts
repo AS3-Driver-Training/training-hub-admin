@@ -1,174 +1,167 @@
 
 import { GooglePlaceData } from './types';
 
-// Higher z-index applied to pac-container with improved styling
-const applyAutocompleteStyles = () => {
-  // Create a style element for the autocomplete dropdown
-  const styleElement = document.createElement('style');
-  styleElement.id = 'google-places-autocomplete-styles';
-  styleElement.textContent = `
-    .pac-container {
-      z-index: 10000 !important;
-      background-color: white !important;
-      position: absolute !important; 
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
-      pointer-events: auto !important;
-    }
-    .pac-item {
-      pointer-events: auto !important;
-      cursor: pointer !important;
-      background-color: white !important;
-    }
-    .pac-item:hover {
-      background-color: #f8f9fa !important;
-    }
-    .pac-item *, .pac-item-query, .pac-matched, .pac-icon {
-      pointer-events: auto !important;
-    }
-  `;
-  
-  // Remove existing style if it exists
-  const existingStyle = document.getElementById('google-places-autocomplete-styles');
-  if (existingStyle) {
-    document.head.removeChild(existingStyle);
-  }
-  
-  // Add the style to the document head
-  document.head.appendChild(styleElement);
-};
+let autocompleteInstance: google.maps.places.Autocomplete | null = null;
+let placeService: google.maps.places.PlacesService | null = null;
 
-/**
- * Initialize Google Places Autocomplete on an input element
- */
-export function initializeAutocomplete(
-  inputElement: HTMLInputElement,
-  onPlaceSelect: (data: GooglePlaceData) => void
-): google.maps.places.Autocomplete | null {
-  if (!inputElement || !window.google?.maps?.places) {
-    console.error("Cannot initialize autocomplete: Google Maps not loaded or input not available");
-    return null;
-  }
-
-  try {
-    // Apply custom styles to ensure dropdown appears above other elements
-    applyAutocompleteStyles();
-    
-    // Create the autocomplete object
-    const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
-      types: ['establishment', 'geocode'],
-      fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id']
-    });
-    
-    // Add data attribute for easier selection
-    inputElement.setAttribute('data-google-places-element', 'true');
-    
-    // Set up the place changed listener
-    const listener = autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace();
-      
-      console.log("Place selected:", place);
-      
-      if (!place.geometry) {
-        console.warn("No details available for this place");
-        return;
-      }
-
-      // Extract address components
-      const addressComponents: Record<string, string> = {};
-      
-      if (place.address_components) {
-        place.address_components.forEach((component: any) => {
-          if (component.types.includes('locality')) {
-            addressComponents.city = component.long_name;
-          }
-          else if (component.types.includes('administrative_area_level_1')) {
-            addressComponents.state = component.long_name;
-          }
-          else if (component.types.includes('country')) {
-            addressComponents.country = component.long_name;
-          }
-        });
-      }
-
-      // Get coordinates
-      const lat = place.geometry.location?.lat();
-      const lng = place.geometry.location?.lng();
-      const locationString = lat && lng ? `${lat},${lng}` : '';
-
-      // Create the place data object
-      const placeData: GooglePlaceData = {
-        place: place.name || '',
-        address: place.formatted_address || '',
-        googleLocation: locationString,
-        region: addressComponents.state || addressComponents.city || '',
-        country: addressComponents.country || '',
-        placeName: place.name || ''
-      };
-
-      // Delay the callback to prevent dialog closing
-      setTimeout(() => {
-        // Call the callback with the place data
-        onPlaceSelect(placeData);
-      }, 100);
-    });
-
-    // Apply direct styling to the pac-container after a short delay
-    setTimeout(() => {
-      const pacContainer = document.querySelector('.pac-container') as HTMLElement;
-      if (pacContainer) {
-        pacContainer.setAttribute('data-google-places-container', 'true');
-        pacContainer.style.zIndex = "10000";
-        pacContainer.style.position = "absolute";
-        pacContainer.style.pointerEvents = "auto";
-      }
-    }, 300);
-
-    return autocomplete;
-  } catch (error) {
-    console.error("Error initializing autocomplete:", error);
-    return null;
-  }
-}
-
-// Simple observer setup to detect PAC container
+// Observer to watch for Google Places container added to DOM
 export function setupPacContainerObserver(): MutationObserver {
-  // Create a mutation observer to watch for pac-container being added to DOM
   const observer = new MutationObserver((mutations) => {
-    mutations.forEach(mutation => {
-      if (mutation.type === 'childList') {
-        mutation.addedNodes.forEach(node => {
-          if (node instanceof HTMLElement && 
-              (node.classList.contains('pac-container') || 
-              node.className.includes('pac-container'))) {
-            
-            // Set critical styles directly on the element
-            node.style.zIndex = '10000';
-            node.style.backgroundColor = 'white';
-            node.style.position = 'absolute';
-            node.style.pointerEvents = 'auto';
-            
-            // Add data attribute to help with detection
-            node.setAttribute('data-google-places-container', 'true');
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'childList' && mutation.addedNodes.length) {
+        mutation.addedNodes.forEach((node) => {
+          // Find any Google Places containers
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as HTMLElement;
+            if (element.classList.contains('pac-container')) {
+              console.log('Found Google Places container, applying styles');
+              
+              // Add custom attribute for easier detection
+              element.setAttribute('data-google-places-container', 'true');
+              
+              // Apply styles for better integration
+              element.style.zIndex = '10000';
+              element.style.position = 'absolute';
+              element.style.backgroundColor = 'white';
+              element.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+              element.style.borderRadius = '0.375rem';
+              element.style.overflow = 'hidden';
+              element.style.marginTop = '2px';
+              element.style.border = '1px solid rgba(0, 0, 0, 0.1)';
+              
+              // Ensure it has proper pointer events
+              element.style.pointerEvents = 'auto';
+            }
           }
         });
       }
     });
   });
   
-  // Start observing the document body for pac-container additions
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
+  // Start observing the entire document for .pac-container elements
+  observer.observe(document.body, { 
+    childList: true, 
+    subtree: true 
   });
   
   return observer;
 }
 
-// Cleanup function to remove event listeners and observer
+// Initialize Google Places autocomplete on an input element
+export function initializeAutocomplete(
+  inputElement: HTMLInputElement,
+  onPlaceSelect?: (placeData: GooglePlaceData) => void
+): google.maps.places.Autocomplete {
+  console.log('Initializing Places Autocomplete');
+  
+  try {
+    // Initialize autocomplete with desired options
+    const options: google.maps.places.AutocompleteOptions = {
+      fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id'],
+      types: ['establishment', 'geocode'],
+    };
+    
+    // Create the autocomplete instance
+    autocompleteInstance = new google.maps.places.Autocomplete(inputElement, options);
+    
+    // Initialize a place service if needed
+    const mapDiv = document.createElement('div');
+    placeService = new google.maps.places.PlacesService(mapDiv);
+    
+    // Add event listener for place selection
+    autocompleteInstance.addListener('place_changed', () => {
+      if (!autocompleteInstance) return;
+      
+      const place = autocompleteInstance.getPlace();
+      console.log('Place selected:', place);
+      
+      if (!place.geometry) {
+        console.warn('No details available for this place');
+        return;
+      }
+      
+      // Extract relevant data from the place
+      const address = place.formatted_address || '';
+      const placeName = place.name || '';
+      
+      // Extract region and country from address components
+      let region = '';
+      let country = '';
+      
+      if (place.address_components) {
+        for (const component of place.address_components) {
+          const componentType = component.types[0];
+          
+          if (componentType === 'administrative_area_level_1') {
+            region = component.long_name;
+          } else if (componentType === 'country') {
+            country = component.long_name;
+          }
+        }
+      }
+      
+      // Create location string format (lat,lng)
+      const googleLocation = place.geometry.location 
+        ? `${place.geometry.location.lat()},${place.geometry.location.lng()}`
+        : '';
+      
+      // Prepare place data object
+      const placeData: GooglePlaceData = {
+        place: placeName,
+        placeName: placeName,
+        address: address,
+        googleLocation: googleLocation,
+        region: region,
+        country: country
+      };
+      
+      // Call the callback if provided
+      if (onPlaceSelect) {
+        onPlaceSelect(placeData);
+      }
+      
+      // Apply styles to Google Places elements after selection
+      applyStylesToGooglePlacesElements();
+    });
+    
+    return autocompleteInstance;
+  } catch (error) {
+    console.error('Error initializing Places Autocomplete:', error);
+    throw error;
+  }
+}
+
+// Apply styles to Google Places container element
+function applyStylesToGooglePlacesElements() {
+  // Get any Google Places container currently in the DOM
+  const pacContainer = document.querySelector('.pac-container') as HTMLElement;
+  
+  // Only apply styles if the element exists
+  if (pacContainer) {
+    pacContainer.style.zIndex = "10000";
+    pacContainer.style.position = "absolute";
+    pacContainer.style.pointerEvents = "auto";
+    
+    // Mark all Google Places elements with a data attribute
+    pacContainer.setAttribute('data-google-places-container', 'true');
+    
+    // Find all Google Places items and mark them
+    const pacItems = pacContainer.querySelectorAll('.pac-item');
+    pacItems.forEach(item => {
+      (item as HTMLElement).setAttribute('data-google-places-element', 'true');
+    });
+  }
+}
+
+// Clean up autocomplete instance
 export function cleanupAutocomplete() {
-  // Remove the style element
-  const styleElement = document.getElementById('google-places-autocomplete-styles');
-  if (styleElement) {
-    document.head.removeChild(styleElement);
+  if (autocompleteInstance) {
+    // Note: google.maps.event.clearInstanceListeners is the proper way to clean up
+    google.maps.event.clearInstanceListeners(autocompleteInstance);
+    autocompleteInstance = null;
+  }
+  
+  if (placeService) {
+    placeService = null;
   }
 }
