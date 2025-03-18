@@ -10,14 +10,7 @@ import {
   ArrowLeft, 
   AlertCircle, 
   Plus, 
-  Trash2, 
-  Users, 
-  Calendar, 
-  MapPin, 
-  UserPlus,
-  Clock,
   Info,
-  ExternalLink
 } from "lucide-react";
 
 import { AllocationForm } from "./allocation/AllocationForm";
@@ -54,6 +47,7 @@ export function CourseAllocations() {
   const [allocations, setAllocations] = useState<Allocation[]>([]);
   const [remainingSeats, setRemainingSeats] = useState<number>(0);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Set up form with React Hook Form
   const form = useForm<AllocationFormValues>({
@@ -65,9 +59,10 @@ export function CourseAllocations() {
   });
 
   // Fetch course instance details
-  const { data: courseInstance, isLoading: courseLoading } = useQuery({
+  const { data: courseInstance, isLoading: courseLoading, error: courseError } = useQuery({
     queryKey: ["courseInstance", id],
     queryFn: async () => {
+      console.log("Fetching course instance with ID:", id);
       const { data, error } = await supabase
         .from("course_instances")
         .select(`
@@ -84,16 +79,23 @@ export function CourseAllocations() {
         .eq("id", parseInt(id || '0', 10))
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching course instance:", error);
+        setError(`Failed to load course: ${error.message}`);
+        throw error;
+      }
+      
+      console.log("Course instance data:", data);
       return data;
     },
     enabled: !!id,
   });
 
   // Fetch existing allocations
-  const { data: existingAllocations, isLoading: allocationsLoading } = useQuery({
+  const { data: existingAllocations, isLoading: allocationsLoading, error: allocationsError } = useQuery({
     queryKey: ["courseAllocations", id],
     queryFn: async () => {
+      console.log("Fetching course allocations for instance ID:", id);
       const { data, error } = await supabase
         .from("course_allocations")
         .select(`
@@ -106,7 +108,13 @@ export function CourseAllocations() {
         `)
         .eq("course_instance_id", parseInt(id || '0', 10));
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching allocations:", error);
+        setError(`Failed to load allocations: ${error.message}`);
+        throw error;
+      }
+      
+      console.log("Allocations data:", data);
       return data;
     },
     enabled: !!id
@@ -128,11 +136,19 @@ export function CourseAllocations() {
   }, [existingAllocations, courseInstance]);
 
   // Fetch clients for allocation
-  const { data: clients, isLoading: clientsLoading } = useQuery({
+  const { data: clients, isLoading: clientsLoading, error: clientsError } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
+      console.log("Fetching clients");
       const { data, error } = await supabase.from("clients").select("*");
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error fetching clients:", error);
+        setError(`Failed to load clients: ${error.message}`);
+        throw error;
+      }
+      
+      console.log("Clients data:", data);
       return data;
     }
   });
@@ -151,13 +167,18 @@ export function CourseAllocations() {
   // Save allocations mutation
   const saveAllocationsMutation = useMutation({
     mutationFn: async (allocations: Allocation[]) => {
+      console.log("Saving allocations:", allocations);
+      
       // Delete all existing allocations
       const { error: deleteError } = await supabase
         .from("course_allocations")
         .delete()
         .eq("course_instance_id", parseInt(id || '0', 10));
       
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error("Error deleting allocations:", deleteError);
+        throw deleteError;
+      }
 
       // Insert new allocations
       if (allocations.length > 0) {
@@ -171,7 +192,10 @@ export function CourseAllocations() {
             }))
           );
         
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error("Error inserting allocations:", insertError);
+          throw insertError;
+        }
       }
 
       return { success: true };
@@ -184,7 +208,8 @@ export function CourseAllocations() {
       });
       navigate("/events");
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Error in saveAllocationsMutation:", error);
       toast({
         title: "Error",
         description: "Failed to save allocations: " + error.message,
@@ -279,6 +304,23 @@ export function CourseAllocations() {
     );
   }
 
+  // Error state
+  if (error || courseError || allocationsError || clientsError) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error || (courseError as Error)?.message || (allocationsError as Error)?.message || (clientsError as Error)?.message}
+          </AlertDescription>
+        </Alert>
+        <Button onClick={() => navigate("/events")} variant="outline">
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Events
+        </Button>
+      </div>
+    );
+  }
+
   // Calculate total allocated seats
   const totalAllocated = allocations.reduce(
     (sum, allocation) => sum + allocation.seatsAllocated, 
@@ -310,7 +352,7 @@ export function CourseAllocations() {
             Back
           </Button>
           <h1 className="text-3xl font-bold tracking-tight">
-            {courseInstance?.program?.name || "Course Details"}
+            Course Details
           </h1>
         </div>
         <p className="text-muted-foreground">
@@ -332,7 +374,7 @@ export function CourseAllocations() {
 
       {/* Enrolled Students / Seat Allocations Section */}
       <Card className="border shadow-sm mb-8">
-        <CardHeader className="border-b bg-muted/10">
+        <CardHeader className="border-b bg-slate-50">
           <div className="flex justify-between items-center">
             <div>
               <CardTitle className="text-xl">Seat Allocations</CardTitle>
@@ -343,7 +385,7 @@ export function CourseAllocations() {
               <Button 
                 onClick={() => setShowAddForm(true)}
                 size="sm"
-                className="bg-primary text-primary-foreground"
+                className="bg-rose-600 hover:bg-rose-700 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Assign Seats
@@ -402,6 +444,7 @@ export function CourseAllocations() {
                 <Button 
                   onClick={handleSaveAllocations}
                   disabled={allocations.length === 0}
+                  className="bg-rose-600 hover:bg-rose-700 text-white"
                 >
                   Save Allocations
                 </Button>

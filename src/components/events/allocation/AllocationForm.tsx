@@ -27,7 +27,7 @@ export function AllocationForm({
 }: AllocationFormProps) {
   return (
     <Card className="border shadow-sm mb-6">
-      <CardHeader className="py-3 px-4 border-b bg-muted/10">
+      <CardHeader className="py-3 px-4 border-b bg-slate-50">
         <CardTitle className="text-base flex items-center">
           <UserPlus className="h-4 w-4 mr-2" />
           Assign Seats to Client
@@ -94,7 +94,13 @@ export function AllocationForm({
               >
                 Cancel
               </Button>
-              <Button type="submit" size="sm">Assign</Button>
+              <Button 
+                type="submit" 
+                size="sm" 
+                className="bg-rose-600 hover:bg-rose-700 text-white"
+              >
+                Assign
+              </Button>
             </div>
           </form>
         </Form>
