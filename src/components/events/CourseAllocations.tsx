@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, AlertCircle, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, AlertCircle, Plus, Trash2, Users, Calendar, MapPin, UserPlus } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -17,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 
 // Define allocation form schema
 const allocationSchema = z.object({
@@ -70,7 +72,7 @@ export function CourseAllocations() {
             name
           )
         `)
-        .eq("id", parseInt(id || '0', 10)) // Convert string to number properly
+        .eq("id", parseInt(id || '0', 10))
         .single();
       
       if (error) throw error;
@@ -93,7 +95,7 @@ export function CourseAllocations() {
             name
           )
         `)
-        .eq("course_instance_id", parseInt(id || '0', 10)); // Convert string to number properly
+        .eq("course_instance_id", parseInt(id || '0', 10));
       
       if (error) throw error;
       return data;
@@ -114,7 +116,7 @@ export function CourseAllocations() {
       setAllocations(formattedAllocations);
       updateRemainingSeats(formattedAllocations);
     }
-  }, [existingAllocations]);
+  }, [existingAllocations, courseInstance]);
 
   // Fetch clients for allocation
   const { data: clients, isLoading: clientsLoading } = useQuery({
@@ -144,7 +146,7 @@ export function CourseAllocations() {
       const { error: deleteError } = await supabase
         .from("course_allocations")
         .delete()
-        .eq("course_instance_id", parseInt(id || '0', 10)); // Convert string to number properly
+        .eq("course_instance_id", parseInt(id || '0', 10));
       
       if (deleteError) throw deleteError;
 
@@ -220,14 +222,27 @@ export function CourseAllocations() {
     // Reset form and hide it
     form.reset();
     setShowAddForm(false);
+    
+    toast({
+      title: "Allocation Added",
+      description: "The seat allocation has been added successfully.",
+    });
   };
 
   // Remove an allocation
   const handleRemoveAllocation = (index: number) => {
+    const clientName = allocations[index].clientName;
+    const seatsAllocated = allocations[index].seatsAllocated;
+    
     const newAllocations = [...allocations];
     newAllocations.splice(index, 1);
     setAllocations(newAllocations);
     updateRemainingSeats(newAllocations);
+    
+    toast({
+      title: "Allocation Removed",
+      description: `Removed ${seatsAllocated} seats for ${clientName}.`,
+    });
   };
 
   // Save all allocations
@@ -245,7 +260,14 @@ export function CourseAllocations() {
 
   // Loading state
   if (courseLoading || allocationsLoading || clientsLoading) {
-    return <div className="flex justify-center p-8">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-muted-foreground">Loading course details...</p>
+        </div>
+      </div>
+    );
   }
 
   // Calculate total allocated seats
@@ -253,6 +275,10 @@ export function CourseAllocations() {
     (sum, allocation) => sum + allocation.seatsAllocated, 
     0
   );
+  
+  // Calculate allocation percentage
+  const maxStudents = courseInstance?.program?.max_students || 0;
+  const allocationPercentage = maxStudents > 0 ? (totalAllocated / maxStudents) * 100 : 0;
 
   // Get filtered clients (exclude already allocated ones unless updating)
   const availableClients = clients?.filter(client => 
@@ -277,137 +303,162 @@ export function CourseAllocations() {
         </h1>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Course Details</CardTitle>
-          <CardDescription>
-            Allocate seats for this open enrollment course
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {courseInstance && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="text-sm font-medium">Program</h3>
-                <p>{courseInstance.program?.name}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium">Venue</h3>
-                <p>{courseInstance.venue?.name}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium">Date</h3>
-                <p>{format(new Date(courseInstance.start_date), "PPP")}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium">Max Capacity</h3>
-                <p>{courseInstance.program?.max_students} seats</p>
-              </div>
-            </div>
-          )}
-
-          <div className="border rounded-md p-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Seat Allocations</h2>
-              <div className="text-sm text-muted-foreground">
-                {totalAllocated} / {courseInstance?.program?.max_students} seats allocated
-              </div>
-            </div>
-
-            {allocations.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Client</TableHead>
-                    <TableHead className="text-right">Seats</TableHead>
-                    <TableHead className="w-[100px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {allocations.map((allocation, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{allocation.clientName}</TableCell>
-                      <TableCell className="text-right">{allocation.seatsAllocated}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveAllocation(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="text-center py-4 text-muted-foreground">
-                No seat allocations yet
-              </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Course Details Card */}
+        <Card className="lg:col-span-1">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Course Details
+            </CardTitle>
+            <CardDescription>
+              Program and venue information
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {courseInstance && (
+              <>
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Program</h3>
+                  <p className="font-medium">{courseInstance.program?.name}</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Venue</h3>
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <p>{courseInstance.venue?.name}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Date</h3>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <p>{format(new Date(courseInstance.start_date), "PPP")}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Capacity</h3>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <p className="font-medium">{courseInstance.program?.max_students} seats</p>
+                  </div>
+                </div>
+                
+                <div className="pt-2">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="font-medium">Allocated</span>
+                    <span>{totalAllocated} / {maxStudents} seats</span>
+                  </div>
+                  <Progress 
+                    value={allocationPercentage} 
+                    className="h-2"
+                    indicatorClassName={allocationPercentage >= 90 ? "bg-red-500" : allocationPercentage >= 70 ? "bg-amber-500" : "bg-emerald-500"}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1 text-right">
+                    {remainingSeats} seats remaining
+                  </p>
+                </div>
+              </>
             )}
-          </div>
+          </CardContent>
+        </Card>
 
-          {remainingSeats > 0 ? (
-            showAddForm ? (
-              <Card className="border">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Add Allocation</CardTitle>
+        {/* Allocations Card */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  Seat Allocations
+                </CardTitle>
+                <CardDescription>
+                  Assign seats to clients for this course
+                </CardDescription>
+              </div>
+              
+              {remainingSeats > 0 && !showAddForm && (
+                <Button 
+                  onClick={() => setShowAddForm(true)}
+                  size="sm"
+                  className="mt-1"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Allocation
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Add Allocation Form */}
+            {showAddForm && (
+              <Card className="border shadow-sm">
+                <CardHeader className="py-3 px-4">
+                  <CardTitle className="text-base flex items-center">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Add Client Allocation
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-4 pb-4 pt-0">
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleAddAllocation)} className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="clientId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select a client" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {availableClients?.map((client) => (
-                                  <SelectItem key={client.id} value={client.id}>
-                                    {client.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="clientId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a client" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {availableClients?.map((client) => (
+                                    <SelectItem key={client.id} value={client.id}>
+                                      {client.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                      <FormField
-                        control={form.control}
-                        name="seatsAllocated"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min="1"
-                                max={remainingSeats.toString()}
-                                placeholder="Number of seats"
-                                {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                        <FormField
+                          control={form.control}
+                          name="seatsAllocated"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  max={remainingSeats.toString()}
+                                  placeholder={`Seats (max: ${remainingSeats})`}
+                                  {...field}
+                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
                       <div className="flex justify-end gap-2">
                         <Button
                           type="button"
                           variant="outline"
+                          size="sm"
                           onClick={() => {
                             form.reset();
                             setShowAddForm(false);
@@ -415,45 +466,95 @@ export function CourseAllocations() {
                         >
                           Cancel
                         </Button>
-                        <Button type="submit">Add</Button>
+                        <Button type="submit" size="sm">Add</Button>
                       </div>
                     </form>
                   </Form>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Allocations Table */}
+            {allocations.length > 0 ? (
+              <div className="border rounded-md overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead>Client</TableHead>
+                      <TableHead className="text-right">Seats</TableHead>
+                      <TableHead className="w-[80px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {allocations.map((allocation, index) => (
+                      <TableRow key={index} className="hover:bg-muted/30">
+                        <TableCell className="font-medium">{allocation.clientName}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="outline" className="font-medium">
+                            {allocation.seatsAllocated}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveAllocation(index)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                            <span className="sr-only">Remove</span>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             ) : (
-              <Button 
-                onClick={() => setShowAddForm(true)}
-                className="w-full"
-                variant="outline"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Client Allocation
-              </Button>
-            )
-          ) : (
-            allocations.length > 0 && (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Maximum capacity reached. No more seats can be allocated.
+              <div className="text-center py-12 border rounded-md bg-muted/10">
+                <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                <h3 className="text-base font-medium mb-1">No allocations yet</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Assign seats to clients for this course
+                </p>
+                {!showAddForm && remainingSeats > 0 && (
+                  <Button 
+                    onClick={() => setShowAddForm(true)}
+                    size="sm"
+                    variant="outline"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Client Allocation
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {allocations.length > 0 && remainingSeats === 0 && (
+              <Alert className="bg-emerald-50 text-emerald-800 border-emerald-200">
+                <AlertCircle className="h-4 w-4 text-emerald-600" />
+                <AlertDescription className="font-medium text-emerald-800">
+                  All available seats have been allocated.
                 </AlertDescription>
               </Alert>
-            )
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-end gap-3">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/events")}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleSaveAllocations}>
-            Save Allocations
-          </Button>
-        </CardFooter>
-      </Card>
+            )}
+          </CardContent>
+          <CardFooter className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate("/events")}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveAllocations}
+              disabled={allocations.length === 0}
+            >
+              Save Allocations
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }
