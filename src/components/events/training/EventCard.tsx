@@ -14,6 +14,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useState } from "react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EventCardProps {
   event: TrainingEvent;
@@ -21,6 +33,9 @@ interface EventCardProps {
 
 export function EventCard({ event }: EventCardProps) {
   const navigate = useNavigate();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const startDate = new Date(event.startDate);
   const endDate = event.endDate ? new Date(event.endDate) : new Date(startDate);
   
@@ -48,78 +63,131 @@ export function EventCard({ event }: EventCardProps) {
   
   const handleDeleteEvent = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // This would typically call an API to delete the event
-    toast.info(`Event ${event.id} would be deleted here`);
+    setDeleteDialogOpen(true);
+  };
+
+  const performDelete = async () => {
+    try {
+      setIsDeleting(true);
+      
+      // Delete the event from the database
+      const { error } = await supabase
+        .from('course_instances')
+        .delete()
+        .eq('id', parseInt(event.id));
+
+      if (error) {
+        throw error;
+      }
+
+      // Show success message
+      toast.success("Event deleted successfully");
+      
+      // Refresh the page or update the UI
+      // This will depend on how your app handles state management
+      // For now, let's navigate back to the events list
+      navigate('/events');
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast.error("Failed to delete event. Please try again.");
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+    }
   };
   
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow" onClick={handleEditEvent}>
-      <div className="flex flex-col sm:flex-row">
-        <div className="bg-muted p-4 text-center sm:w-32 flex flex-col justify-center">
-          <div className="font-medium">{dayName}</div>
-          <div className="font-bold">{dateRangeForBox}</div>
-        </div>
-        
-        <div className="flex-1 p-4">
-          <div className="flex justify-between items-start">
-            <h3 className="text-lg font-semibold">{event.title}</h3>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className={event.status === "scheduled" ? "bg-primary/10 text-primary" : ""}>
-                {event.status === "scheduled" ? "Scheduled" : event.status === "completed" ? "Completed" : "Cancelled"}
-              </Badge>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical className="h-4 w-4" />
-                    <span className="sr-only">More options</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleEditEvent}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleDeleteEvent} className="text-destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete Event
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+    <>
+      <Card className="overflow-hidden hover:shadow-md transition-shadow" onClick={handleEditEvent}>
+        <div className="flex flex-col sm:flex-row">
+          <div className="bg-muted p-4 text-center sm:w-32 flex flex-col justify-center">
+            <div className="font-medium">{dayName}</div>
+            <div className="font-bold">{dateRangeForBox}</div>
           </div>
           
-          <div className="mt-2 space-y-1">
-            <div className="flex items-center text-muted-foreground text-sm">
-              <MapPin className="h-4 w-4 mr-2 shrink-0" />
-              <span>{event.location}</span>
-            </div>
-            <div className="flex items-center text-muted-foreground text-sm">
-              <Clock className="h-4 w-4 mr-2 shrink-0" />
-              <span>{dateRangeText}</span>
-            </div>
-          </div>
-          
-          <div className="mt-4 flex justify-between items-center">
-            <div className="flex items-center text-sm">
-              <Users className="h-4 w-4 mr-2" />
-              <span>{event.enrolledCount || 0}/{event.capacity || 0}</span>
+          <div className="flex-1 p-4">
+            <div className="flex justify-between items-start">
+              <h3 className="text-lg font-semibold">{event.title}</h3>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className={event.status === "scheduled" ? "bg-primary/10 text-primary" : ""}>
+                  {event.status === "scheduled" ? "Scheduled" : event.status === "completed" ? "Completed" : "Cancelled"}
+                </Badge>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
+                      <span className="sr-only">More options</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleEditEvent}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleDeleteEvent} className="text-destructive">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Event
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
             
-            <div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleViewAllocations}
-                className="flex items-center"
-              >
-                Allocations
-                <ArrowRight className="ml-1 h-3 w-3" />
-              </Button>
+            <div className="mt-2 space-y-1">
+              <div className="flex items-center text-muted-foreground text-sm">
+                <MapPin className="h-4 w-4 mr-2 shrink-0" />
+                <span>{event.location}</span>
+              </div>
+              <div className="flex items-center text-muted-foreground text-sm">
+                <Clock className="h-4 w-4 mr-2 shrink-0" />
+                <span>{dateRangeText}</span>
+              </div>
+            </div>
+            
+            <div className="mt-4 flex justify-between items-center">
+              <div className="flex items-center text-sm">
+                <Users className="h-4 w-4 mr-2" />
+                <span>{event.enrolledCount || 0}/{event.capacity || 0}</span>
+              </div>
+              
+              <div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleViewAllocations}
+                  className="flex items-center"
+                >
+                  Allocations
+                  <ArrowRight className="ml-1 h-3 w-3" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this event?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the event
+              "{event.title}" scheduled for {dateRangeText}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={performDelete} 
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete Event"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
