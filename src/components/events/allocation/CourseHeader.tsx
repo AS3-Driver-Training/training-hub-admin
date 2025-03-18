@@ -14,6 +14,20 @@ export function CourseHeader({ courseInstance }: CourseHeaderProps) {
   // Get course name from the program
   const courseName = courseInstance?.program?.name || "Loading...";
 
+  // Format dates for display
+  const startDate = courseInstance?.start_date 
+    ? format(new Date(courseInstance.start_date), "MMMM d, yyyy") 
+    : "";
+    
+  const endDate = courseInstance?.end_date 
+    ? format(new Date(courseInstance.end_date), "MMMM d, yyyy") 
+    : "";
+
+  // Format date display
+  const dateDisplay = startDate && endDate 
+    ? `${startDate} - ${endDate}` 
+    : startDate || "Date not available";
+
   return (
     <div className="mb-8">
       <div className="flex items-center mb-1">
@@ -31,8 +45,7 @@ export function CourseHeader({ courseInstance }: CourseHeaderProps) {
         {courseName}
       </h1>
       <p className="text-muted-foreground mt-1">
-        {courseInstance?.start_date && format(new Date(courseInstance.start_date), "MMMM d, yyyy")} - 
-        {courseInstance?.end_date && format(new Date(courseInstance.end_date), " MMMM d, yyyy")}
+        {dateDisplay}
       </p>
     </div>
   );
