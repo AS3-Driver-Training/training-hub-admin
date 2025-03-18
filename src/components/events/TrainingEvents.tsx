@@ -37,7 +37,7 @@ export function TrainingEvents() {
       
       console.log("Enrollment by instance:", enrollmentByInstance);
       
-      // Then fetch the course instances with related data
+      // Then fetch the course instances with related data including client information
       const { data, error } = await supabase
         .from('course_instances')
         .select(`
@@ -47,7 +47,8 @@ export function TrainingEvents() {
           is_open_enrollment,
           private_seats_allocated,
           programs:program_id(name, max_students),
-          venues:venue_id(name)
+          venues:venue_id(name),
+          clients:client_id(name)
         `)
         .order('start_date', { ascending: true });
       
@@ -82,7 +83,9 @@ export function TrainingEvents() {
           endDate: endDate.toISOString(),
           status: new Date(instance.start_date) > new Date() ? 'scheduled' : 'completed',
           capacity: capacity,
-          enrolledCount: enrolledCount
+          enrolledCount: enrolledCount,
+          clientName: instance.clients?.name || null,
+          isOpenEnrollment: instance.is_open_enrollment || false
         };
       });
       

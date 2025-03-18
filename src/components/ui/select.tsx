@@ -80,11 +80,6 @@ const SelectContent = React.forwardRef<
         className
       )}
       position={position}
-      // Fix accessibility by removing aria-hidden
-      aria-hidden={undefined}
-      // Ensure proper focus management
-      onOpenAutoFocus={props.onOpenAutoFocus}
-      onCloseAutoFocus={props.onCloseAutoFocus}
       {...props}
     >
       <SelectScrollUpButton />

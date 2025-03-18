@@ -1,10 +1,9 @@
 
 import { TrainingEvent } from "@/types/events";
 import { format } from "date-fns";
-import { MapPin, Clock, Users, ArrowRight, MoreVertical, Edit, Trash2 } from "lucide-react";
+import { MapPin, Clock, Users, ArrowRight, MoreVertical, Edit, Trash2, Globe, Building2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { EnrollButton } from "./EnrollButton";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import {
@@ -154,9 +153,25 @@ export function EventCard({ event, onDelete }: EventCardProps) {
             </div>
             
             <div className="mt-4 flex justify-between items-center">
-              <div className="flex items-center text-sm">
-                <Users className="h-4 w-4 mr-2" />
-                <span>{event.enrolledCount || 0}/{event.capacity || 0}</span>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center text-sm">
+                  <Users className="h-4 w-4 mr-2" />
+                  <span>{event.enrolledCount || 0}/{event.capacity || 0}</span>
+                </div>
+                
+                <div className="flex items-center text-sm text-muted-foreground">
+                  {event.isOpenEnrollment ? (
+                    <>
+                      <Globe className="h-4 w-4 mr-2" />
+                      <span>Open Enrollment</span>
+                    </>
+                  ) : event.clientName ? (
+                    <>
+                      <Building2 className="h-4 w-4 mr-2" />
+                      <span>{event.clientName}</span>
+                    </>
+                  ) : null}
+                </div>
               </div>
               
               <div>

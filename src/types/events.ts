@@ -8,4 +8,6 @@ export interface TrainingEvent {
   status: 'scheduled' | 'completed' | 'cancelled';
   capacity: number;
   enrolledCount: number;
+  clientName: string | null;
+  isOpenEnrollment: boolean;
 }
