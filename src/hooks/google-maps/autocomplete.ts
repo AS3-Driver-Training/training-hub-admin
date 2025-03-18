@@ -1,3 +1,4 @@
+
 import { GooglePlaceData } from './types';
 
 // Fix the error with PlacesService
@@ -180,11 +181,13 @@ export const extractPlaceData = (place: google.maps.places.PlaceResult): GoogleP
   };
 
   return {
-    name: place.name || "",
+    place: place.name || "",
+    placeName: place.name || "",
     address: `${getStreetNumber()} ${getStreetName()}`.trim(),
-    city: getCity(),
+    googleLocation: `${place.geometry?.location?.lat() || 0},${place.geometry?.location?.lng() || 0}`,
     region: getRegion(),
     country: getCountry(),
+    city: getCity(),
     postalCode: getPostalCode(),
     latitude: place.geometry?.location?.lat() || 0,
     longitude: place.geometry?.location?.lng() || 0,

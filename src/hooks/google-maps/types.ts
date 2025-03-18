@@ -9,6 +9,13 @@ export interface GooglePlaceData {
   region: string;
   country: string;
   placeName: string;
+  // Add any missing fields that were causing type errors
+  name?: string;
+  city?: string;
+  postalCode?: string;
+  latitude?: number;
+  longitude?: number;
+  googlePlaceId?: string;
 }
 
 export interface UseGooglePlacesProps {

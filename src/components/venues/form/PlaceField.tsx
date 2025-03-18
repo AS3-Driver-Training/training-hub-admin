@@ -52,12 +52,23 @@ export function PlaceField({
       inputRef.current.addEventListener('mousedown', stopPropagation);
       inputRef.current.addEventListener('pointerdown', stopPropagation);
       
+      // Also prevent default behavior on keydown to ensure typing works
+      const preventDefaultOnEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          e.stopPropagation();
+          e.preventDefault();
+        }
+      };
+      
+      inputRef.current.addEventListener('keydown', preventDefaultOnEsc);
+      
       // Clean up
       return () => {
         if (inputRef.current) {
           inputRef.current.removeEventListener('click', stopPropagation);
           inputRef.current.removeEventListener('mousedown', stopPropagation);
           inputRef.current.removeEventListener('pointerdown', stopPropagation);
+          inputRef.current.removeEventListener('keydown', preventDefaultOnEsc);
         }
       };
     }
@@ -73,6 +84,9 @@ export function PlaceField({
     
     // Also update the form value
     form.setValue("place", newValue, { shouldValidate: true });
+    
+    // Log the input change for debugging
+    console.log('PlaceField input changed:', newValue);
   };
 
   return (
@@ -92,6 +106,10 @@ export function PlaceField({
           required={isRequired}
           autoComplete="off"
           data-google-places-element="true"
+          // Add these to ensure the input works properly
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
         />
         
         {/* Loading indicator */}

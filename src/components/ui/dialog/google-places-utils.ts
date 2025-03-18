@@ -27,9 +27,20 @@ export const isGooglePlacesElement = (target: HTMLElement | null): boolean => {
     target.closest('[data-google-places-container]') !== null
   );
   
+  // Add enhanced event debugging
   if (result) {
-    // Debug log for tracking which elements are being detected
     console.log('Google Places element detected:', target);
+    
+    // Log detailed information for better debugging
+    if (target.classList.contains('pac-container')) {
+      console.log('Direct pac-container detected');
+    } else if (target.closest('.pac-container')) {
+      console.log('Parent pac-container detected');
+    } else if (target.hasAttribute('data-google-places-element')) {
+      console.log('Data attribute detected on element');
+    } else if (target.closest('[data-google-places-element]')) {
+      console.log('Data attribute detected on parent');
+    }
   }
   
   return result;
