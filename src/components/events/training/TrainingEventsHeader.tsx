@@ -1,9 +1,8 @@
 
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { List, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus } from "lucide-react";
 
 interface TrainingEventsHeaderProps {
   view: "list" | "calendar";
@@ -14,36 +13,25 @@ export function TrainingEventsHeader({ view, setView }: TrainingEventsHeaderProp
   const navigate = useNavigate();
   
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Upcoming Training Events</h1>
-          <p className="text-muted-foreground mt-1">
-            View and enroll in available training sessions
-          </p>
-        </div>
-        
-        <Button 
-          size="sm" 
-          onClick={() => navigate("/events/create")}
-          className="mt-4 sm:mt-0 flex items-center gap-1"
-        >
-          <Plus className="h-4 w-4" />
-          Create Course
-        </Button>
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Training Events</h1>
+        <p className="text-muted-foreground">
+          Manage and schedule training courses
+        </p>
       </div>
       
-      <div className="flex justify-end">
-        <ToggleGroup type="single" value={view} onValueChange={(value) => value && setView(value as "list" | "calendar")}>
-          <ToggleGroupItem value="list" aria-label="List view">
-            <List className="h-4 w-4 mr-2" />
-            List
-          </ToggleGroupItem>
-          <ToggleGroupItem value="calendar" aria-label="Calendar view">
-            <Calendar className="h-4 w-4 mr-2" />
-            Calendar
-          </ToggleGroupItem>
-        </ToggleGroup>
+      <div className="flex flex-col sm:flex-row items-center gap-4">
+        <Tabs value={view} onValueChange={(v) => setView(v as "list" | "calendar")} className="w-full sm:w-auto">
+          <TabsList>
+            <TabsTrigger value="list">List</TabsTrigger>
+            <TabsTrigger value="calendar">Calendar</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
+        <Button onClick={() => navigate("/events/create")} className="w-full sm:w-auto">
+          <Plus className="mr-2 h-4 w-4" /> Create Course
+        </Button>
       </div>
     </div>
   );

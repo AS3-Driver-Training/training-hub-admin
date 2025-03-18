@@ -1,16 +1,19 @@
 
 import { TrainingEvent } from "@/types/events";
 import { format } from "date-fns";
-import { MapPin, Clock, Users } from "lucide-react";
+import { MapPin, Clock, Users, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EnrollButton } from "./EnrollButton";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface EventCardProps {
   event: TrainingEvent;
 }
 
 export function EventCard({ event }: EventCardProps) {
+  const navigate = useNavigate();
   const startDate = new Date(event.startDate);
   const endDate = new Date(event.endDate);
   
@@ -27,8 +30,17 @@ export function EventCard({ event }: EventCardProps) {
     ? monthDay 
     : `${format(startDate, "MMM d")} - ${format(endDate, "d")}`;
   
+  const handleViewAllocations = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/events/${event.id}/allocations`);
+  };
+  
+  const handleEditEvent = () => {
+    navigate(`/events/${event.id}/edit`);
+  };
+  
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden hover:shadow-md transition-shadow" onClick={handleEditEvent}>
       <div className="flex flex-col sm:flex-row">
         <div className="bg-muted p-4 text-center sm:w-32 flex flex-col justify-center">
           <div className="font-medium">{dayName}</div>
@@ -59,7 +71,19 @@ export function EventCard({ event }: EventCardProps) {
               <Users className="h-4 w-4 mr-2" />
               <span>{event.enrolledCount}/{event.capacity}</span>
             </div>
-            <EnrollButton event={event} />
+            
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleViewAllocations}
+                className="flex items-center"
+              >
+                Allocations
+                <ArrowRight className="ml-1 h-3 w-3" />
+              </Button>
+              <EnrollButton event={event} />
+            </div>
           </div>
         </div>
       </div>
