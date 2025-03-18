@@ -7,7 +7,6 @@ import { EventListView } from "./training/EventListView";
 import { EventCalendarView } from "./training/EventCalendarView";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingEvent } from "@/types/events";
-import { format } from "date-fns";
 
 export function TrainingEvents() {
   const [view, setView] = useState<"list" | "calendar">("list");
@@ -17,6 +16,27 @@ export function TrainingEvents() {
     queryKey: ['training-events'],
     queryFn: async () => {
       console.log("Fetching course instances...");
+      
+      // First, fetch all course allocations to calculate enrolled students
+      const { data: allocations, error: allocationsError } = await supabase
+        .from('course_allocations')
+        .select('course_instance_id, seats_allocated');
+      
+      if (allocationsError) {
+        console.error("Error fetching course allocations:", allocationsError);
+        throw allocationsError;
+      }
+      
+      // Group allocations by course instance ID and sum up allocated seats
+      const enrollmentByInstance = allocations?.reduce((acc, allocation) => {
+        const instanceId = allocation.course_instance_id;
+        acc[instanceId] = (acc[instanceId] || 0) + allocation.seats_allocated;
+        return acc;
+      }, {});
+      
+      console.log("Enrollment by instance:", enrollmentByInstance);
+      
+      // Then fetch the course instances with related data
       const { data, error } = await supabase
         .from('course_instances')
         .select(`
@@ -25,7 +45,7 @@ export function TrainingEvents() {
           end_date,
           is_open_enrollment,
           private_seats_allocated,
-          programs:program_id(name),
+          programs:program_id(name, max_students),
           venues:venue_id(name)
         `)
         .order('start_date', { ascending: true });
@@ -39,10 +59,12 @@ export function TrainingEvents() {
       
       // Transform database data into TrainingEvent format
       const trainingEvents: TrainingEvent[] = data.map(instance => {
-        // Calculate enrolled count based on allocated seats
-        // For now we're setting it to a random number between 0 and capacity for demonstration
-        const capacity = instance.private_seats_allocated || 20; // Default capacity if not set
-        const enrolledCount = Math.floor(Math.random() * capacity); // Random enrollment for demo
+        // Get the enrollment count from our calculated map
+        const enrolledCount = enrollmentByInstance[instance.id] || 0;
+        
+        // Get capacity from program max_students or instance private_seats_allocated
+        const capacity = instance.private_seats_allocated || 
+                         (instance.programs?.max_students || 0);
         
         // Ensure end_date is set, default to start_date + 1 day if null
         const startDate = new Date(instance.start_date);
