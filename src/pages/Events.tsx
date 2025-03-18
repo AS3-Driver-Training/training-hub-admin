@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { TrainingEvents } from "@/components/events/TrainingEvents";
 import { CourseInstanceForm } from "@/components/events/CourseInstanceForm";
-import { CourseAllocations } from "@/components/events/allocation/CourseAllocations";
+import { CourseAllocations } from "@/components/events/CourseAllocations";
 
 export default function Events() {
   return (
