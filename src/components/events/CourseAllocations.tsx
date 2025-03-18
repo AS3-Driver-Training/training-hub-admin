@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -49,8 +48,8 @@ export function CourseAllocations() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Set up form with React Hook Form
-  const form = useForm<AllocationFormValues>({
+  // Set up form with React Hook Form - using explicit type parameter
+  const form = useForm<{clientId: string; seatsAllocated: number;}>({
     resolver: zodResolver(allocationSchema),
     defaultValues: {
       clientId: "",
