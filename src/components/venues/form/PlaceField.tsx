@@ -68,9 +68,9 @@ export function PlaceField({
           className="pr-8 z-[1]"
           required={isRequired}
           autoComplete="off"
-          // Only stop propagation, don't prevent default
+          // Let click events propagate normally to the Google element
           onClick={(e) => e.stopPropagation()}
-          // Remove other event handlers to avoid conflicts
+          // We're now relying on our global hook for handling clicks on Google Places elements
         />
         
         {/* Loading indicator */}

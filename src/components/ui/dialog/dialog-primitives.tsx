@@ -1,11 +1,39 @@
-
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-// Rename to avoid naming conflicts - these are the primitive components
-export const DialogRoot = DialogPrimitive.Root
+// Create a wrapped version of the Dialog Root that checks for Google Place selection
+const PatchedDialogRoot = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>
+>(({ onOpenChange, ...props }, ref) => {
+  // Custom onOpenChange handler that checks for Google Place selection
+  const handleOpenChange = (open: boolean) => {
+    // If trying to close dialog during Google Place selection, block it
+    if (!open && window.isSelectingGooglePlace && window.isSelectingGooglePlace()) {
+      console.log('Blocked dialog close during Google Places selection');
+      return;
+    }
+    
+    // Otherwise call the original handler
+    if (onOpenChange) {
+      onOpenChange(open);
+    }
+  };
+  
+  return <DialogPrimitive.Root 
+    {...props} 
+    onOpenChange={handleOpenChange} 
+  />;
+});
+
+// Add displayName
+PatchedDialogRoot.displayName = 'PatchedDialogRoot';
+
+// Export the patched component as DialogRoot
+export const DialogRoot = PatchedDialogRoot;
+
 export const DialogTrigger = DialogPrimitive.Trigger
 export const DialogPortal = DialogPrimitive.Portal
 export const DialogClose = DialogPrimitive.Close

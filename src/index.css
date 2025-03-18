@@ -34,19 +34,23 @@
   }
 }
 
-/* Google Places Autocomplete Styling */
+/* Google Places Autocomplete Styling - Enhanced for better clickability */
 .pac-container {
   z-index: 99999 !important;
   background-color: white !important;
   position: absolute !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
   pointer-events: auto !important;
+  border-radius: 0.375rem !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  margin-top: 2px !important;
 }
 
 .pac-item {
   pointer-events: auto !important;
   cursor: pointer !important;
   background-color: white !important;
+  padding: 0.5rem 1rem !important;
 }
 
 .pac-item:hover {
@@ -54,5 +58,10 @@
 }
 
 .pac-item-query, .pac-matched, .pac-icon {
+  pointer-events: auto !important;
+}
+
+/* Force-fix for any z-index issues */
+.pac-container, .pac-item, .pac-item-query, .pac-matched, .pac-icon {
   pointer-events: auto !important;
 }
