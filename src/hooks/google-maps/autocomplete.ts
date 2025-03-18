@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { GooglePlaceData } from './types';
 
 // Fix the error with PlacesService
@@ -74,41 +73,77 @@ export const initializeAutoComplete = (
   loadGoogleMapsScript();
 };
 
-// Fix the PlacesService reference
-export const setupPlaceSearch = (input: HTMLInputElement, map?: google.maps.Map): void => {
+// Add the missing initializeAutocomplete function
+export const initializeAutocomplete = (
+  inputElement: HTMLInputElement,
+  handlePlaceSelect: (placeData: GooglePlaceData) => void
+): google.maps.places.Autocomplete | null => {
   try {
-    // Check if PlacesService is available before using it
-    if (google && google.maps && google.maps.places && 
-        typeof google.maps.places.AutocompleteService !== 'undefined') {
-      const autocompleteService = new google.maps.places.AutocompleteService();
-      console.log('Places service initialized');
-    } else {
-      console.warn('Google maps places service not available');
+    if (!window.google?.maps?.places) {
+      console.error('Google Maps Places API not loaded');
+      return null;
     }
+
+    console.log('Initializing Places Autocomplete');
     
-    const autocomplete = new google.maps.places.Autocomplete(input);
-    autocomplete.setFields(['address_components', 'geometry', 'icon', 'name']);
-
-    autocomplete.addListener('place_changed', function() {
+    // Create autocomplete instance
+    const autocomplete = new google.maps.places.Autocomplete(inputElement, {
+      fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id']
+    });
+    
+    // Add place_changed listener
+    autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();
-
+      
       if (!place.geometry) {
-        console.log("Autocomplete's returned place contains no geometry");
+        console.warn('No geometry data for selected place');
         return;
       }
-
-      if (map) {
-        if (place.geometry.viewport) {
-          map.fitBounds(place.geometry.viewport);
-        } else {
-          map.setCenter(place.geometry.location!);
-          map.setZoom(17);
-        }
+      
+      // Extract data for the selected place
+      const placeData: GooglePlaceData = {
+        place: place.name || '',
+        placeName: place.name || '',
+        address: place.formatted_address || '',
+        googleLocation: `${place.geometry.location?.lat()},${place.geometry.location?.lng()}`,
+        region: '', // Will be filled from address components
+        country: '', // Will be filled from address components
+      };
+      
+      // Extract region and country from address components
+      if (place.address_components) {
+        place.address_components.forEach(component => {
+          if (component.types.includes('administrative_area_level_1')) {
+            placeData.region = component.long_name;
+          }
+          if (component.types.includes('country')) {
+            placeData.country = component.long_name;
+          }
+        });
       }
+      
+      // Call the handler with the extracted data
+      handlePlaceSelect(placeData);
     });
+    
+    return autocomplete;
   } catch (error) {
-    console.error('Error setting up place search:', error);
+    console.error('Error initializing autocomplete:', error);
+    return null;
   }
+};
+
+// Add the missing cleanupAutocomplete function
+export const cleanupAutocomplete = (): void => {
+  // Clean up any Google Maps related elements
+  const pacContainers = document.querySelectorAll('.pac-container');
+  pacContainers.forEach(container => {
+    if (container.parentNode) {
+      container.parentNode.removeChild(container);
+    }
+  });
+  
+  console.log('Cleaned up autocomplete elements');
 };
 
 export const extractPlaceData = (place: google.maps.places.PlaceResult): GooglePlaceData => {
@@ -157,14 +192,29 @@ export const extractPlaceData = (place: google.maps.places.PlaceResult): GoogleP
   };
 };
 
+// Simplify fillAddressFields to avoid type errors
 export const fillAddressFields = (
   place: google.maps.places.PlaceResult,
   form: any
 ) => {
-  const placeData = extractPlaceData(place);
-  form.setValue("address", placeData.address);
-  form.setValue("city", placeData.city);
-  form.setValue("region", placeData.region);
-  form.setValue("country", placeData.country);
-  form.setValue("postalCode", placeData.postalCode);
+  if (!place || !place.address_components) {
+    return;
+  }
+  
+  const getAddressComponent = (
+    type: string,
+    place: google.maps.places.PlaceResult
+  ): string => {
+    const component = place.address_components?.find(c => 
+      c.types.includes(type)
+    );
+    return component ? component.long_name : '';
+  };
+  
+  // Set form values with correct typing
+  form.setValue("address", place.formatted_address || '');
+  form.setValue("city", getAddressComponent('locality', place));
+  form.setValue("region", getAddressComponent('administrative_area_level_1', place));
+  form.setValue("country", getAddressComponent('country', place));
+  form.setValue("postalCode", getAddressComponent('postal_code', place));
 };

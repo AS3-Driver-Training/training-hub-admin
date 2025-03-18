@@ -87,8 +87,8 @@ export function useGooglePlaces({ onPlaceSelect }: UseGooglePlacesProps = {}): U
     
     // Clean up autocomplete when unmounting
     return () => {
-      autocompleteInstanceRef.current = null;
       cleanupAutocomplete();
+      autocompleteInstanceRef.current = null;
     };
   }, [isInputReady, onPlaceSelect]);
   

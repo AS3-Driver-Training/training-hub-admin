@@ -37,23 +37,27 @@ export function PlaceField({
     }
   }, [value]);
 
-  // Use useLayoutEffect to ensure the input element has the proper stacking context
+  // Use useLayoutEffect to ensure the input element has the proper setup before any interactions
   useLayoutEffect(() => {
     if (inputRef.current) {
       // Add data attribute to help with detection
       inputRef.current.setAttribute('data-google-places-element', 'true');
       
-      // Ensure clicking on this input doesn't close the dialog
-      inputRef.current.addEventListener('click', (e) => {
+      // Ensure clicking on this input doesn't close the dialog but allows typing
+      const stopPropagation = (e: Event) => {
         e.stopPropagation();
-      });
+      };
+      
+      inputRef.current.addEventListener('click', stopPropagation);
+      inputRef.current.addEventListener('mousedown', stopPropagation);
+      inputRef.current.addEventListener('pointerdown', stopPropagation);
       
       // Clean up
       return () => {
         if (inputRef.current) {
-          inputRef.current.removeEventListener('click', (e) => {
-            e.stopPropagation();
-          });
+          inputRef.current.removeEventListener('click', stopPropagation);
+          inputRef.current.removeEventListener('mousedown', stopPropagation);
+          inputRef.current.removeEventListener('pointerdown', stopPropagation);
         }
       };
     }
@@ -66,6 +70,9 @@ export function PlaceField({
     if (onChange) {
       onChange(newValue);
     }
+    
+    // Also update the form value
+    form.setValue("place", newValue, { shouldValidate: true });
   };
 
   return (
