@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
@@ -79,10 +80,15 @@ const SelectContent = React.forwardRef<
         className
       )}
       position={position}
+      // Remove aria-hidden to fix accessibility
+      aria-hidden={undefined}
       style={{
         backgroundColor: 'var(--popover)',
         zIndex: 9999
       }}
+      // Add proper focus management
+      onOpenAutoFocus={props.onOpenAutoFocus}
+      onCloseAutoFocus={props.onCloseAutoFocus}
       {...props}
     >
       <SelectScrollUpButton />

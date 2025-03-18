@@ -83,9 +83,7 @@ export function EventCard({ event }: EventCardProps) {
       // Show success message
       toast.success("Event deleted successfully");
       
-      // Refresh the page or update the UI
-      // This will depend on how your app handles state management
-      // For now, let's navigate back to the events list
+      // Navigate back to the events list
       navigate('/events');
     } catch (error) {
       console.error("Error deleting event:", error);
