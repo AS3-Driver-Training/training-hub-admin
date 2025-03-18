@@ -1,8 +1,10 @@
 
-import { Plus, Trash2, Users } from "lucide-react";
+import { Plus, Trash2, Users, UserPlus } from "lucide-react";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { StudentsList } from "./StudentsList";
 
 interface Allocation {
   id?: number;
@@ -26,6 +28,8 @@ export function AllocationsTable({
   remainingSeats,
   setShowAddForm
 }: AllocationsTableProps) {
+  const [managingStudentsFor, setManagingStudentsFor] = useState<Allocation | null>(null);
+
   if (allocations.length === 0) {
     return (
       <div className="text-center py-12 border rounded-md bg-slate-50">
@@ -49,39 +53,67 @@ export function AllocationsTable({
   }
 
   return (
-    <div className="border rounded-md overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-slate-50">
-            <TableHead className="font-medium">Client</TableHead>
-            <TableHead className="text-right font-medium">Seats</TableHead>
-            <TableHead className="w-[80px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {allocations.map((allocation, index) => (
-            <TableRow key={index} className="hover:bg-slate-50">
-              <TableCell className="font-medium">{allocation.clientName}</TableCell>
-              <TableCell className="text-right">
-                <Badge variant="outline" className="font-medium">
-                  {allocation.seatsAllocated}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onRemoveAllocation(index)}
-                  className="h-8 w-8 p-0"
-                >
-                  <Trash2 className="h-4 w-4 text-muted-foreground hover:text-rose-600" />
-                  <span className="sr-only">Remove</span>
-                </Button>
-              </TableCell>
+    <>
+      <div className="border rounded-md overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-50">
+              <TableHead className="font-medium">Client</TableHead>
+              <TableHead className="text-center font-medium">Seats</TableHead>
+              <TableHead className="text-center font-medium">Students</TableHead>
+              <TableHead className="w-[160px]"></TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {allocations.map((allocation, index) => (
+              <TableRow key={index} className="hover:bg-slate-50">
+                <TableCell className="font-medium">{allocation.clientName}</TableCell>
+                <TableCell className="text-center">
+                  <Badge variant="outline" className="font-medium">
+                    {allocation.seatsAllocated}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-center">
+                  <Badge variant="secondary" className="bg-slate-100">
+                    0/{allocation.seatsAllocated}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setManagingStudentsFor(allocation)}
+                      className="h-8 flex items-center"
+                    >
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      Students
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onRemoveAllocation(index)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Trash2 className="h-4 w-4 text-muted-foreground hover:text-rose-600" />
+                      <span className="sr-only">Remove</span>
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {managingStudentsFor && (
+        <StudentsList 
+          clientId={managingStudentsFor.clientId}
+          clientName={managingStudentsFor.clientName}
+          seatsAllocated={managingStudentsFor.seatsAllocated}
+          onClose={() => setManagingStudentsFor(null)}
+        />
+      )}
+    </>
   );
 }
