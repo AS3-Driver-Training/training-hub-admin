@@ -29,7 +29,6 @@ const formSchema = z.object({
   isOpenEnrollment: z.boolean().default(false),
   hostClientId: z.string().optional(),
   privateSeatsAllocated: z.number().optional(),
-  visibilityType: z.number().default(0),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -97,7 +96,6 @@ export function CourseInstanceForm() {
       isOpenEnrollment: false,
       hostClientId: "",
       privateSeatsAllocated: 0,
-      visibilityType: 0,
     },
   });
 
@@ -121,7 +119,7 @@ export function CourseInstanceForm() {
           is_open_enrollment: values.isOpenEnrollment,
           host_client_id: values.isOpenEnrollment ? null : values.hostClientId,
           private_seats_allocated: values.isOpenEnrollment ? null : values.privateSeatsAllocated,
-          visibility_type: values.visibilityType,
+          visibility_type: values.isOpenEnrollment ? 0 : 1, // Public if open enrollment, private otherwise
         },
       ]).select();
       
@@ -166,7 +164,7 @@ export function CourseInstanceForm() {
           is_open_enrollment: values.isOpenEnrollment,
           host_client_id: values.isOpenEnrollment ? null : values.hostClientId,
           private_seats_allocated: values.isOpenEnrollment ? null : values.privateSeatsAllocated,
-          visibility_type: values.visibilityType,
+          visibility_type: values.isOpenEnrollment ? 0 : 1, // Public if open enrollment, private otherwise
         })
         .eq("id", parseInt(id || '0', 10))
         .select();
@@ -210,7 +208,6 @@ export function CourseInstanceForm() {
         isOpenEnrollment: courseInstance.is_open_enrollment,
         hostClientId: courseInstance.host_client_id || undefined,
         privateSeatsAllocated: courseInstance.private_seats_allocated || undefined,
-        visibilityType: courseInstance.visibility_type,
       });
     }
   }, [isEditMode, courseInstance, courseInstanceLoading, programs, form]);
@@ -428,35 +425,6 @@ export function CourseInstanceForm() {
                           <span className="font-medium text-secondary-foreground">End Date:</span> {format(calculateEndDate(field.value, selectedProgram.duration_days || 1), "PPP")}
                         </FormDescription>
                       )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Visibility Type */}
-                <FormField
-                  control={form.control}
-                  name="visibilityType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-base font-medium">Visibility</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(parseInt(value))}
-                        value={field.value.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-12">
-                            <SelectValue placeholder="Select visibility" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="0">Public</SelectItem>
-                          <SelectItem value="1">Invite Only</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription className="text-muted-foreground italic">
-                        Control who can see and enroll in this course
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
