@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,14 +13,33 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserPlus, Building, Link2, Copy } from "lucide-react";
+import { UserPlus, Building, Link2, Copy, Search, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useQuery } from "@tanstack/react-query";
 
 interface CreateClientResponse {
   client_id: string;
   invitation_id: string;
   token: string;
+}
+
+interface Client {
+  id: string;
+  name: string;
 }
 
 export function InviteClientDialog() {
@@ -42,6 +61,31 @@ export function InviteClientDialog() {
   });
   const [shareableLink, setShareableLink] = useState("");
   const [selectedClientId, setSelectedClientId] = useState("");
+  const [clientCommandOpen, setClientCommandOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Fetch available clients for dropdown
+  const { data: clients, isLoading: clientsLoading } = useQuery({
+    queryKey: ['clients'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('clients')
+          .select('id, name')
+          .order('name');
+
+        if (error) throw error;
+        
+        return data || [];
+      } catch (error: any) {
+        console.error("Error fetching clients:", error);
+        return [];
+      }
+    },
+  });
+
+  // Get selected client name for display
+  const selectedClient = clients?.find(client => client.id === selectedClientId);
 
   // Handler for email invitation submission
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -156,6 +200,11 @@ export function InviteClientDialog() {
     toast.success("Link copied to clipboard!");
   };
 
+  // Filter clients based on search query
+  const filteredClients = clients?.filter(client => 
+    client.name.toLowerCase().includes(searchQuery.toLowerCase())
+  ) || [];
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -213,7 +262,14 @@ export function InviteClientDialog() {
               </div>
               <DialogFooter>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Sending..." : "Send Invitation"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Invitation"
+                  )}
                 </Button>
               </DialogFooter>
             </form>
@@ -333,7 +389,14 @@ export function InviteClientDialog() {
               </div>
               <DialogFooter>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Creating..." : "Create Client"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Client"
+                  )}
                 </Button>
               </DialogFooter>
             </form>
@@ -343,14 +406,54 @@ export function InviteClientDialog() {
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="selectClient">Select Client</Label>
-                <Input
-                  id="selectClient"
-                  placeholder="Enter client ID"
-                  value={selectedClientId}
-                  onChange={(e) => setSelectedClientId(e.target.value)}
-                />
+                <Popover open={clientCommandOpen} onOpenChange={setClientCommandOpen}>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      role="combobox" 
+                      aria-expanded={clientCommandOpen}
+                      className="justify-between w-full"
+                    >
+                      {selectedClient ? selectedClient.name : "Search for a client..."}
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0 w-[300px]">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Search clients..." 
+                        value={searchQuery}
+                        onValueChange={setSearchQuery}
+                      />
+                      <CommandList>
+                        <CommandEmpty>No clients found</CommandEmpty>
+                        <CommandGroup>
+                          {clientsLoading ? (
+                            <div className="flex items-center justify-center p-4">
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                            </div>
+                          ) : (
+                            filteredClients.map((client) => (
+                              <CommandItem
+                                key={client.id}
+                                value={client.name}
+                                onSelect={() => {
+                                  setSelectedClientId(client.id);
+                                  setClientCommandOpen(false);
+                                }}
+                              >
+                                <Building className="mr-2 h-4 w-4" />
+                                {client.name}
+                              </CommandItem>
+                            ))
+                          )}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <p className="text-sm text-muted-foreground">
-                  Enter the client ID to generate a shareable invitation link.
+                  Search and select a client to generate a shareable invitation link
                 </p>
               </div>
               
@@ -360,8 +463,17 @@ export function InviteClientDialog() {
                 disabled={isLoading || !selectedClientId}
                 className="mt-2"
               >
-                <Link2 className="mr-2 h-4 w-4" />
-                {isLoading ? "Generating..." : "Generate Shareable Link"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Link2 className="mr-2 h-4 w-4" />
+                    Generate Shareable Link
+                  </>
+                )}
               </Button>
               
               {shareableLink && (
