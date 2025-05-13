@@ -47,8 +47,8 @@ export default function Invitation() {
           { p_token: token }
         );
 
-        // Type assertion for the response data
-        const verificationData = data as VerifyInvitationResponse;
+        // Type assertion with proper validation
+        const verificationData = (data as unknown) as VerifyInvitationResponse;
 
         if (error || !verificationData) {
           console.error("Error verifying invitation:", error || "No data returned");
@@ -150,8 +150,8 @@ export default function Invitation() {
           }
         );
         
-        // Type assertion for the response data
-        const acceptData = acceptResponseData as AcceptInvitationResponse;
+        // Type assertion with proper validation
+        const acceptData = (acceptResponseData as unknown) as AcceptInvitationResponse;
         
         if (acceptError || !acceptData?.success) {
           throw acceptError || new Error(acceptData?.error || "Failed to accept invitation");

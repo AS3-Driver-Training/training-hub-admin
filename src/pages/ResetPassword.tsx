@@ -63,7 +63,7 @@ export default function ResetPassword() {
               }
             );
             
-            const acceptData = data as AcceptInvitationResponse;
+            const acceptData = (data as unknown) as AcceptInvitationResponse;
             
             if (acceptError || !acceptData?.success) {
               throw acceptError || new Error(acceptData?.error || "Failed to accept invitation");

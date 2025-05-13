@@ -15,3 +15,4 @@ export interface AcceptInvitationResponse {
   message?: string;
   client_user_id?: string;
 }
+
