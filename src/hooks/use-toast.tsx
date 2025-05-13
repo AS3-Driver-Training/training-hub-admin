@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Toaster as Sonner } from "sonner";
+import { Toaster as Sonner, toast as sonnerToast, type ToastT } from "sonner";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
@@ -38,8 +38,7 @@ export function useToast() {
   return { toast, toasts };
 }
 
-// For compatibility with Sonner
-import { toast as sonnerToast } from "sonner";
-// Re-export properly typed toast function
-export const toast = sonnerToast;
+// Re-export properly typed toast function from sonner
+// This ensures the type includes all the properties being used in the components
+export const toast: ToastT = sonnerToast;
 export { Toaster };
