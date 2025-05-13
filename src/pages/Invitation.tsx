@@ -42,13 +42,20 @@ export default function Invitation() {
 
       try {
         // Verify invitation token
-        const { data, error } = await supabase.rpc<VerifyInvitationResponse>(
+        const { data, error } = await supabase.rpc<VerifyInvitationResponse, { p_token: string }>(
           'verify_invitation_token',
           { p_token: token }
         );
 
-        if (error || !data || !data.valid) {
-          console.error("Error verifying invitation:", error || data?.error || "No data returned");
+        if (error || !data) {
+          console.error("Error verifying invitation:", error || "No data returned");
+          toast.error("This invitation link is invalid or has expired");
+          setTimeout(() => navigate("/"), 3000);
+          return;
+        }
+
+        if (!data.valid) {
+          console.error("Invalid invitation:", data.error);
           toast.error("This invitation link is invalid or has expired");
           setTimeout(() => navigate("/"), 3000);
           return;
@@ -132,10 +139,10 @@ export default function Invitation() {
           .eq('id', data.user.id);
           
         // Accept invitation and add user to client
-        const { data: acceptData, error: acceptError } = await supabase.rpc<AcceptInvitationResponse>(
+        const { data: acceptData, error: acceptError } = await supabase.rpc<AcceptInvitationResponse, { p_token: string; p_user_id: string }>(
           'accept_invitation',
           {
-            p_token: token,
+            p_token: token!,
             p_user_id: data.user.id
           }
         );

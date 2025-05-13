@@ -55,7 +55,7 @@ export default function ResetPassword() {
           const { data: userData } = await supabase.auth.getUser();
           
           if (userData?.user) {
-            const { data: acceptData, error: acceptError } = await supabase.rpc<AcceptInvitationResponse>(
+            const { data: acceptData, error: acceptError } = await supabase.rpc<AcceptInvitationResponse, { p_token: string; p_user_id: string }>(
               'accept_invitation',
               {
                 p_token: token,
