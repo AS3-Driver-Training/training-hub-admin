@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Toaster as Sonner } from "sonner";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
@@ -15,6 +15,7 @@ interface ToastOptions {
   description?: string;
   action?: React.ReactNode;
   variant?: "default" | "destructive" | undefined;
+  id?: string;
 }
 
 export function useToast() {
