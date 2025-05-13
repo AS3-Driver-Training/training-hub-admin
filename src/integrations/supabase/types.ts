@@ -259,6 +259,7 @@ export type Database = {
           email: string
           expires_at: string
           id: string
+          invitation_type: string | null
           status: string | null
           token: string
           updated_at: string
@@ -269,6 +270,7 @@ export type Database = {
           email: string
           expires_at: string
           id?: string
+          invitation_type?: string | null
           status?: string | null
           token: string
           updated_at?: string
@@ -279,6 +281,7 @@ export type Database = {
           email?: string
           expires_at?: string
           id?: string
+          invitation_type?: string | null
           status?: string | null
           token?: string
           updated_at?: string
@@ -533,6 +536,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_user_to_client: {
+        Args: {
+          p_client_id: string
+          p_email: string
+          p_role?: Database["public"]["Enums"]["client_role"]
+        }
+        Returns: Json
+      }
       can_access_client_groups: {
         Args: { client_id: string }
         Returns: boolean
@@ -568,6 +579,22 @@ export type Database = {
       check_superadmin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      create_client_manual: {
+        Args: {
+          client_name: string
+          p_address?: string
+          p_city?: string
+          p_state?: string
+          p_zip_code?: string
+          p_phone?: string
+          p_contact_email?: string
+        }
+        Returns: string
+      }
+      create_client_shareable_invitation: {
+        Args: { client_id: string }
+        Returns: Json
       }
       create_client_with_invitation: {
         Args: { client_name: string; contact_email: string }
