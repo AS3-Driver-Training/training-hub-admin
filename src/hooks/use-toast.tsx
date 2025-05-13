@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Toaster as Sonner, toast as sonnerToast } from "sonner";
+import { Toaster as Sonner, toast as sonnerToast, type ExternalToast } from "sonner";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
@@ -38,7 +38,39 @@ export function useToast() {
   return { toast, toasts };
 }
 
-// Export the toast function from sonner directly
-// This is a proper function with call signatures that can be invoked
-export const toast = sonnerToast;
+// Create a properly typed wrapper for sonner toast that accepts our application's expected interface
+interface CustomToastOptions {
+  title?: string;
+  description?: string;
+  action?: ReactNode;
+  variant?: "default" | "destructive" | undefined;
+  [key: string]: any; // Allow other properties that sonner might accept
+}
+
+// This is our custom toast function that matches the API used throughout the application
+const customToast = (options: CustomToastOptions) => {
+  // Convert our app's toast format to sonner's format
+  // Use title as the main message and pass description and other properties
+  return sonnerToast(options.title || "", {
+    description: options.description,
+    action: options.action,
+    // Pass any other properties
+    ...Object.entries(options)
+      .filter(([key]) => !['title'].includes(key))
+      .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {})
+  });
+};
+
+// Add the same methods that sonner toast has
+Object.keys(sonnerToast).forEach(key => {
+  if (typeof sonnerToast[key as keyof typeof sonnerToast] === 'function') {
+    (customToast as any)[key] = sonnerToast[key as keyof typeof sonnerToast];
+  }
+});
+
+// Export our custom toast function that accepts the format used in our app
+export const toast = customToast as typeof sonnerToast & {
+  (options: CustomToastOptions): string | number;
+};
+
 export { Toaster };
