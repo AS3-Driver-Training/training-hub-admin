@@ -1,41 +1,38 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import Auth from "@/pages/Auth";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "@/pages/Index";
-import Events from "@/pages/Events";
-import Settings from "@/pages/Settings";
-import ClientSettings from "@/pages/ClientSettings";
 import Clients from "@/pages/Clients";
-import Profile from "@/pages/Profile";
+import ClientSettings from "@/pages/ClientSettings";
 import Programs from "@/pages/Programs";
+import Events from "@/pages/Events";
 import Venues from "@/pages/Venues";
+import Settings from "@/pages/Settings";
+import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
-import "./App.css";
-
-const queryClient = new QueryClient();
+import { Toaster } from "sonner";
+import Auth from "@/pages/Auth";
+import Invitation from "@/pages/Invitation";
+import ResetPassword from "@/pages/ResetPassword";
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/dashboard" element={<Index />} />
-          <Route path="/events/*" element={<Events />} />
-          <Route path="/programs" element={<Programs />} />
-          <Route path="/venues" element={<Venues />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/clients" element={<Clients />} />
-          <Route path="/clients/:clientId/settings" element={<ClientSettings />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/invitation" element={<Invitation />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/clients" element={<Clients />} />
+        <Route path="/clients/:clientId/*" element={<ClientSettings />} />
+        <Route path="/programs" element={<Programs />} />
+        <Route path="/events" element={<Events />} />
+        <Route path="/venues" element={<Venues />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
       <Toaster />
-    </QueryClientProvider>
+    </BrowserRouter>
   );
 }
 
