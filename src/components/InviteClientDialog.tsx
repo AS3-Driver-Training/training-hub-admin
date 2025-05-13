@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -151,8 +152,8 @@ export function InviteClientDialog() {
 
         if (error) throw error;
 
-        // Type assertion to ensure TypeScript recognizes the structure
-        const data = responseData as AddUserToClientResponse;
+        // Type assertion with unknown first to satisfy TypeScript
+        const data = responseData as unknown as AddUserToClientResponse;
 
         // If it's an invited user, send invitation email
         if (data.status === 'invited') {
@@ -180,8 +181,8 @@ export function InviteClientDialog() {
 
         if (error) throw error;
 
-        // Type assertion to ensure TypeScript recognizes the structure
-        const response = responseData as CreateClientResponse;
+        // Type assertion with unknown first to satisfy TypeScript
+        const response = responseData as unknown as CreateClientResponse;
 
         // Send invitation email
         const emailResponse = await supabase.functions.invoke('send-invitation', {
@@ -307,7 +308,8 @@ export function InviteClientDialog() {
 
       if (error) throw error;
 
-      const response = responseData as CreateClientResponse;
+      // Type assertion with unknown first to satisfy TypeScript
+      const response = responseData as unknown as CreateClientResponse;
       const inviteLink = `${window.location.origin}/invitation?token=${response.token}`;
       
       setShareableLink(inviteLink);
