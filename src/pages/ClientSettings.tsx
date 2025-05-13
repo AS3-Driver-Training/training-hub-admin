@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, UserCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, UserCircle2 } from "lucide-react";
 import { useState } from "react";
 import { ClientUsersTab } from "@/components/client-settings/ClientUsersTab";
 import { ClientSettingsTab } from "@/components/client-settings/ClientSettingsTab";
@@ -99,7 +99,7 @@ export default function ClientSettings() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/clients')}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
