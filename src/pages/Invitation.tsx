@@ -42,32 +42,35 @@ export default function Invitation() {
 
       try {
         // Verify invitation token
-        const { data, error } = await supabase.rpc<VerifyInvitationResponse, { p_token: string }>(
+        const { data, error } = await supabase.rpc(
           'verify_invitation_token',
           { p_token: token }
         );
 
-        if (error || !data) {
+        // Type assertion for the response data
+        const verificationData = data as VerifyInvitationResponse;
+
+        if (error || !verificationData) {
           console.error("Error verifying invitation:", error || "No data returned");
           toast.error("This invitation link is invalid or has expired");
           setTimeout(() => navigate("/"), 3000);
           return;
         }
 
-        if (!data.valid) {
-          console.error("Invalid invitation:", data.error);
+        if (!verificationData.valid) {
+          console.error("Invalid invitation:", verificationData.error);
           toast.error("This invitation link is invalid or has expired");
           setTimeout(() => navigate("/"), 3000);
           return;
         }
 
-        console.log("Invitation data:", data);
+        console.log("Invitation data:", verificationData);
         
         // Get client name
         const { data: clientData } = await supabase
           .from('clients')
           .select('name')
-          .eq('id', data.client_id)
+          .eq('id', verificationData.client_id)
           .single();
           
         if (!clientData) {
@@ -78,19 +81,19 @@ export default function Invitation() {
 
         setInvitationData({
           clientName: clientData.name,
-          invitationType: data.invitation_type || 'shareable',
-          clientId: data.client_id!,
-          email: data.email
+          invitationType: verificationData.invitation_type || 'shareable',
+          clientId: verificationData.client_id!,
+          email: verificationData.email
         });
         
-        if (data.email) {
-          setFormData(prev => ({...prev, email: data.email!}));
+        if (verificationData.email) {
+          setFormData(prev => ({...prev, email: verificationData.email!}));
         }
 
         // Check if the email is already registered
-        if (data.email) {
+        if (verificationData.email) {
           const { data: userData } = await supabase.auth.signInWithOtp({
-            email: data.email,
+            email: verificationData.email,
             options: {
               shouldCreateUser: false,
             }
@@ -139,13 +142,16 @@ export default function Invitation() {
           .eq('id', data.user.id);
           
         // Accept invitation and add user to client
-        const { data: acceptData, error: acceptError } = await supabase.rpc<AcceptInvitationResponse, { p_token: string; p_user_id: string }>(
+        const { data: acceptResponseData, error: acceptError } = await supabase.rpc(
           'accept_invitation',
           {
             p_token: token!,
             p_user_id: data.user.id
           }
         );
+        
+        // Type assertion for the response data
+        const acceptData = acceptResponseData as AcceptInvitationResponse;
         
         if (acceptError || !acceptData?.success) {
           throw acceptError || new Error(acceptData?.error || "Failed to accept invitation");

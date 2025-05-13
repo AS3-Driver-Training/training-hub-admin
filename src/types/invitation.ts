@@ -1,4 +1,6 @@
 
+// TypeScript interfaces for RPC function responses
+
 export interface VerifyInvitationResponse {
   valid: boolean;
   error?: string;

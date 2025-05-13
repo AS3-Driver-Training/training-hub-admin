@@ -55,13 +55,15 @@ export default function ResetPassword() {
           const { data: userData } = await supabase.auth.getUser();
           
           if (userData?.user) {
-            const { data: acceptData, error: acceptError } = await supabase.rpc<AcceptInvitationResponse, { p_token: string; p_user_id: string }>(
+            const { data, error: acceptError } = await supabase.rpc(
               'accept_invitation',
               {
                 p_token: token,
                 p_user_id: userData.user.id
               }
             );
+            
+            const acceptData = data as AcceptInvitationResponse;
             
             if (acceptError || !acceptData?.success) {
               throw acceptError || new Error(acceptData?.error || "Failed to accept invitation");
