@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { AcceptInvitationResponse } from "@/types/invitation";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -54,12 +55,17 @@ export default function ResetPassword() {
           const { data: userData } = await supabase.auth.getUser();
           
           if (userData?.user) {
-            const { error: acceptError } = await supabase.rpc('accept_invitation', {
-              p_token: token,
-              p_user_id: userData.user.id
-            });
+            const { data: acceptData, error: acceptError } = await supabase.rpc<AcceptInvitationResponse>(
+              'accept_invitation',
+              {
+                p_token: token,
+                p_user_id: userData.user.id
+              }
+            );
             
-            if (acceptError) throw acceptError;
+            if (acceptError || !acceptData?.success) {
+              throw acceptError || new Error(acceptData?.error || "Failed to accept invitation");
+            }
             
             toast.success("You've been added to the client organization");
           }

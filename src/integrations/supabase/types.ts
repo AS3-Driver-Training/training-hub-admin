@@ -536,6 +536,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation: {
+        Args: { p_token: string; p_user_id: string }
+        Returns: Json
+      }
       add_user_to_client: {
         Args: {
           p_client_id: string
@@ -661,6 +665,10 @@ export type Database = {
       is_superadmin_simple: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      verify_invitation_token: {
+        Args: { p_token: string }
+        Returns: Json
       }
     }
     Enums: {

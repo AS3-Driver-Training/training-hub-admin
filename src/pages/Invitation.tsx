@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { VerifyInvitationResponse, AcceptInvitationResponse } from "@/types/invitation";
 
 export default function Invitation() {
   const [searchParams] = useSearchParams();
@@ -41,12 +42,13 @@ export default function Invitation() {
 
       try {
         // Verify invitation token
-        const { data, error } = await supabase.rpc('verify_invitation_token', {
-          p_token: token
-        });
+        const { data, error } = await supabase.rpc<VerifyInvitationResponse>(
+          'verify_invitation_token',
+          { p_token: token }
+        );
 
-        if (error || !data) {
-          console.error("Error verifying invitation:", error || "No data returned");
+        if (error || !data || !data.valid) {
+          console.error("Error verifying invitation:", error || data?.error || "No data returned");
           toast.error("This invitation link is invalid or has expired");
           setTimeout(() => navigate("/"), 3000);
           return;
@@ -70,12 +72,12 @@ export default function Invitation() {
         setInvitationData({
           clientName: clientData.name,
           invitationType: data.invitation_type || 'shareable',
-          clientId: data.client_id,
+          clientId: data.client_id!,
           email: data.email
         });
         
         if (data.email) {
-          setFormData(prev => ({...prev, email: data.email}));
+          setFormData(prev => ({...prev, email: data.email!}));
         }
 
         // Check if the email is already registered
@@ -130,12 +132,17 @@ export default function Invitation() {
           .eq('id', data.user.id);
           
         // Accept invitation and add user to client
-        const { error: acceptError } = await supabase.rpc('accept_invitation', {
-          p_token: token,
-          p_user_id: data.user.id
-        });
+        const { data: acceptData, error: acceptError } = await supabase.rpc<AcceptInvitationResponse>(
+          'accept_invitation',
+          {
+            p_token: token,
+            p_user_id: data.user.id
+          }
+        );
         
-        if (acceptError) throw acceptError;
+        if (acceptError || !acceptData?.success) {
+          throw acceptError || new Error(acceptData?.error || "Failed to accept invitation");
+        }
         
         toast.success(`Welcome to ${invitationData?.clientName}!`);
         navigate("/clients");

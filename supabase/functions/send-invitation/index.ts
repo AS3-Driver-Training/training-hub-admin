@@ -10,6 +10,7 @@ interface EmailRequest {
   email: string;
   token: string;
   clientName: string;
+  request: Request;
 }
 
 const sendEmail = async (req: EmailRequest) => {
