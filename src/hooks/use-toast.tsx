@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Toaster as Sonner, toast as sonnerToast, type ToastT } from "sonner";
+import { Toaster as Sonner, toast as sonnerToast } from "sonner";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
@@ -38,7 +38,7 @@ export function useToast() {
   return { toast, toasts };
 }
 
-// Re-export properly typed toast function from sonner
-// This ensures the type includes all the properties being used in the components
-export const toast: ToastT = sonnerToast;
+// Export the toast function from sonner directly
+// This is a proper function with call signatures that can be invoked
+export const toast = sonnerToast;
 export { Toaster };
