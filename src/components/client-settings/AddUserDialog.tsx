@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
@@ -63,7 +62,14 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       }
       
       console.log('Fetched groups:', data);
-      return data as Group[] || [];
+      // Ensure we return properly formatted Group objects with all required properties
+      return (data || []).map(group => ({
+        ...group,
+        client_id: clientId, // Make sure client_id is included
+        description: group.description || '',
+        is_default: group.is_default || false,
+        teams: group.teams || [] // Ensure teams is always an array
+      })) as Group[];
     },
   });
 

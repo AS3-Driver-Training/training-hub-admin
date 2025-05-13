@@ -21,7 +21,8 @@ export interface GroupData {
   name: string;
   description: string;
   is_default: boolean;
-  teams?: Array<{ id: string; name: string; group_id: string }>;
+  client_id: string;
+  teams: Array<{ id: string; name: string; group_id: string }>;
 }
 
 export interface TeamData {
@@ -40,8 +41,9 @@ export interface Group {
   id: string;
   name: string;
   description: string;  
-  is_default: boolean;  
-  teams?: Array<Team>;  
+  is_default: boolean;
+  client_id: string;
+  teams: Array<Team>;  
 }
 
 export interface Team {
