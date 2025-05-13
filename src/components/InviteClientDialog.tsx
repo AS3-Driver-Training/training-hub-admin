@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserPlus, Building, Link2, Copy, Search, Loader2 } from "lucide-react";
+import { UserPlus, Building, Link2, Copy, Search, Loader2, PlusCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -30,6 +30,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useQuery } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 interface CreateClientResponse {
   client_id: string;
@@ -63,8 +64,11 @@ export function InviteClientDialog() {
   const [selectedClientId, setSelectedClientId] = useState("");
   const [clientCommandOpen, setClientCommandOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Fetch available clients for dropdown
+  const [isSearchingEmail, setIsSearchingEmail] = useState(false);
+  const [isSearchingManual, setIsSearchingManual] = useState(false);
+  const [existingClientSelected, setExistingClientSelected] = useState(false);
+  
+  // Common client search functionality
   const { data: clients, isLoading: clientsLoading } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
@@ -84,8 +88,45 @@ export function InviteClientDialog() {
     },
   });
 
-  // Get selected client name for display
+  // Get selected client for display
   const selectedClient = clients?.find(client => client.id === selectedClientId);
+
+  // Search clients by name (for email tab)
+  const filteredClientsEmail = clients?.filter(client => 
+    client.name.toLowerCase().includes(emailFormData.clientName.toLowerCase())
+  ) || [];
+
+  // Search clients by name (for manual tab)
+  const filteredClientsManual = clients?.filter(client => 
+    client.name.toLowerCase().includes(manualFormData.clientName.toLowerCase())
+  ) || [];
+
+  // Search clients for shareable link tab
+  const filteredClients = clients?.filter(client => 
+    client.name.toLowerCase().includes(searchQuery.toLowerCase())
+  ) || [];
+
+  // Handler for selecting an existing client in email tab
+  const handleSelectClientEmail = (clientId: string, clientName: string) => {
+    setEmailFormData(prev => ({
+      ...prev,
+      clientName: clientName
+    }));
+    setSelectedClientId(clientId);
+    setExistingClientSelected(true);
+    setIsSearchingEmail(false);
+  };
+
+  // Handler for selecting an existing client in manual tab
+  const handleSelectClientManual = (clientId: string, clientName: string) => {
+    setManualFormData(prev => ({
+      ...prev,
+      clientName: clientName
+    }));
+    setSelectedClientId(clientId);
+    setExistingClientSelected(true);
+    setIsSearchingManual(false);
+  };
 
   // Handler for email invitation submission
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -93,33 +134,63 @@ export function InviteClientDialog() {
     setIsLoading(true);
 
     try {
-      // Create client and generate invitation
-      const { data, error } = await supabase.rpc('create_client_with_invitation', {
-        client_name: emailFormData.clientName,
-        contact_email: emailFormData.email,
-      });
+      // If we're adding a user to an existing client
+      if (existingClientSelected && selectedClientId) {
+        const { data, error } = await supabase.rpc('add_user_to_client', {
+          p_client_id: selectedClientId,
+          p_email: emailFormData.email,
+          p_role: 'client_admin'
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Type assertion with unknown first to satisfy TypeScript
-      const response = data as unknown as CreateClientResponse;
+        // If it's an invited user, send invitation email
+        if (data.status === 'invited') {
+          const emailResponse = await supabase.functions.invoke('send-invitation', {
+            body: {
+              clientName: emailFormData.clientName,
+              email: emailFormData.email,
+              token: data.token,
+            },
+          });
 
-      // Send invitation email
-      const emailResponse = await supabase.functions.invoke('send-invitation', {
-        body: {
-          clientName: emailFormData.clientName,
-          email: emailFormData.email,
-          token: response.token,
-        },
-      });
+          if (emailResponse.error) throw emailResponse.error;
+        }
 
-      if (!emailResponse.error) {
+        toast.success(data.status === 'invited' 
+          ? "Invitation sent successfully!" 
+          : "User added to client successfully!");
+      } 
+      // Create new client and generate invitation
+      else {
+        const { data, error } = await supabase.rpc('create_client_with_invitation', {
+          client_name: emailFormData.clientName,
+          contact_email: emailFormData.email,
+        });
+
+        if (error) throw error;
+
+        // Type assertion with unknown first to satisfy TypeScript
+        const response = data as unknown as CreateClientResponse;
+
+        // Send invitation email
+        const emailResponse = await supabase.functions.invoke('send-invitation', {
+          body: {
+            clientName: emailFormData.clientName,
+            email: emailFormData.email,
+            token: response.token,
+          },
+        });
+
+        if (emailResponse.error) throw new Error("Failed to send invitation email");
+        
         toast.success("Client invited successfully!");
-        setOpen(false);
-        setEmailFormData({ clientName: "", email: "" });
-      } else {
-        throw new Error("Failed to send invitation email");
       }
+      
+      setOpen(false);
+      setEmailFormData({ clientName: "", email: "" });
+      setExistingClientSelected(false);
+      setSelectedClientId("");
     } catch (error: any) {
       console.error("Error inviting client:", error);
       toast.error(error.message || "Failed to invite client");
@@ -134,20 +205,41 @@ export function InviteClientDialog() {
     setIsLoading(true);
 
     try {
-      // Create client directly
-      const { data, error } = await supabase.rpc('create_client_manual', {
-        client_name: manualFormData.clientName,
-        p_address: manualFormData.address,
-        p_city: manualFormData.city,
-        p_state: manualFormData.state,
-        p_zip_code: manualFormData.zipCode,
-        p_phone: manualFormData.phone,
-        p_contact_email: manualFormData.contactEmail,
-      });
+      // If we're updating an existing client
+      if (existingClientSelected && selectedClientId) {
+        const { error } = await supabase
+          .from('clients')
+          .update({
+            address: manualFormData.address,
+            city: manualFormData.city,
+            state: manualFormData.state,
+            zip_code: manualFormData.zipCode,
+            phone: manualFormData.phone,
+            contact_email: manualFormData.contactEmail,
+          })
+          .eq('id', selectedClientId);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast.success("Client created successfully!");
+        toast.success("Client updated successfully!");
+      } 
+      // Create a new client
+      else {
+        const { data, error } = await supabase.rpc('create_client_manual', {
+          client_name: manualFormData.clientName,
+          p_address: manualFormData.address,
+          p_city: manualFormData.city,
+          p_state: manualFormData.state,
+          p_zip_code: manualFormData.zipCode,
+          p_phone: manualFormData.phone,
+          p_contact_email: manualFormData.contactEmail,
+        });
+
+        if (error) throw error;
+
+        toast.success("Client created successfully!");
+      }
+      
       setOpen(false);
       setManualFormData({
         clientName: "",
@@ -158,12 +250,35 @@ export function InviteClientDialog() {
         phone: "",
         contactEmail: "",
       });
+      setExistingClientSelected(false);
+      setSelectedClientId("");
     } catch (error: any) {
       console.error("Error creating client:", error);
       toast.error(error.message || "Failed to create client");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Reset state when dialog is closed
+  const handleDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      setEmailFormData({ clientName: "", email: "" });
+      setManualFormData({
+        clientName: "",
+        address: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        phone: "",
+        contactEmail: "",
+      });
+      setShareableLink("");
+      setSelectedClientId("");
+      setExistingClientSelected(false);
+      setSearchQuery("");
+    }
+    setOpen(open);
   };
 
   // Handler for generating shareable link
@@ -200,13 +315,15 @@ export function InviteClientDialog() {
     toast.success("Link copied to clipboard!");
   };
 
-  // Filter clients based on search query
-  const filteredClients = clients?.filter(client => 
-    client.name.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  // Handle tab change and reset form state
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setExistingClientSelected(false);
+    setSelectedClientId("");
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogTrigger asChild>
         <Button>
           <UserPlus className="mr-2 h-4 w-4" />
@@ -221,7 +338,7 @@ export function InviteClientDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid grid-cols-3 mb-4">
             <TabsTrigger value="email">Email Invitation</TabsTrigger>
             <TabsTrigger value="manual">Manual Setup</TabsTrigger>
@@ -233,18 +350,59 @@ export function InviteClientDialog() {
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="clientName">Organization Name</Label>
-                  <Input
-                    id="clientName"
-                    value={emailFormData.clientName}
-                    onChange={(e) =>
-                      setEmailFormData((prev) => ({
-                        ...prev,
-                        clientName: e.target.value,
-                      }))
-                    }
-                    placeholder="Acme Corp"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="clientName"
+                      value={emailFormData.clientName}
+                      onChange={(e) => {
+                        setEmailFormData((prev) => ({
+                          ...prev,
+                          clientName: e.target.value,
+                        }));
+                        setIsSearchingEmail(e.target.value.length > 0);
+                        setExistingClientSelected(false);
+                      }}
+                      placeholder="Acme Corp"
+                      required
+                      className={cn(
+                        isSearchingEmail && filteredClientsEmail.length > 0 
+                          ? "rounded-b-none border-b-0" 
+                          : ""
+                      )}
+                    />
+                    {isSearchingEmail && filteredClientsEmail.length > 0 && (
+                      <div className="absolute z-10 w-full border border-t-0 rounded-b-md bg-background max-h-48 overflow-y-auto">
+                        <ul className="py-1">
+                          {filteredClientsEmail.map(client => (
+                            <li 
+                              key={client.id} 
+                              className="px-3 py-2 hover:bg-accent cursor-pointer flex items-center"
+                              onClick={() => handleSelectClientEmail(client.id, client.name)}
+                            >
+                              <Building className="mr-2 h-4 w-4" />
+                              {client.name}
+                            </li>
+                          ))}
+                          <li 
+                            className="px-3 py-2 hover:bg-accent cursor-pointer flex items-center text-muted-foreground border-t"
+                            onClick={() => {
+                              setIsSearchingEmail(false);
+                              setExistingClientSelected(false);
+                              setSelectedClientId("");
+                            }}
+                          >
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Create new client "{emailFormData.clientName}"
+                          </li>
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  {existingClientSelected && (
+                    <p className="text-sm text-blue-500">
+                      Adding user to existing client: {emailFormData.clientName}
+                    </p>
+                  )}
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="email">Contact Email</Label>
@@ -265,10 +423,10 @@ export function InviteClientDialog() {
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
+                      {existingClientSelected ? "Adding..." : "Sending..."}
                     </>
                   ) : (
-                    "Send Invitation"
+                    existingClientSelected ? "Add to Existing Client" : "Send Invitation"
                   )}
                 </Button>
               </DialogFooter>
@@ -280,18 +438,59 @@ export function InviteClientDialog() {
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="manualClientName">Organization Name</Label>
-                  <Input
-                    id="manualClientName"
-                    value={manualFormData.clientName}
-                    onChange={(e) =>
-                      setManualFormData((prev) => ({
-                        ...prev,
-                        clientName: e.target.value,
-                      }))
-                    }
-                    placeholder="Acme Corp"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="manualClientName"
+                      value={manualFormData.clientName}
+                      onChange={(e) => {
+                        setManualFormData((prev) => ({
+                          ...prev,
+                          clientName: e.target.value,
+                        }));
+                        setIsSearchingManual(e.target.value.length > 0);
+                        setExistingClientSelected(false);
+                      }}
+                      placeholder="Acme Corp"
+                      required
+                      className={cn(
+                        isSearchingManual && filteredClientsManual.length > 0 
+                          ? "rounded-b-none border-b-0" 
+                          : ""
+                      )}
+                    />
+                    {isSearchingManual && filteredClientsManual.length > 0 && (
+                      <div className="absolute z-10 w-full border border-t-0 rounded-b-md bg-background max-h-48 overflow-y-auto">
+                        <ul className="py-1">
+                          {filteredClientsManual.map(client => (
+                            <li 
+                              key={client.id} 
+                              className="px-3 py-2 hover:bg-accent cursor-pointer flex items-center"
+                              onClick={() => handleSelectClientManual(client.id, client.name)}
+                            >
+                              <Building className="mr-2 h-4 w-4" />
+                              {client.name}
+                            </li>
+                          ))}
+                          <li 
+                            className="px-3 py-2 hover:bg-accent cursor-pointer flex items-center text-muted-foreground border-t"
+                            onClick={() => {
+                              setIsSearchingManual(false);
+                              setExistingClientSelected(false);
+                              setSelectedClientId("");
+                            }}
+                          >
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Create new client "{manualFormData.clientName}"
+                          </li>
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  {existingClientSelected && (
+                    <p className="text-sm text-blue-500">
+                      Updating existing client: {manualFormData.clientName}
+                    </p>
+                  )}
                 </div>
                 
                 <div className="grid gap-2">
@@ -392,10 +591,10 @@ export function InviteClientDialog() {
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
+                      {existingClientSelected ? "Updating..." : "Creating..."}
                     </>
                   ) : (
-                    "Create Client"
+                    existingClientSelected ? "Update Client" : "Create Client"
                   )}
                 </Button>
               </DialogFooter>
