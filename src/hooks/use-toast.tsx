@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Toaster as Sonner } from "sonner";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
@@ -13,7 +13,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
 interface ToastOptions {
   title?: string;
   description?: string;
-  action?: React.ReactNode;
+  action?: ReactNode;
   variant?: "default" | "destructive" | undefined;
   id?: string;
 }
@@ -39,5 +39,7 @@ export function useToast() {
 }
 
 // For compatibility with Sonner
-import { toast } from "sonner";
-export { toast, Toaster };
+import { toast as sonnerToast } from "sonner";
+// Re-export properly typed toast function
+export const toast = sonnerToast;
+export { Toaster };
