@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,12 +67,14 @@ export function InviteClientDialog() {
     phone: "",
     contactEmail: "",
   });
+  const [shareableFormData, setShareableFormData] = useState({
+    clientName: "",
+  });
   const [shareableLink, setShareableLink] = useState("");
   const [selectedClientId, setSelectedClientId] = useState("");
-  const [clientCommandOpen, setClientCommandOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [isSearchingEmail, setIsSearchingEmail] = useState(false);
   const [isSearchingManual, setIsSearchingManual] = useState(false);
+  const [isSearchingShareable, setIsSearchingShareable] = useState(false);
   const [existingClientSelected, setExistingClientSelected] = useState(false);
   
   // Common client search functionality
@@ -109,9 +110,9 @@ export function InviteClientDialog() {
     client.name.toLowerCase().includes(manualFormData.clientName.toLowerCase())
   ) || [];
 
-  // Search clients for shareable link tab
-  const filteredClients = clients?.filter(client => 
-    client.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // Search clients by name (for shareable link tab)
+  const filteredClientsShareable = clients?.filter(client => 
+    client.name.toLowerCase().includes(shareableFormData.clientName.toLowerCase())
   ) || [];
 
   // Handler for selecting an existing client in email tab
@@ -134,6 +135,17 @@ export function InviteClientDialog() {
     setSelectedClientId(clientId);
     setExistingClientSelected(true);
     setIsSearchingManual(false);
+  };
+
+  // Handler for selecting an existing client in shareable tab
+  const handleSelectClientShareable = (clientId: string, clientName: string) => {
+    setShareableFormData(prev => ({
+      ...prev,
+      clientName: clientName
+    }));
+    setSelectedClientId(clientId);
+    setExistingClientSelected(true);
+    setIsSearchingShareable(false);
   };
 
   // Handler for email invitation submission
@@ -271,49 +283,46 @@ export function InviteClientDialog() {
     }
   };
 
-  // Reset state when dialog is closed
-  const handleDialogOpenChange = (open: boolean) => {
-    if (!open) {
-      setEmailFormData({ clientName: "", email: "" });
-      setManualFormData({
-        clientName: "",
-        address: "",
-        city: "",
-        state: "",
-        zipCode: "",
-        phone: "",
-        contactEmail: "",
-      });
-      setShareableLink("");
-      setSelectedClientId("");
-      setExistingClientSelected(false);
-      setSearchQuery("");
-    }
-    setOpen(open);
-  };
-
   // Handler for generating shareable link
   const handleGenerateShareableLink = async () => {
-    if (!selectedClientId) {
-      toast.error("Please select a client");
+    if (!shareableFormData.clientName) {
+      toast.error("Please enter a client name");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const { data: responseData, error } = await supabase.rpc('create_client_shareable_invitation', {
-        client_id: selectedClientId,
-      });
+      if (existingClientSelected && selectedClientId) {
+        // Generate recovery link for existing client
+        const { data: responseData, error } = await supabase.rpc('create_client_shareable_invitation', {
+          client_id: selectedClientId,
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Type assertion with unknown first to satisfy TypeScript
-      const response = responseData as unknown as CreateClientResponse;
-      const inviteLink = `${window.location.origin}/invitation?token=${response.token}`;
-      
-      setShareableLink(inviteLink);
-      toast.success("Shareable invitation link generated!");
+        // Type assertion with unknown first to satisfy TypeScript
+        const response = responseData as unknown as CreateClientResponse;
+        const inviteLink = `${window.location.origin}/invitation?token=${response.token}`;
+        
+        setShareableLink(inviteLink);
+        toast.success("Recovery link generated for existing client!");
+      } else {
+        // Generate invitation link for new client
+        const { data: responseData, error } = await supabase.rpc('create_client_with_invitation', {
+          client_name: shareableFormData.clientName,
+          contact_email: '', // Leave empty for shareable link
+        });
+
+        if (error) throw error;
+
+        // Type assertion with unknown first to satisfy TypeScript
+        const response = responseData as unknown as CreateClientResponse;
+        const inviteLink = `${window.location.origin}/invitation?token=${response.token}`;
+        
+        setShareableLink(inviteLink);
+        toast.success("Self-registration link generated for new client!");
+      }
     } catch (error: any) {
       console.error("Error generating shareable link:", error);
       toast.error(error.message || "Failed to generate shareable link");
@@ -327,11 +336,33 @@ export function InviteClientDialog() {
     toast.success("Link copied to clipboard!");
   };
 
+  // Reset state when dialog is closed
+  const handleDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      setEmailFormData({ clientName: "", email: "" });
+      setManualFormData({
+        clientName: "",
+        address: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        phone: "",
+        contactEmail: "",
+      });
+      setShareableFormData({ clientName: "" });
+      setShareableLink("");
+      setSelectedClientId("");
+      setExistingClientSelected(false);
+    }
+    setOpen(open);
+  };
+
   // Handle tab change and reset form state
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setExistingClientSelected(false);
     setSelectedClientId("");
+    setShareableLink("");
   };
 
   return (
@@ -616,62 +647,81 @@ export function InviteClientDialog() {
           <TabsContent value="link">
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="selectClient">Select Client</Label>
-                <Popover open={clientCommandOpen} onOpenChange={setClientCommandOpen}>
-                  <PopoverTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      role="combobox" 
-                      aria-expanded={clientCommandOpen}
-                      className="justify-between w-full"
-                    >
-                      {selectedClient ? selectedClient.name : "Search for a client..."}
-                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="p-0 w-[300px]">
-                    <Command>
-                      <CommandInput 
-                        placeholder="Search clients..." 
-                        value={searchQuery}
-                        onValueChange={setSearchQuery}
-                      />
-                      <CommandList>
-                        <CommandEmpty>No clients found</CommandEmpty>
-                        <CommandGroup>
-                          {clientsLoading ? (
-                            <div className="flex items-center justify-center p-4">
-                              <Loader2 className="h-5 w-5 animate-spin" />
-                            </div>
-                          ) : (
-                            filteredClients.map((client) => (
-                              <CommandItem
-                                key={client.id}
-                                value={client.name}
-                                onSelect={() => {
-                                  setSelectedClientId(client.id);
-                                  setClientCommandOpen(false);
-                                }}
-                              >
-                                <Building className="mr-2 h-4 w-4" />
-                                {client.name}
-                              </CommandItem>
-                            ))
-                          )}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                <p className="text-sm text-muted-foreground">
-                  Search and select a client to generate a shareable invitation link
+                <Label htmlFor="shareableClientName">Organization Name</Label>
+                <div className="relative">
+                  <Input
+                    id="shareableClientName"
+                    value={shareableFormData.clientName}
+                    onChange={(e) => {
+                      setShareableFormData((prev) => ({
+                        ...prev,
+                        clientName: e.target.value,
+                      }));
+                      setIsSearchingShareable(e.target.value.length > 0);
+                      setExistingClientSelected(false);
+                      setSelectedClientId("");
+                      setShareableLink("");
+                    }}
+                    placeholder="Acme Corp"
+                    required
+                    className={cn(
+                      isSearchingShareable && filteredClientsShareable.length > 0 
+                        ? "rounded-b-none border-b-0" 
+                        : ""
+                    )}
+                  />
+                  {isSearchingShareable && filteredClientsShareable.length > 0 && (
+                    <div className="absolute z-10 w-full border border-t-0 rounded-b-md bg-background max-h-48 overflow-y-auto">
+                      <ul className="py-1">
+                        {filteredClientsShareable.map(client => (
+                          <li 
+                            key={client.id} 
+                            className="px-3 py-2 hover:bg-accent cursor-pointer flex items-center"
+                            onClick={() => handleSelectClientShareable(client.id, client.name)}
+                          >
+                            <Building className="mr-2 h-4 w-4" />
+                            {client.name}
+                          </li>
+                        ))}
+                        <li 
+                          className="px-3 py-2 hover:bg-accent cursor-pointer flex items-center text-muted-foreground border-t"
+                          onClick={() => {
+                            setIsSearchingShareable(false);
+                            setExistingClientSelected(false);
+                            setSelectedClientId("");
+                          }}
+                        >
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Create new client "{shareableFormData.clientName}"
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                
+                {existingClientSelected ? (
+                  <p className="text-sm text-blue-500">
+                    Generating recovery link for existing client
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {shareableFormData.clientName 
+                      ? `Creating self-registration link for new client "${shareableFormData.clientName}"`
+                      : "Enter a client name to generate a link"}
+                  </p>
+                )}
+                
+                <p className="text-sm text-muted-foreground mt-1">
+                  {existingClientSelected 
+                    ? "This link can be used by client administrators to recover access to their account." 
+                    : "This link will allow the client to register and create their account without an email invitation."}
                 </p>
               </div>
               
               <Button 
                 type="button" 
                 onClick={handleGenerateShareableLink} 
-                disabled={isLoading || !selectedClientId}
+                disabled={isLoading || !shareableFormData.clientName}
                 className="mt-2"
               >
                 {isLoading ? (
@@ -682,14 +732,16 @@ export function InviteClientDialog() {
                 ) : (
                   <>
                     <Link2 className="mr-2 h-4 w-4" />
-                    Generate Shareable Link
+                    Generate {existingClientSelected ? "Recovery" : "Registration"} Link
                   </>
                 )}
               </Button>
               
               {shareableLink && (
                 <div className="mt-4 space-y-2">
-                  <Label>Invitation Link</Label>
+                  <Label>
+                    {existingClientSelected ? "Recovery Link" : "Self-Registration Link"}
+                  </Label>
                   <div className="flex items-center">
                     <Input value={shareableLink} readOnly className="mr-2" />
                     <Button 
@@ -702,7 +754,10 @@ export function InviteClientDialog() {
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    This link will expire in 30 days. Anyone with this link can join this client organization.
+                    This link will expire in {existingClientSelected ? "30" : "7"} days.
+                    {existingClientSelected 
+                      ? " Only client administrators can use this link to access the account."
+                      : " Anyone with this link can register as a client administrator."}
                   </p>
                 </div>
               )}
