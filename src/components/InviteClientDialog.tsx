@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,10 +31,18 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
+// Define proper TypeScript interfaces for the RPC responses
 interface CreateClientResponse {
   client_id: string;
   invitation_id: string;
   token: string;
+}
+
+interface AddUserToClientResponse {
+  status: string;
+  message: string;
+  invitation_id?: string;
+  token?: string;
 }
 
 interface Client {
@@ -136,13 +143,16 @@ export function InviteClientDialog() {
     try {
       // If we're adding a user to an existing client
       if (existingClientSelected && selectedClientId) {
-        const { data, error } = await supabase.rpc('add_user_to_client', {
+        const { data: responseData, error } = await supabase.rpc('add_user_to_client', {
           p_client_id: selectedClientId,
           p_email: emailFormData.email,
           p_role: 'client_admin'
         });
 
         if (error) throw error;
+
+        // Type assertion to ensure TypeScript recognizes the structure
+        const data = responseData as AddUserToClientResponse;
 
         // If it's an invited user, send invitation email
         if (data.status === 'invited') {
@@ -163,15 +173,15 @@ export function InviteClientDialog() {
       } 
       // Create new client and generate invitation
       else {
-        const { data, error } = await supabase.rpc('create_client_with_invitation', {
+        const { data: responseData, error } = await supabase.rpc('create_client_with_invitation', {
           client_name: emailFormData.clientName,
           contact_email: emailFormData.email,
         });
 
         if (error) throw error;
 
-        // Type assertion with unknown first to satisfy TypeScript
-        const response = data as unknown as CreateClientResponse;
+        // Type assertion to ensure TypeScript recognizes the structure
+        const response = responseData as CreateClientResponse;
 
         // Send invitation email
         const emailResponse = await supabase.functions.invoke('send-invitation', {
@@ -291,13 +301,13 @@ export function InviteClientDialog() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.rpc('create_client_shareable_invitation', {
+      const { data: responseData, error } = await supabase.rpc('create_client_shareable_invitation', {
         client_id: selectedClientId,
       });
 
       if (error) throw error;
 
-      const response = data as unknown as CreateClientResponse;
+      const response = responseData as CreateClientResponse;
       const inviteLink = `${window.location.origin}/invitation?token=${response.token}`;
       
       setShareableLink(inviteLink);
