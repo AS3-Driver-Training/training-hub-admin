@@ -10,11 +10,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/utils/toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AddStudentDialogProps {
   open: boolean;
@@ -30,18 +31,120 @@ export function AddStudentDialog({ open, onOpenChange }: AddStudentDialogProps) 
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [employeeNumber, setEmployeeNumber] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [groupId, setGroupId] = useState('');
   const [teamId, setTeamId] = useState('');
+  const [isActive, setIsActive] = useState(true);
   
-  // Fetch teams for the dropdown
-  const { data: teams = [] } = useQueryClient().getQueryState(['teams'])?.data as { data: any[] } || { data: [] };
+  // Fetch clients
+  const { data: clients = [], isLoading: isLoadingClients } = useQuery({
+    queryKey: ['clients'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name')
+        .order('name');
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+  
+  // Fetch groups based on selected client
+  const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
+    queryKey: ['groups', clientId],
+    queryFn: async () => {
+      if (!clientId) return [];
+      
+      const { data, error } = await supabase
+        .from('groups')
+        .select('id, name, is_default')
+        .eq('client_id', clientId)
+        .order('name');
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!clientId,
+  });
+
+  // Find default group
+  const defaultGroup = groups.find(group => group.is_default);
+  
+  // Set default group if available and none selected
+  useEffect(() => {
+    if (groups.length > 0 && !groupId && defaultGroup) {
+      setGroupId(defaultGroup.id);
+    }
+  }, [groups, groupId]);
+  
+  // Fetch teams based on selected group
+  const { data: teams = [], isLoading: isLoadingTeams } = useQuery({
+    queryKey: ['teams', groupId],
+    queryFn: async () => {
+      if (!groupId) return [];
+      
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id, name')
+        .eq('group_id', groupId)
+        .order('name');
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!groupId,
+  });
+  
+  // Reset downstream selections when parent selection changes
+  useEffect(() => {
+    if (clientId) {
+      setGroupId('');
+      setTeamId('');
+    }
+  }, [clientId]);
+  
+  useEffect(() => {
+    if (groupId) {
+      setTeamId('');
+    }
+  }, [groupId]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!firstName || !lastName || !email || !teamId) {
+    if (!firstName || !lastName || !email || !clientId) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields and select a client",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Ensure we have a group (use default if none selected)
+    const selectedGroupId = groupId || (defaultGroup ? defaultGroup.id : null);
+    
+    if (!selectedGroupId) {
+      toast({
+        title: "Error",
+        description: "Please select a group or ensure the client has a default group",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // If no team is selected but we have teams for this group, get the first one
+    let selectedTeamId = teamId;
+    if (!selectedTeamId && teams.length > 0) {
+      selectedTeamId = teams[0].id;
+    }
+    
+    // If still no team, we need to create a default team for this group
+    if (!selectedTeamId) {
+      toast({
+        title: "Error",
+        description: "No team available for the selected group. Please create a team first.",
         variant: "destructive"
       });
       return;
@@ -59,7 +162,8 @@ export function AddStudentDialog({ open, onOpenChange }: AddStudentDialogProps) 
           email,
           phone: phone || null,
           employee_number: employeeNumber || null,
-          team_id: teamId
+          team_id: selectedTeamId,
+          status: isActive ? 'active' : 'inactive'
         })
         .select();
       
@@ -73,6 +177,17 @@ export function AddStudentDialog({ open, onOpenChange }: AddStudentDialogProps) 
       });
       queryClient.invalidateQueries({ queryKey: ['students'] });
       onOpenChange(false);
+      
+      // Reset form
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setPhone('');
+      setEmployeeNumber('');
+      setClientId('');
+      setGroupId('');
+      setTeamId('');
+      setIsActive(true);
     } catch (error: any) {
       console.error("Error adding student:", error);
       toast({
@@ -91,7 +206,7 @@ export function AddStudentDialog({ open, onOpenChange }: AddStudentDialogProps) 
         <DialogHeader>
           <DialogTitle>Add New Student</DialogTitle>
           <DialogDescription>
-            Add a new student to your organization. They'll be assigned to the selected team.
+            Add a new student to your organization. They'll be assigned to the selected client, group, and team.
           </DialogDescription>
         </DialogHeader>
         
@@ -148,25 +263,98 @@ export function AddStudentDialog({ open, onOpenChange }: AddStudentDialogProps) 
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="team">Team *</Label>
-            <Select value={teamId} onValueChange={setTeamId} required>
-              <SelectTrigger id="team">
-                <SelectValue placeholder="Select a team" />
+            <Label htmlFor="client">Client/Company *</Label>
+            <Select value={clientId} onValueChange={setClientId} required>
+              <SelectTrigger id="client">
+                <SelectValue placeholder={isLoadingClients ? "Loading clients..." : "Select a client"} />
               </SelectTrigger>
               <SelectContent>
-                {teams.length > 0 ? (
-                  teams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name} - {team.groups?.clients?.name || 'Unknown Client'}
-                    </SelectItem>
-                  ))
-                ) : (
+                {clients.map((client) => (
+                  <SelectItem key={client.id} value={client.id}>
+                    {client.name}
+                  </SelectItem>
+                ))}
+                {clients.length === 0 && !isLoadingClients && (
+                  <SelectItem value="no-clients" disabled>
+                    No clients available
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="group">Group</Label>
+            <Select 
+              value={groupId} 
+              onValueChange={setGroupId} 
+              disabled={!clientId || isLoadingGroups}
+            >
+              <SelectTrigger id="group">
+                <SelectValue placeholder={
+                  !clientId ? "Select a client first" : 
+                  isLoadingGroups ? "Loading groups..." : 
+                  "Select a group"
+                } />
+              </SelectTrigger>
+              <SelectContent>
+                {groups.map((group) => (
+                  <SelectItem key={group.id} value={group.id}>
+                    {group.name} {group.is_default ? "(Default)" : ""}
+                  </SelectItem>
+                ))}
+                {groups.length === 0 && !!clientId && !isLoadingGroups && (
+                  <SelectItem value="no-groups" disabled>
+                    No groups available
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+            {clientId && groups.length === 0 && !isLoadingGroups && (
+              <p className="text-xs text-amber-500">This client has no groups. Please create a group first.</p>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="team">Team *</Label>
+            <Select 
+              value={teamId} 
+              onValueChange={setTeamId} 
+              disabled={!groupId || isLoadingTeams}
+            >
+              <SelectTrigger id="team">
+                <SelectValue placeholder={
+                  !clientId ? "Select a client first" :
+                  !groupId ? "Select a group first" :
+                  isLoadingTeams ? "Loading teams..." : 
+                  "Select a team"
+                } />
+              </SelectTrigger>
+              <SelectContent>
+                {teams.map((team) => (
+                  <SelectItem key={team.id} value={team.id}>
+                    {team.name}
+                  </SelectItem>
+                ))}
+                {teams.length === 0 && !!groupId && !isLoadingTeams && (
                   <SelectItem value="no-teams" disabled>
                     No teams available
                   </SelectItem>
                 )}
               </SelectContent>
             </Select>
+            {groupId && teams.length === 0 && !isLoadingTeams && (
+              <p className="text-xs text-amber-500">This group has no teams. Please create a team first.</p>
+            )}
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="isActive" 
+              checked={isActive}
+              onCheckedChange={(checked) => setIsActive(checked as boolean)} 
+            />
+            <Label htmlFor="isActive" className="cursor-pointer">Active student</Label>
           </div>
           
           <DialogFooter>
