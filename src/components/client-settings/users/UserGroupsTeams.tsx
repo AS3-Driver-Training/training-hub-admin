@@ -17,7 +17,7 @@ export function UserGroupsTeams({ user, clientId, onManageAccess }: UserGroupsTe
   const teams = user.teams.length > 0 ? user.teams : [];
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="w-full space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Groups Section */}
         <div>

@@ -41,19 +41,22 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
   };
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
+    <>
       <TableRow>
         <TableCell className="w-[50%]">
           <div className="flex items-center gap-3">
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6 p-0 flex-shrink-0">
-                {isOpen ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </Button>
-            </CollapsibleTrigger>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6 p-0 flex-shrink-0"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              {isOpen ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </Button>
             <div className="min-w-0">
               <div className="font-medium truncate">
                 {user.profiles.first_name} {user.profiles.last_name}
@@ -123,17 +126,19 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
         </TableCell>
       </TableRow>
       
-      <CollapsibleContent>
-        <div className="border-t bg-muted/20">
-          <div className="py-4 px-6">
-            <UserGroupsTeams 
-              user={user} 
-              clientId={clientId} 
-              onManageAccess={() => onManageGroupsTeams(user)}
-            />
-          </div>
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+      {isOpen && (
+        <TableRow>
+          <TableCell colSpan={4} className="p-0">
+            <div className="border-t bg-muted/20 py-4 px-6">
+              <UserGroupsTeams 
+                user={user} 
+                clientId={clientId} 
+                onManageAccess={() => onManageGroupsTeams(user)}
+              />
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 }
