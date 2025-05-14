@@ -1,27 +1,19 @@
 
 export interface Student {
   id: string;
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone?: string;
+  employee_number?: string;
+  status: string;
   enrolled: boolean;
 }
 
-export interface Client {
-  id: string;
-  name: string;
-}
-
-export interface Group {
-  id: string;
-  name: string;
-  client_id: string;
-  is_default?: boolean;
-}
-
-export interface Team {
-  id: string;
-  name: string;
-  group_id: string;
+export interface StudentFormValues {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  employee_number?: string;
 }

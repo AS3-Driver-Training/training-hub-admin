@@ -1,4 +1,3 @@
-
 import { Plus, Trash2, Users, UserPlus } from "lucide-react";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -29,6 +28,7 @@ export function AllocationsTable({
   setShowAddForm
 }: AllocationsTableProps) {
   const [managingStudentsFor, setManagingStudentsFor] = useState<Allocation | null>(null);
+  const courseInstanceId = allocations.length > 0 ? allocations[0].courseInstanceId : undefined;
 
   if (allocations.length === 0) {
     return (
@@ -112,6 +112,7 @@ export function AllocationsTable({
           clientName={managingStudentsFor.clientName}
           seatsAllocated={managingStudentsFor.seatsAllocated}
           onClose={() => setManagingStudentsFor(null)}
+          courseInstanceId={courseInstanceId}
         />
       )}
     </>

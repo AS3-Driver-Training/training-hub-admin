@@ -1,4 +1,3 @@
-
 import { TrainingEvent } from "@/types/events";
 import { format } from "date-fns";
 import { MapPin, Clock, Users, ArrowRight, MoreVertical, Edit, Trash2, Globe, Building2 } from "lucide-react";
@@ -51,6 +50,11 @@ export function EventCard({ event, onDelete }: EventCardProps) {
   const dateRangeForBox = isSameDay 
     ? monthDay 
     : `${format(startDate, "MMM d")} - ${format(endDate, "d")}`;
+  
+  const handleViewDetails = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/events/${event.id}`);
+  };
   
   const handleViewAllocations = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -105,7 +109,7 @@ export function EventCard({ event, onDelete }: EventCardProps) {
   
   return (
     <>
-      <Card className="overflow-hidden hover:shadow-md transition-shadow" onClick={handleEditEvent}>
+      <Card className="overflow-hidden hover:shadow-md transition-shadow" onClick={handleViewDetails}>
         <div className="flex flex-col sm:flex-row">
           <div className="bg-muted p-4 text-center sm:w-32 flex flex-col justify-center">
             <div className="font-medium">{dayName}</div>
@@ -128,6 +132,10 @@ export function EventCard({ event, onDelete }: EventCardProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleViewDetails}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      View Details
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleEditEvent}>
                       <Edit className="mr-2 h-4 w-4" />
                       Edit

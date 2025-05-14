@@ -1,70 +1,92 @@
 
-import { Check, User, X } from "lucide-react";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { UserPlus, UserMinus, User } from "lucide-react";
 import { Student } from "./types";
-import { EmptyState } from "./EmptyState";
 
 interface StudentTableProps {
   students: Student[];
-  toggleEnrollment: (id: string) => void;
-  seatsRemaining: number;
+  enrolledCount: number;
+  maxSeats: number;
+  onEnrollStudent: (studentId: string) => void;
+  onUnenrollStudent: (studentId: string) => void;
 }
 
-export function StudentTable({ students, toggleEnrollment, seatsRemaining }: StudentTableProps) {
-  if (students.length === 0) {
-    return <EmptyState />;
-  }
-
+export function StudentTable({ 
+  students, 
+  enrolledCount, 
+  maxSeats, 
+  onEnrollStudent, 
+  onUnenrollStudent 
+}: StudentTableProps) {
+  const availableSeats = maxSeats - enrolledCount;
+  
   return (
-    <ScrollArea className="h-[300px]">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-slate-50">
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Phone</TableHead>
-            <TableHead className="text-right">Status</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {students.map((student) => (
-            <TableRow key={student.id}>
-              <TableCell className="font-medium">
-                {student.firstName} {student.lastName}
-              </TableCell>
-              <TableCell>{student.email}</TableCell>
-              <TableCell>{student.phone || "-"}</TableCell>
-              <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => toggleEnrollment(student.id)}
-                  className={
-                    student.enrolled
-                      ? "text-rose-600 hover:text-rose-700 hover:bg-rose-50"
-                      : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                  }
-                  disabled={!student.enrolled && seatsRemaining <= 0}
-                >
-                  {student.enrolled ? (
-                    <>
-                      <X className="h-4 w-4 mr-1" />
-                      Unenroll
-                    </>
-                  ) : (
-                    <>
-                      <Check className="h-4 w-4 mr-1" />
-                      Enroll
-                    </>
-                  )}
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </ScrollArea>
+    <div>
+      {students.length > 0 ? (
+        <div className="border rounded-md overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50">
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {students.map((student) => (
+                <TableRow key={student.id} className="hover:bg-slate-50">
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>{student.first_name} {student.last_name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{student.email}</TableCell>
+                  <TableCell>
+                    {student.enrolled ? (
+                      <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                        Enrolled
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+                        Not Enrolled
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {student.enrolled ? (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => onUnenrollStudent(student.id)}
+                      >
+                        <UserMinus className="h-4 w-4 mr-1 text-rose-600" />
+                        Remove
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => onEnrollStudent(student.id)}
+                        disabled={availableSeats <= 0}
+                      >
+                        <UserPlus className="h-4 w-4 mr-1 text-green-600" />
+                        Add
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="text-center py-8 border rounded-md bg-slate-50">
+          <p className="text-muted-foreground">No students found</p>
+        </div>
+      )}
+    </div>
   );
 }
