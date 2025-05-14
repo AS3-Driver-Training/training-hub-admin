@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
       }
     )
 
-    // Use admin.listUsers with email filter
+    // Use auth.admin.listUsers with exact email match
     const { data: { users }, error } = await supabase.auth.admin.listUsers({
       page: 1,
       perPage: 1,
@@ -42,11 +42,12 @@ Deno.serve(async (req) => {
       throw error
     }
 
-    const user = users?.[0] || null
-    console.log('Found user:', user ? 'yes' : 'no')
+    // Ensure we only return a user if there's an exact match
+    const exactMatch = users?.find(u => u.email && u.email.toLowerCase() === email.toLowerCase())
+    console.log('Found user:', exactMatch ? 'yes' : 'no')
 
     return new Response(
-      JSON.stringify({ user }),
+      JSON.stringify({ user: exactMatch || null }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,

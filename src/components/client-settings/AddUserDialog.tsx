@@ -125,94 +125,138 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       setError(null);
       console.log('Adding user with data:', { email, role, groupId, teamId });
       
-      const { data: userData, error: userError } = await supabase.functions.invoke(
-        'get-user-by-email',
-        { body: { email } }
-      );
+      try {
+        // Check if email exists in the system
+        const { data: userData, error: userError } = await supabase.functions.invoke(
+          'get-user-by-email',
+          { body: { email } }
+        );
 
-      if (userError || !userData?.user) {
-        const message = 'User not found. Please make sure the email is correct.';
-        setError(message);
-        throw new Error(message);
-      }
+        console.log('User lookup response:', userData);
 
-      console.log('User found:', userData.user);
-
-      const { data: existingUser, error: existingError } = await supabase
-        .from('client_users')
-        .select('*')
-        .eq('client_id', clientId)
-        .eq('user_id', userData.user.id)
-        .maybeSingle();
-
-      if (existingError) {
-        console.error('Error checking existing user:', existingError);
-        throw existingError;
-      }
-
-      if (existingUser) {
-        const message = 'User is already a member of this client';
-        setError(message);
-        throw new Error(message);
-      }
-
-      const { data: newClientUser, error: insertError } = await supabase
-        .from('client_users')
-        .insert({
-          client_id: clientId,
-          user_id: userData.user.id,
-          role: role,
-          status: 'active'
-        })
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error('Error creating client user:', insertError);
-        const message = insertError.message || 'Failed to add user to client';
-        setError(message);
-        throw new Error(message);
-      }
-
-      if (!newClientUser) {
-        const message = 'Failed to create client user - no data returned';
-        setError(message);
-        throw new Error(message);
-      }
-
-      console.log('Client user created successfully:', newClientUser);
-
-      if (groupId) {
-        const { error: groupError } = await supabase
-          .from('user_groups')
-          .insert({
-            user_id: userData.user.id,
-            group_id: groupId
-          });
-        
-        if (groupError) {
-          console.error('Error assigning group:', groupError);
-          throw groupError;
+        if (userError) {
+          console.error('Error looking up user:', userError);
+          throw new Error(`Error looking up user: ${userError.message}`);
         }
-        console.log('Group assignment created successfully');
-      }
 
-      if (teamId) {
-        const { error: teamError } = await supabase
-          .from('user_teams')
-          .insert({
-            user_id: userData.user.id,
-            team_id: teamId
-          });
-        
-        if (teamError) {
-          console.error('Error assigning team:', teamError);
-          throw teamError;
+        if (!userData?.user) {
+          const message = 'User not found. Please make sure the email is correct.';
+          setError(message);
+          throw new Error(message);
         }
-        console.log('Team assignment created successfully');
-      }
 
-      return userData.user.id;
+        console.log('User found:', userData.user);
+        const userId = userData.user.id;
+
+        // Check if user is a superadmin
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+
+        if (profileError) {
+          console.error('Error checking user profile:', profileError);
+          throw new Error(`Error checking user profile: ${profileError.message}`);
+        }
+
+        if (profileData?.role === 'superadmin') {
+          const message = 'Superadmin users cannot be added as client users';
+          setError(message);
+          throw new Error(message);
+        }
+
+        // Check if user is already a member of this client
+        const { data: existingUser, error: existingError } = await supabase
+          .from('client_users')
+          .select('*')
+          .eq('client_id', clientId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (existingError) {
+          console.error('Error checking existing user:', existingError);
+          throw new Error(`Error checking existing user: ${existingError.message}`);
+        }
+
+        if (existingUser) {
+          const message = 'User is already a member of this client';
+          setError(message);
+          throw new Error(message);
+        }
+
+        // Add the user to the client
+        const { data: newClientUser, error: insertError } = await supabase
+          .from('client_users')
+          .insert({
+            client_id: clientId,
+            user_id: userId,
+            role: role,
+            status: 'active'
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Error creating client user:', insertError);
+          let message = insertError.message;
+          
+          // Check if it's the superadmin error
+          if (message.includes('Superadmin users cannot be added as client users')) {
+            message = 'This user has superadmin privileges and cannot be added as a client user';
+          } else {
+            message = `Failed to add user to client: ${message}`;
+          }
+          
+          setError(message);
+          throw new Error(message);
+        }
+
+        if (!newClientUser) {
+          const message = 'Failed to create client user - no data returned';
+          setError(message);
+          throw new Error(message);
+        }
+
+        console.log('Client user created successfully:', newClientUser);
+
+        // Assign group if provided
+        if (groupId) {
+          const { error: groupError } = await supabase
+            .from('user_groups')
+            .insert({
+              user_id: userId,
+              group_id: groupId
+            });
+          
+          if (groupError) {
+            console.error('Error assigning group:', groupError);
+            throw new Error(`Error assigning group: ${groupError.message}`);
+          }
+          console.log('Group assignment created successfully');
+        }
+
+        // Assign team if provided
+        if (teamId) {
+          const { error: teamError } = await supabase
+            .from('user_teams')
+            .insert({
+              user_id: userId,
+              team_id: teamId
+            });
+          
+          if (teamError) {
+            console.error('Error assigning team:', teamError);
+            throw new Error(`Error assigning team: ${teamError.message}`);
+          }
+          console.log('Team assignment created successfully');
+        }
+
+        return userId;
+      } catch (error: any) {
+        console.error('Error in add user mutation:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['client_users', clientId] });
