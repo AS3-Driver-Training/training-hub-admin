@@ -27,6 +27,10 @@ export interface Group {
   teams: Team[];
 }
 
+// For backward compatibility
+export interface GroupData extends Group {}
+export interface TeamData extends Team {}
+
 // User data structure for the client settings
 export interface UserData {
   id: string;
