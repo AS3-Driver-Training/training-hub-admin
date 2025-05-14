@@ -32,7 +32,11 @@ export function ProfileTab({ student }: ProfileTabProps) {
     e.preventDefault();
     
     if (!firstName || !lastName || !email || !teamId) {
-      toast.error("Please fill in all required fields");
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -56,11 +60,18 @@ export function ProfileTab({ student }: ProfileTabProps) {
         throw error;
       }
       
-      toast.success("Student updated successfully");
+      toast({
+        title: "Success",
+        description: "Student updated successfully"
+      });
       queryClient.invalidateQueries({ queryKey: ['students'] });
     } catch (error: any) {
       console.error("Error updating student:", error);
-      toast.error(error.message || "Failed to update student");
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update student",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -134,7 +145,7 @@ export function ProfileTab({ student }: ProfileTabProps) {
                   </SelectItem>
                 ))
               ) : (
-                <SelectItem value="" disabled>
+                <SelectItem value="no-teams" disabled>
                   No teams available
                 </SelectItem>
               )}

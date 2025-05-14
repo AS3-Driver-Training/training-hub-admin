@@ -39,7 +39,11 @@ export function AddStudentDialog({ open, onOpenChange }: AddStudentDialogProps) 
     e.preventDefault();
     
     if (!firstName || !lastName || !email || !teamId) {
-      toast.error("Please fill in all required fields");
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -63,12 +67,19 @@ export function AddStudentDialog({ open, onOpenChange }: AddStudentDialogProps) 
         throw error;
       }
       
-      toast.success("Student added successfully");
+      toast({
+        title: "Success",
+        description: "Student added successfully"
+      });
       queryClient.invalidateQueries({ queryKey: ['students'] });
       onOpenChange(false);
     } catch (error: any) {
       console.error("Error adding student:", error);
-      toast.error(error.message || "Failed to add student");
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add student",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -150,7 +161,7 @@ export function AddStudentDialog({ open, onOpenChange }: AddStudentDialogProps) 
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="no-teams" disabled>
                     No teams available
                   </SelectItem>
                 )}

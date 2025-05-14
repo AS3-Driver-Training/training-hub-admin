@@ -1,5 +1,5 @@
 
-export type AppRole = 'superadmin' | 'admin' | 'staff';
+export type AppRole = 'superadmin' | 'admin' | 'staff' | 'student';
 
 export interface InternalUser {
   id: string;
