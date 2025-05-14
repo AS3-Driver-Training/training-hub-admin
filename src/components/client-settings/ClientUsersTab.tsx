@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -96,7 +95,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           invitationId: invitation.id, // Store the invitation ID for reference
           user_id: null, // No user ID for pending invitations
           client_id: invitation.client_id,
-          role: invitation.role || 'supervisor', // Get role from invitation or default to supervisor
+          role: 'supervisor', // Default role for invitations since it's not stored in the invitations table
           status: 'pending',
           created_at: invitation.created_at,
           updated_at: invitation.updated_at,

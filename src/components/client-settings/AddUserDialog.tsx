@@ -70,8 +70,8 @@ export default function AddUserDialog({
 
       if (error) throw error;
 
-      // Properly type the response
-      const response = data as AddUserToClientResponse;
+      // Properly type the response using two-step casting approach
+      const response = (data as unknown) as AddUserToClientResponse;
       console.log("User/invitation added:", response);
 
       // If user needs invitation

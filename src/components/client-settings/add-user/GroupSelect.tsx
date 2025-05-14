@@ -22,7 +22,6 @@ export interface GroupSelectProps {
   onChange?: (value: string) => void;
   clientId?: string;
   selectedGroupId?: string;
-  onGroupChange?: (value: string) => void;
   disabled?: boolean;
 }
 
