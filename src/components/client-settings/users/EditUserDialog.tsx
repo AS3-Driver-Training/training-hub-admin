@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +33,7 @@ interface EditUserDialogProps {
   user: UserData | null;
   clientId: string;
   groups?: Group[];
+  initialTab?: "basic" | "access";  // Added initialTab prop with the correct type
 }
 
 type UserRole = 'client_admin' | 'manager' | 'supervisor';
@@ -44,9 +44,10 @@ export function EditUserDialog({
   onOpenChange, 
   user, 
   clientId,
-  groups = []
+  groups = [],
+  initialTab = "basic"  // Set default value to "basic"
 }: EditUserDialogProps) {
-  const [activeTab, setActiveTab] = useState("basic");
+  const [activeTab, setActiveTab] = useState<"basic" | "access">(initialTab);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -72,7 +73,10 @@ export function EditUserDialog({
       setSelectedGroups(user.groups.map(g => g.id));
       setSelectedTeams(user.teams.map(t => t.id));
     }
-  }, [user]);
+
+    // Set the active tab when the dialog opens
+    setActiveTab(initialTab);
+  }, [user, initialTab]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -169,14 +173,19 @@ export function EditUserDialog({
     }
   };
 
+  // Create a typed handler for tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as "basic" | "access");
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Edit User</DialogTitle>
+          <DialogTitle>{activeTab === "basic" ? "Edit User" : "Manage Groups & Teams"}</DialogTitle>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="grid grid-cols-2">
             <TabsTrigger value="basic">Basic Information</TabsTrigger>
             <TabsTrigger value="access">Access Control</TabsTrigger>
