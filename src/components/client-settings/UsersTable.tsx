@@ -119,41 +119,39 @@ export function UsersTable({ users, clientId, isLoading }: UsersTableProps) {
   }
 
   return (
-    <div className="relative rounded-md border overflow-hidden">
-      <div className="w-full overflow-x-auto">
-        <Table>
-          <TableHeader>
+    <div className="border rounded-md">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>User</TableHead>
+            <TableHead>Access Level</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {processedUsers && processedUsers.length > 0 ? (
+            processedUsers.map((user) => (
+              <UserRow 
+                key={user.id} 
+                user={user} 
+                clientId={clientId} 
+                onEdit={handleEditUser}
+                onManageGroupsTeams={handleManageGroupsTeams}
+              />
+            ))
+          ) : (
             <TableRow>
-              <TableHead className="w-[40%]">User</TableHead>
-              <TableHead className="w-[20%]">Access Level</TableHead>
-              <TableHead className="w-[20%]">Status</TableHead>
-              <TableHead className="w-[20%] text-right">Actions</TableHead>
+              <TableCell 
+                colSpan={4} 
+                className="h-24 text-center text-muted-foreground"
+              >
+                No users found
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {processedUsers && processedUsers.length > 0 ? (
-              processedUsers.map((user) => (
-                <UserRow 
-                  key={user.id} 
-                  user={user} 
-                  clientId={clientId} 
-                  onEdit={handleEditUser}
-                  onManageGroupsTeams={handleManageGroupsTeams}
-                />
-              ))
-            ) : (
-              <TableRow>
-                <TableCell 
-                  colSpan={4} 
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  No users found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+          )}
+        </TableBody>
+      </Table>
 
       <EditUserDialog
         isOpen={isEditUserOpen}
@@ -163,7 +161,6 @@ export function UsersTable({ users, clientId, isLoading }: UsersTableProps) {
         groups={groups}
       />
 
-      {/* We're reusing the EditUserDialog but opening it to the "access" tab for managing groups/teams */}
       <EditUserDialog
         isOpen={isManageGroupsOpen}
         onOpenChange={setIsManageGroupsOpen}

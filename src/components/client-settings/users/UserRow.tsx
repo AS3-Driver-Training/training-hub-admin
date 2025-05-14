@@ -3,7 +3,7 @@ import { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, MoreVertical } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,7 +43,7 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
       <TableRow className="hover:bg-muted/50">
-        <TableCell className="w-[40%]">
+        <TableCell>
           <div className="flex items-center gap-3">
             <CollapsibleTrigger className="p-1 hover:bg-muted rounded flex-shrink-0">
               {isOpen ? (
@@ -60,12 +60,12 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
             </div>
           </div>
         </TableCell>
-        <TableCell className="w-[20%]">
+        <TableCell>
           <Badge variant="outline" className="font-medium">
             {user.role}
           </Badge>
         </TableCell>
-        <TableCell className="w-[20%]">
+        <TableCell>
           <Badge 
             variant={getStatusVariant(user.status) as "default" | "secondary" | "destructive" | "success" | "warning"}
             className="capitalize"
@@ -73,25 +73,12 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
             {user.status}
           </Badge>
         </TableCell>
-        <TableCell className="w-[20%] text-right">
+        <TableCell className="text-right">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                 <span className="sr-only">Open menu</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-4 w-4"
-                >
-                  <circle cx="12" cy="12" r="1" />
-                  <circle cx="12" cy="5" r="1" />
-                  <circle cx="12" cy="19" r="1" />
-                </svg>
+                <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

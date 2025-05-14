@@ -110,22 +110,20 @@ export function ClientUserRow({ user, clientId }: ClientUserRowProps) {
               <div className="font-medium">
                 {user.profiles.first_name} {user.profiles.last_name}
               </div>
+              <div className="text-sm text-muted-foreground">
+                {user.email}
+              </div>
             </div>
           </div>
-        </TableCell>
-        <TableCell className="text-sm text-muted-foreground">
-          {user.email}
         </TableCell>
         <TableCell>
           <Badge variant="outline">{user.role}</Badge>
         </TableCell>
         <TableCell>
-          <Badge variant={user.status === "pending" ? "secondary" : "default"}>
+          <Badge variant={user.status === "pending" ? "warning" : "success"}>
             {user.status}
           </Badge>
         </TableCell>
-        <TableCell className="text-center">{user.groups.length}</TableCell>
-        <TableCell className="text-center">{user.teams.length}</TableCell>
         <TableCell className="text-right">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -149,7 +147,7 @@ export function ClientUserRow({ user, clientId }: ClientUserRowProps) {
         </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell colSpan={7} className="p-0">
+        <TableCell colSpan={4} className="p-0">
           <CollapsibleContent>
             <div className="p-4 bg-muted/50 space-y-4">
               <div>
