@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
@@ -33,7 +34,14 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    setError(null);
+    if (!isDialogOpen) {
+      // Reset form when dialog closes
+      setEmail("");
+      setRole('supervisor');
+      setSelectedGroup(null);
+      setSelectedTeam(null);
+      setError(null);
+    }
   }, [isDialogOpen]);
 
   const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
@@ -74,14 +82,38 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
   });
 
   useEffect(() => {
+    // Set first group as selected when groups are loaded
     if (groups.length > 0 && !selectedGroup) {
+      console.log("Setting initial group:", groups[0].id);
       setSelectedGroup(groups[0].id);
     }
-  }, [groups]);
+  }, [groups, selectedGroup]);
 
+  // Get teams for the selected group
   const availableTeams = selectedGroup 
     ? groups.find(g => g.id === selectedGroup)?.teams || []
     : [];
+    
+  console.log("Available teams:", availableTeams);
+
+  // Role change handler with proper type
+  const handleRoleChange = (newRole: 'client_admin' | 'manager' | 'supervisor') => {
+    console.log("Setting role to:", newRole);
+    setRole(newRole);
+  };
+
+  // Group change handler
+  const handleGroupChange = (groupId: string) => {
+    console.log("Setting group to:", groupId);
+    setSelectedGroup(groupId);
+    setSelectedTeam(null); // Reset team when group changes
+  };
+
+  // Team change handler
+  const handleTeamChange = (teamId: string | null) => {
+    console.log("Setting team to:", teamId);
+    setSelectedTeam(teamId);
+  };
 
   const addUserMutation = useMutation({
     mutationFn: async ({ email, role, groupId, teamId }: { 
@@ -228,7 +260,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button onClick={() => console.log("Add User button clicked")}>
           <UserPlus className="mr-2 h-4 w-4" />
           Add User
         </Button>
@@ -247,16 +279,16 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
             </Alert>
           )}
           <EmailInput email={email} onEmailChange={setEmail} />
-          <RoleSelect role={role} onRoleChange={(value: 'client_admin' | 'manager' | 'supervisor') => setRole(value)} />
+          <RoleSelect role={role} onRoleChange={handleRoleChange} />
           <GroupSelect 
             groups={groups} 
             selectedGroup={selectedGroup} 
-            onGroupChange={setSelectedGroup} 
+            onGroupChange={handleGroupChange} 
           />
           <TeamSelect
             selectedGroup={selectedGroup}
             selectedTeam={selectedTeam}
-            onTeamChange={setSelectedTeam}
+            onTeamChange={handleTeamChange}
             availableTeams={availableTeams}
           />
           <Button type="submit" className="w-full" disabled={addUserMutation.isPending}>

@@ -8,6 +8,13 @@ interface EmailInputProps {
 }
 
 export function EmailInput({ email, onEmailChange }: EmailInputProps) {
+  console.log("EmailInput rendered with email:", email);
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("Email changed to:", e.target.value);
+    onEmailChange(e.target.value);
+  };
+  
   return (
     <div>
       <Label htmlFor="email">Email</Label>
@@ -15,8 +22,8 @@ export function EmailInput({ email, onEmailChange }: EmailInputProps) {
         id="email"
         type="email"
         value={email}
-        onChange={(e) => onEmailChange(e.target.value)}
-        required
+        onChange={handleChange}
+        placeholder="user@example.com"
       />
     </div>
   );

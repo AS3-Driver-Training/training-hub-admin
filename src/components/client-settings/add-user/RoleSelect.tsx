@@ -9,19 +9,26 @@ import {
 } from "@/components/ui/select";
 
 interface RoleSelectProps {
-  role: string;
-  onRoleChange: (value: string) => void;
+  role: 'client_admin' | 'manager' | 'supervisor';
+  onRoleChange: (value: 'client_admin' | 'manager' | 'supervisor') => void;
 }
 
 export function RoleSelect({ role, onRoleChange }: RoleSelectProps) {
+  console.log("RoleSelect rendered with role:", role);
+  
+  const handleRoleChange = (value: string) => {
+    console.log("Role changed to:", value);
+    onRoleChange(value as 'client_admin' | 'manager' | 'supervisor');
+  };
+  
   return (
     <div>
       <Label htmlFor="role">Role</Label>
-      <Select value={role} onValueChange={onRoleChange}>
-        <SelectTrigger>
-          <SelectValue />
+      <Select value={role} onValueChange={handleRoleChange}>
+        <SelectTrigger className="w-full z-50">
+          <SelectValue placeholder="Select a role" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="z-[100]">
           <SelectItem value="client_admin">Client Admin</SelectItem>
           <SelectItem value="manager">Manager</SelectItem>
           <SelectItem value="supervisor">Supervisor (View Only)</SelectItem>
@@ -30,4 +37,3 @@ export function RoleSelect({ role, onRoleChange }: RoleSelectProps) {
     </div>
   );
 }
-

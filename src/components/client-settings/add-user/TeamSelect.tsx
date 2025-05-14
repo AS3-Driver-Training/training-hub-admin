@@ -23,30 +23,44 @@ export function TeamSelect({
   onTeamChange,
   availableTeams 
 }: TeamSelectProps) {
+  console.log("TeamSelect rendered with:", { 
+    selectedGroup, 
+    selectedTeam, 
+    availableTeamsCount: availableTeams.length 
+  });
+  
+  const handleTeamChange = (value: string) => {
+    console.log("Team changed to:", value);
+    onTeamChange(value);
+  };
+  
+  const placeholderText = !selectedGroup 
+    ? "Select a group first" 
+    : availableTeams.length === 0 
+      ? "No teams available" 
+      : "Select a team";
+  
   return (
     <div>
       <Label>Team</Label>
       <Select 
         value={selectedTeam || undefined}
-        onValueChange={onTeamChange}
+        onValueChange={handleTeamChange}
         disabled={!selectedGroup || availableTeams.length === 0}
       >
-        <SelectTrigger>
-          <SelectValue placeholder={
-            !selectedGroup 
-              ? "Select a group first" 
-              : availableTeams.length === 0 
-                ? "No teams available" 
-                : "Select a team"
-          } />
+        <SelectTrigger className="w-full z-50">
+          <SelectValue placeholder={placeholderText} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="z-[100]">
           <SelectGroup>
             {availableTeams.map((team) => (
               <SelectItem key={team.id} value={team.id}>
                 {team.name}
               </SelectItem>
             ))}
+            {selectedGroup && availableTeams.length === 0 && (
+              <SelectItem value="no-teams" disabled>No teams available for this group</SelectItem>
+            )}
           </SelectGroup>
         </SelectContent>
       </Select>

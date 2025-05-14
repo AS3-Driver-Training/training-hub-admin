@@ -17,23 +17,33 @@ interface GroupSelectProps {
 }
 
 export function GroupSelect({ groups, selectedGroup, onGroupChange }: GroupSelectProps) {
+  console.log("GroupSelect rendered with:", { groupsCount: groups.length, selectedGroup });
+  
+  const handleGroupChange = (value: string) => {
+    console.log("Group changed to:", value);
+    onGroupChange(value);
+  };
+  
   return (
     <div>
       <Label>Group</Label>
       <Select 
         value={selectedGroup || undefined} 
-        onValueChange={onGroupChange}
+        onValueChange={handleGroupChange}
       >
-        <SelectTrigger>
+        <SelectTrigger className="w-full z-50">
           <SelectValue placeholder="Select a group" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="z-[100]">
           <SelectGroup>
             {groups.map((group) => (
               <SelectItem key={group.id} value={group.id}>
                 {group.name} {group.teams?.length ? `(${group.teams.length} teams)` : ''}
               </SelectItem>
             ))}
+            {groups.length === 0 && (
+              <SelectItem value="no-groups" disabled>No groups available</SelectItem>
+            )}
           </SelectGroup>
         </SelectContent>
       </Select>
