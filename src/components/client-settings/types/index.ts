@@ -1,4 +1,3 @@
-
 export type ClientRole = 'client_admin' | 'manager' | 'supervisor';
 
 export interface UserData {
@@ -62,4 +61,18 @@ export interface Team {
     description: string | null;
     is_default: boolean | null;
   };
+}
+
+// Adding the InvitationData interface to fix the ClientUsersTab error
+export interface InvitationData {
+  id: string;
+  client_id: string;
+  email: string;
+  token: string;
+  expires_at: string;
+  created_at: string;
+  updated_at: string;
+  status: string;
+  invitation_type: string;
+  role?: ClientRole; // Make role optional since it might not exist in all invitations
 }

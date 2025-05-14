@@ -2,13 +2,14 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
-interface EmailInputProps {
+export interface EmailInputProps {
   email: string;
   onEmailChange: (email: string) => void;
   description?: string;
+  disabled?: boolean;
 }
 
-export function EmailInput({ email, onEmailChange, description }: EmailInputProps) {
+export function EmailInput({ email, onEmailChange, description, disabled }: EmailInputProps) {
   return (
     <div className="space-y-1">
       <Label htmlFor="email">Email</Label>
@@ -18,6 +19,7 @@ export function EmailInput({ email, onEmailChange, description }: EmailInputProp
         placeholder="user@example.com"
         value={email}
         onChange={(e) => onEmailChange(e.target.value)}
+        disabled={disabled}
         required
       />
       {description && (

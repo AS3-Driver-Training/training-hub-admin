@@ -18,9 +18,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 import { EmailInput } from "./add-user/EmailInput";
 import { RoleSelect } from "./add-user/RoleSelect";
-import { ClientRole } from "./types";
 import { GroupSelect } from "./add-user/GroupSelect";
 import { TeamSelect } from "./add-user/TeamSelect";
+import { ClientRole } from "./types";
+import { AddUserToClientResponse } from "./types/rpc-responses";
 
 interface AddUserDialogProps {
   clientId: string;
@@ -69,23 +70,19 @@ export default function AddUserDialog({
 
       if (error) throw error;
 
-      console.log("User/invitation added:", data);
+      // Properly type the response
+      const response = data as AddUserToClientResponse;
+      console.log("User/invitation added:", response);
 
       // If user needs invitation
-      if (data.status === "invited" && data.invitation_id) {
-        // Store the role in the invitation table
-        await supabase
-          .from("invitations")
-          .update({ role: role })
-          .eq("id", data.invitation_id);
-          
+      if (response.status === "invited" && response.invitation_id) {
         // Send invitation email
         const emailResponse = await supabase.functions.invoke(
           "send-invitation",
           {
             body: {
               email: email,
-              token: data.token,
+              token: response.token,
               clientName: clientName,
             },
           }
@@ -96,15 +93,15 @@ export default function AddUserDialog({
         }
 
         toast.success(`Invitation sent to ${email}`);
-      } else if (data.status === "added") {
+      } else if (response.status === "added") {
         toast.success(`User ${email} added to ${clientName}`);
-      } else if (data.status === "exists") {
-        toast.info(data.message);
+      } else if (response.status === "exists") {
+        toast.info(response.message);
       }
 
       // Add user to selected group if one is selected
-      if (selectedGroupId && data.status === "added") {
-        const userId = data.user_id;
+      if (selectedGroupId && response.status === "added" && response.user_id) {
+        const userId = response.user_id;
         await addUserToGroup(userId, selectedGroupId);
         
         // Add user to selected teams if any
