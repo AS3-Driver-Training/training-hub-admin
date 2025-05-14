@@ -2,10 +2,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AppRole } from "@/components/settings/types";
 
 export function useProfile() {
   const [userName, setUserName] = useState("User");
-  const [userRole, setUserRole] = useState<"superadmin" | "admin" | "staff">("staff");
+  const [userRole, setUserRole] = useState<AppRole>("staff");
   const [userTitle, setUserTitle] = useState("");
   const [userStatus, setUserStatus] = useState("active");
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +44,7 @@ export function useProfile() {
         if (profile) {
           const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
           setUserName(fullName || 'User');
-          setUserRole(profile.role);
+          setUserRole(profile.role as AppRole);
           setUserTitle(profile.title || '');
           setUserStatus(profile.status);
         }
