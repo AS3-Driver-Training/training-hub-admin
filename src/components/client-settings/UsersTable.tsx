@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { UserData } from "./types";
+import { UserData, Group } from "./types";
 import { EditUserDialog } from "./users/EditUserDialog";
 import { UserRow } from "./users/UserRow";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +22,7 @@ interface UsersTableProps {
 
 export function UsersTable({ users, clientId, isLoading }: UsersTableProps) {
   const [isEditUserOpen, setIsEditUserOpen] = useState(false);
+  const [isManageGroupsOpen, setIsManageGroupsOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
 
   // Fetch groups for the edit dialog
@@ -79,6 +80,26 @@ export function UsersTable({ users, clientId, isLoading }: UsersTableProps) {
     setIsEditUserOpen(true);
   };
 
+  const handleManageGroupsTeams = (user: UserData) => {
+    setSelectedUser(user);
+    setIsManageGroupsOpen(true);
+  };
+
+  // Ensure all users belong to the default group
+  const processedUsers = users?.map(user => {
+    // If user has no groups, assign them to the default group
+    if (user.groups.length === 0) {
+      const defaultGroup = groups.find(g => g.is_default);
+      if (defaultGroup) {
+        return {
+          ...user,
+          groups: [defaultGroup]
+        };
+      }
+    }
+    return user;
+  });
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -98,38 +119,41 @@ export function UsersTable({ users, clientId, isLoading }: UsersTableProps) {
   }
 
   return (
-    <div className="relative rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead colSpan={2}>User</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users && users.length > 0 ? (
-            users.map((user) => (
-              <UserRow 
-                key={user.id} 
-                user={user} 
-                clientId={clientId} 
-                onEdit={handleEditUser}
-              />
-            ))
-          ) : (
+    <div className="relative rounded-md border overflow-hidden">
+      <div className="w-full overflow-x-auto">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell 
-                colSpan={5} 
-                className="h-24 text-center text-muted-foreground"
-              >
-                No users found
-              </TableCell>
+              <TableHead className="w-[40%]">User</TableHead>
+              <TableHead className="w-[20%]">Access Level</TableHead>
+              <TableHead className="w-[20%]">Status</TableHead>
+              <TableHead className="w-[20%] text-right">Actions</TableHead>
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {processedUsers && processedUsers.length > 0 ? (
+              processedUsers.map((user) => (
+                <UserRow 
+                  key={user.id} 
+                  user={user} 
+                  clientId={clientId} 
+                  onEdit={handleEditUser}
+                  onManageGroupsTeams={handleManageGroupsTeams}
+                />
+              ))
+            ) : (
+              <TableRow>
+                <TableCell 
+                  colSpan={4} 
+                  className="h-24 text-center text-muted-foreground"
+                >
+                  No users found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       <EditUserDialog
         isOpen={isEditUserOpen}
@@ -137,6 +161,16 @@ export function UsersTable({ users, clientId, isLoading }: UsersTableProps) {
         user={selectedUser}
         clientId={clientId}
         groups={groups}
+      />
+
+      {/* We're reusing the EditUserDialog but opening it to the "access" tab for managing groups/teams */}
+      <EditUserDialog
+        isOpen={isManageGroupsOpen}
+        onOpenChange={setIsManageGroupsOpen}
+        user={selectedUser}
+        clientId={clientId}
+        groups={groups}
+        initialTab="access"
       />
     </div>
   );
