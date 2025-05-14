@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Allocation } from "./hooks/useAllocationData";
 
 export function useSeatAllocation(existingAllocations: any[] | undefined, courseInstance: any) {
@@ -78,9 +77,8 @@ export function useSeatAllocation(existingAllocations: any[] | undefined, course
     // Hide form
     setShowAddForm(false);
     
-    toast({
-      title: "Allocation Added",
-      description: "The seat allocation has been added successfully.",
+    toast.success("Allocation Added", {
+      description: "The seat allocation has been added successfully."
     });
     
     return { success: true };
@@ -101,9 +99,8 @@ export function useSeatAllocation(existingAllocations: any[] | undefined, course
     setAllocations(newAllocations);
     updateRemainingSeats(newAllocations);
     
-    toast({
-      title: "Allocation Removed",
-      description: `Removed ${seatsAllocated} seats for ${clientName}.`,
+    toast.success("Allocation Removed", {
+      description: `Removed ${seatsAllocated} seats for ${clientName}.`
     });
   };
 

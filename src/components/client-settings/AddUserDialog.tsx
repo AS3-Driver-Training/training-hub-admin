@@ -12,7 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,34 +32,19 @@ export default function AddUserDialog({
   groups,
 }: AddUserDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("existing");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
-  // Form state for adding an existing user
-  const [existingUserData, setExistingUserData] = useState({
+  // Combined form state for all users
+  const [userData, setUserData] = useState({
     email: "",
     role: "supervisor" as ClientRole,
     groupId: "",
     teamId: "",
   });
 
-  // Form state for inviting a new user
-  const [newUserData, setNewUserData] = useState({
-    email: "",
-    role: "supervisor" as ClientRole,
-    groupId: "",
-    teamId: "",
-  });
-
-  // Get teams for the selected group
-  const getTeamsForGroup = (groupId: string) => {
-    const group = groups.find((g) => g.id === groupId);
-    return group ? group.teams : [];
-  };
-
-  // Handle adding an existing user
-  const handleAddExistingUser = async (e: React.FormEvent) => {
+  // Handle adding or inviting a user
+  const handleSubmitUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -68,8 +52,8 @@ export default function AddUserDialog({
       // Call the add_user_to_client function
       const { data, error } = await supabase.rpc("add_user_to_client", {
         p_client_id: clientId,
-        p_email: existingUserData.email,
-        p_role: existingUserData.role,
+        p_email: userData.email,
+        p_role: userData.role,
       });
 
       if (error) throw error;
@@ -83,12 +67,12 @@ export default function AddUserDialog({
         toast.success(responseData.message);
         
         // Add user to selected group if specified
-        if (existingUserData.groupId && responseData.user_id) {
-          await addUserToGroup(responseData.user_id, existingUserData.groupId);
+        if (userData.groupId && responseData.user_id) {
+          await addUserToGroup(responseData.user_id, userData.groupId);
           
           // Add user to selected team if specified
-          if (existingUserData.teamId) {
-            await addUserToTeam(responseData.user_id, existingUserData.teamId);
+          if (userData.teamId) {
+            await addUserToTeam(responseData.user_id, userData.teamId);
           }
         }
       } else if (responseData?.status === "invited") {
@@ -106,55 +90,6 @@ export default function AddUserDialog({
     } catch (error: any) {
       console.error("Error adding user:", error);
       toast.error(error.message || "Failed to add user");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Handle inviting a new user
-  const handleInviteNewUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      // Generate invitation token
-      const { data: tokenData, error: tokenError } = await supabase.rpc("generate_invitation_token");
-      if (tokenError) throw tokenError;
-
-      // Create invitation record
-      const { error: invitationError } = await supabase
-        .from("invitations")
-        .insert({
-          client_id: clientId,
-          email: newUserData.email,
-          token: tokenData,
-          status: "pending",
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        });
-
-      if (invitationError) throw invitationError;
-
-      // Send invitation email
-      const emailResponse = await supabase.functions.invoke("send-invitation", {
-        body: {
-          clientName,
-          email: newUserData.email,
-          token: tokenData,
-        },
-      });
-
-      if (emailResponse.error) throw emailResponse.error;
-
-      toast.success("Invitation sent successfully");
-
-      // Invalidate and refetch invitations query
-      await queryClient.invalidateQueries({ queryKey: ["invitations", clientId] });
-
-      setIsOpen(false);
-      resetForm();
-    } catch (error: any) {
-      console.error("Error inviting user:", error);
-      toast.error(error.message || "Failed to invite user");
     } finally {
       setIsSubmitting(false);
     }
@@ -179,19 +114,12 @@ export default function AddUserDialog({
   };
 
   const resetForm = () => {
-    setExistingUserData({
+    setUserData({
       email: "",
       role: "supervisor" as ClientRole,
       groupId: "",
       teamId: "",
     });
-    setNewUserData({
-      email: "",
-      role: "supervisor" as ClientRole,
-      groupId: "",
-      teamId: "",
-    });
-    setActiveTab("existing");
   };
 
   // Convert groups to the proper format including missing fields
@@ -200,7 +128,16 @@ export default function AddUserDialog({
     description: null,  // Add missing properties
     is_default: null,
     client_id: clientId,
+    // Adding optional fields to match Group type
+    created_at: undefined,
+    updated_at: undefined
   })) as Group[];
+
+  // Get teams for the selected group
+  const getTeamsForGroup = (groupId: string) => {
+    const group = groups.find((g) => g.id === groupId);
+    return group ? group.teams : [];
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -215,121 +152,72 @@ export default function AddUserDialog({
           <DialogTitle>Add User</DialogTitle>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 w-full">
-            <TabsTrigger value="existing">Add Existing User</TabsTrigger>
-            <TabsTrigger value="invite">Invite New User</TabsTrigger>
-          </TabsList>
+        <form onSubmit={handleSubmitUser} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="user@example.com"
+              value={userData.email}
+              onChange={(e) =>
+                setUserData((prev) => ({
+                  ...prev,
+                  email: e.target.value,
+                }))
+              }
+              required
+            />
+          </div>
 
-          <TabsContent value="existing" className="mt-4">
-            <form onSubmit={handleAddExistingUser} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="existing-email">Email</Label>
-                <Input
-                  id="existing-email"
-                  type="email"
-                  placeholder="user@example.com"
-                  value={existingUserData.email}
-                  onChange={(e) =>
-                    setExistingUserData((prev) => ({
-                      ...prev,
-                      email: e.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
+          <RoleSelect
+            role={userData.role}
+            onRoleChange={(value) =>
+              setUserData((prev) => ({
+                ...prev,
+                role: value,
+              }))
+            }
+          />
 
-              <RoleSelect
-                role={existingUserData.role}
-                onRoleChange={(value) =>
-                  setExistingUserData((prev) => ({
-                    ...prev,
-                    role: value,
-                  }))
-                }
-              />
+          <GroupSelect
+            groups={enhancedGroups}
+            value={userData.groupId}
+            onChange={(value) =>
+              setUserData((prev) => ({
+                ...prev,
+                groupId: value,
+                teamId: "", // Reset team when group changes
+              }))
+            }
+          />
 
-              <GroupSelect
-                groups={enhancedGroups}
-                value={existingUserData.groupId}
-                onChange={(value) =>
-                  setExistingUserData((prev) => ({
-                    ...prev,
-                    groupId: value,
-                    teamId: "", // Reset team when group changes
-                  }))
-                }
-              />
+          {userData.groupId && (
+            <TeamSelect
+              availableTeams={getTeamsForGroup(userData.groupId)}
+              selectedGroup={userData.groupId}
+              selectedTeam={userData.teamId}
+              onTeamChange={(value) =>
+                setUserData((prev) => ({
+                  ...prev,
+                  teamId: value || "",
+                }))
+              }
+            />
+          )}
 
-              {existingUserData.groupId && (
-                <TeamSelect
-                  availableTeams={getTeamsForGroup(existingUserData.groupId)}
-                  selectedGroup={existingUserData.groupId}
-                  selectedTeam={existingUserData.teamId}
-                  onTeamChange={(value) =>
-                    setExistingUserData((prev) => ({
-                      ...prev,
-                      teamId: value || "",
-                    }))
-                  }
-                />
-              )}
+          <p className="text-sm text-muted-foreground">
+            If the user doesn't exist in the system, an invitation will be sent to join.
+          </p>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Adding..." : "Add User"}
-              </Button>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="invite" className="mt-4">
-            <form onSubmit={handleInviteNewUser} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="new-email">Email</Label>
-                <Input
-                  id="new-email"
-                  type="email"
-                  placeholder="newuser@example.com"
-                  value={newUserData.email}
-                  onChange={(e) =>
-                    setNewUserData((prev) => ({
-                      ...prev,
-                      email: e.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-
-              <RoleSelect
-                role={newUserData.role}
-                onRoleChange={(value) =>
-                  setNewUserData((prev) => ({
-                    ...prev,
-                    role: value,
-                  }))
-                }
-              />
-
-              <p className="text-sm text-muted-foreground">
-                An invitation will be sent to the email address. The user will be
-                able to join the client after accepting the invitation.
-              </p>
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Sending..." : "Send Invitation"}
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Processing..." : "Add User"}
+          </Button>
+        </form>
       </DialogContent>
     </Dialog>
   );

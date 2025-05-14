@@ -1,8 +1,7 @@
-
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useState } from "react";
 
 export interface Allocation {
@@ -159,17 +158,14 @@ export function useAllocationData() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["courseAllocations", id] });
-      toast({
-        title: "Success",
-        description: "Seat allocations have been saved successfully",
+      toast.success("Success", {
+        description: "Seat allocations have been saved successfully"
       });
     },
     onError: (error: any) => {
       console.error("Error in saveAllocationsMutation:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to save allocations: " + error.message,
-        variant: "destructive",
       });
     },
   });

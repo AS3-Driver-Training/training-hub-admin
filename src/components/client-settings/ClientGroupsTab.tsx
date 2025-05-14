@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,10 @@ export function ClientGroupsTab({ clientId }: ClientGroupsTabProps) {
         client_id: clientId, // Ensure client_id is always included
         description: group.description || '', // Ensure description is never undefined
         is_default: group.is_default || false, // Ensure is_default is never undefined
-        teams: [] // Initialize with empty teams array (required by our interface)
+        teams: [], // Initialize with empty teams array (required by our interface)
+        // Add optional fields for type compatibility
+        created_at: undefined,
+        updated_at: undefined
       }));
 
       // Fetch teams in a separate query to avoid complex joins

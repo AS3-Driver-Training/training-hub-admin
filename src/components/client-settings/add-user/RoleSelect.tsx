@@ -31,6 +31,7 @@ export function RoleSelect({
   
   const handleRoleChange = (value: string) => {
     console.log("Role changed to:", value);
+    // Convert string to ClientRole using type assertion
     handleChange(value as ClientRole);
   };
   
