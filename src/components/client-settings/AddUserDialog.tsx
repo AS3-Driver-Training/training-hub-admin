@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { RoleSelect } from "./add-user/RoleSelect";
 import { GroupSelect } from "./add-user/GroupSelect";
 import { TeamSelect } from "./add-user/TeamSelect";
+import { ClientRole, Group } from "./types";
 
 interface AddUserDialogProps {
   clientId: string;
@@ -39,7 +40,7 @@ export default function AddUserDialog({
   // Form state for adding an existing user
   const [existingUserData, setExistingUserData] = useState({
     email: "",
-    role: "supervisor",
+    role: "supervisor" as ClientRole,
     groupId: "",
     teamId: "",
   });
@@ -47,7 +48,7 @@ export default function AddUserDialog({
   // Form state for inviting a new user
   const [newUserData, setNewUserData] = useState({
     email: "",
-    role: "supervisor",
+    role: "supervisor" as ClientRole,
     groupId: "",
     teamId: "",
   });
@@ -73,21 +74,24 @@ export default function AddUserDialog({
 
       if (error) throw error;
 
-      if (data.status === "exists") {
-        toast.info(data.message);
-      } else if (data.status === "added") {
-        toast.success(data.message);
+      // Safely access properties with type checking
+      const responseData = data as { status: string; message: string; user_id?: string } | null;
+      
+      if (responseData?.status === "exists") {
+        toast.info(responseData.message);
+      } else if (responseData?.status === "added") {
+        toast.success(responseData.message);
         
         // Add user to selected group if specified
-        if (existingUserData.groupId) {
-          await addUserToGroup(data.user_id || "", existingUserData.groupId);
+        if (existingUserData.groupId && responseData.user_id) {
+          await addUserToGroup(responseData.user_id, existingUserData.groupId);
           
           // Add user to selected team if specified
           if (existingUserData.teamId) {
-            await addUserToTeam(data.user_id || "", existingUserData.teamId);
+            await addUserToTeam(responseData.user_id, existingUserData.teamId);
           }
         }
-      } else if (data.status === "invited") {
+      } else if (responseData?.status === "invited") {
         toast.success("Invitation sent successfully");
       }
 
@@ -177,18 +181,26 @@ export default function AddUserDialog({
   const resetForm = () => {
     setExistingUserData({
       email: "",
-      role: "supervisor",
+      role: "supervisor" as ClientRole,
       groupId: "",
       teamId: "",
     });
     setNewUserData({
       email: "",
-      role: "supervisor",
+      role: "supervisor" as ClientRole,
       groupId: "",
       teamId: "",
     });
     setActiveTab("existing");
   };
+
+  // Convert groups to the proper format including missing fields
+  const enhancedGroups = groups.map(group => ({
+    ...group,
+    description: null,  // Add missing properties
+    is_default: null,
+    client_id: clientId,
+  })) as Group[];
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -229,8 +241,8 @@ export default function AddUserDialog({
               </div>
 
               <RoleSelect
-                value={existingUserData.role}
-                onChange={(value) =>
+                role={existingUserData.role}
+                onRoleChange={(value) =>
                   setExistingUserData((prev) => ({
                     ...prev,
                     role: value,
@@ -239,7 +251,7 @@ export default function AddUserDialog({
               />
 
               <GroupSelect
-                groups={groups}
+                groups={enhancedGroups}
                 value={existingUserData.groupId}
                 onChange={(value) =>
                   setExistingUserData((prev) => ({
@@ -252,12 +264,13 @@ export default function AddUserDialog({
 
               {existingUserData.groupId && (
                 <TeamSelect
-                  teams={getTeamsForGroup(existingUserData.groupId)}
-                  value={existingUserData.teamId}
-                  onChange={(value) =>
+                  availableTeams={getTeamsForGroup(existingUserData.groupId)}
+                  selectedGroup={existingUserData.groupId}
+                  selectedTeam={existingUserData.teamId}
+                  onTeamChange={(value) =>
                     setExistingUserData((prev) => ({
                       ...prev,
-                      teamId: value,
+                      teamId: value || "",
                     }))
                   }
                 />
@@ -293,8 +306,8 @@ export default function AddUserDialog({
               </div>
 
               <RoleSelect
-                value={newUserData.role}
-                onChange={(value) =>
+                role={newUserData.role}
+                onRoleChange={(value) =>
                   setNewUserData((prev) => ({
                     ...prev,
                     role: value,

@@ -114,6 +114,18 @@ type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
 
 type ToastActionElement = React.ReactElement<typeof ToastAction>
 
+export function useToast() {
+  return {
+    toast: (props: any) => {
+      console.log('Toast called with:', props);
+      // This is a bridge to sonner toast
+      // We don't actually use it directly, but keep for compatibility
+    }
+  };
+}
+
+export { toast } from 'sonner';
+
 export {
   type ToastProps,
   type ToastActionElement,

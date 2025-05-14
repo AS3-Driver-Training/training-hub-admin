@@ -1,6 +1,11 @@
 
-// Update the import path to the correct location
-import { useToast as useToastHook, toast } from "@/components/ui/toast";
+// Import from sonner instead
+import { toast } from "sonner";
 
-export const useToast = useToastHook;
+// Create a simple hook to ensure consistent usage
+export function useToast() {
+  return { toast };
+}
+
+// Export toast for direct usage
 export { toast };

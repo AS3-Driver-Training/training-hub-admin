@@ -7,24 +7,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ClientRole } from "../types";
 
 interface RoleSelectProps {
-  role: 'client_admin' | 'manager' | 'supervisor';
-  onRoleChange: (value: 'client_admin' | 'manager' | 'supervisor') => void;
+  role: ClientRole;
+  onRoleChange: (value: ClientRole) => void;
+  // Added for compatibility with old code
+  value?: ClientRole;
+  onChange?: (value: ClientRole) => void;
 }
 
-export function RoleSelect({ role, onRoleChange }: RoleSelectProps) {
-  console.log("RoleSelect rendered with role:", role);
+export function RoleSelect({ 
+  role, 
+  onRoleChange,
+  value,
+  onChange 
+}: RoleSelectProps) {
+  console.log("RoleSelect rendered with role/value:", role || value);
+  
+  // Use either the new or old prop pattern
+  const currentValue = value || role;
+  const handleChange = onChange || onRoleChange;
   
   const handleRoleChange = (value: string) => {
     console.log("Role changed to:", value);
-    onRoleChange(value as 'client_admin' | 'manager' | 'supervisor');
+    handleChange(value as ClientRole);
   };
   
   return (
     <div>
       <Label htmlFor="role">Role</Label>
-      <Select value={role} onValueChange={handleRoleChange}>
+      <Select value={currentValue} onValueChange={handleRoleChange}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select a role" />
         </SelectTrigger>
