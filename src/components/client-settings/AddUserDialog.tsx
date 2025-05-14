@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   Dialog,
@@ -29,11 +29,45 @@ interface AddUserDialogProps {
 export default function AddUserDialog({
   clientId,
   clientName,
-  groups,
 }: AddUserDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
+
+  // Fetch groups for this client
+  const { data: groups = [] } = useQuery({
+    queryKey: ['client_groups', clientId],
+    queryFn: async () => {
+      console.log('Fetching groups for client:', clientId);
+      
+      // Simplified query to avoid complex joins
+      const { data: existingGroups, error: fetchError } = await supabase
+        .from('groups')
+        .select('id, name, description, is_default, teams(id, name, group_id)')
+        .eq('client_id', clientId)
+        .order('name');
+
+      if (fetchError) {
+        console.error('Error fetching groups:', fetchError);
+        throw fetchError;
+      }
+
+      // Initialize groups with proper structure
+      const formattedGroups: Group[] = (existingGroups || []).map(group => ({
+        ...group,
+        client_id: clientId,
+        description: group.description || '',
+        is_default: group.is_default || false,
+        teams: group.teams || [],
+        created_at: undefined,
+        updated_at: undefined
+      }));
+
+      console.log('Groups fetched:', formattedGroups.length);
+      return formattedGroups;
+    },
+    enabled: isOpen, // Only fetch when dialog is open
+  });
 
   // Combined form state for all users
   const [userData, setUserData] = useState({
@@ -122,17 +156,6 @@ export default function AddUserDialog({
     });
   };
 
-  // Convert groups to the proper format including missing fields
-  const enhancedGroups = groups.map(group => ({
-    ...group,
-    description: null,  // Add missing properties
-    is_default: null,
-    client_id: clientId,
-    // Adding optional fields to match Group type
-    created_at: undefined,
-    updated_at: undefined
-  })) as Group[];
-
   // Get teams for the selected group
   const getTeamsForGroup = (groupId: string) => {
     const group = groups.find((g) => g.id === groupId);
@@ -181,7 +204,7 @@ export default function AddUserDialog({
           />
 
           <GroupSelect
-            groups={enhancedGroups}
+            groups={groups}
             value={userData.groupId}
             onChange={(value) =>
               setUserData((prev) => ({

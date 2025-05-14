@@ -34,6 +34,9 @@ export function GroupSelector({ selectedGroup, setSelectedGroup, groups }: Group
                 {group.name} {group.teams?.length ? `(${group.teams.length} teams)` : ''}
               </SelectItem>
             ))}
+            {groups.length === 0 && (
+              <SelectItem value="no-groups" disabled>No groups available</SelectItem>
+            )}
           </SelectGroup>
         </SelectContent>
       </Select>

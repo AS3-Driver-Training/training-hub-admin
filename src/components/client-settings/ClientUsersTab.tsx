@@ -1,11 +1,9 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import AddUserDialog from "./AddUserDialog";
 import { UsersTable } from "./UsersTable";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { UserData } from "./types";
 
@@ -153,7 +151,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
             Manage {clientName} users and their permissions
           </p>
         </div>
-        <AddUserDialog clientId={clientId} clientName={clientName} groups={[]} />
+        <AddUserDialog clientId={clientId} clientName={clientName} />
       </div>
       
       <UsersTable 
