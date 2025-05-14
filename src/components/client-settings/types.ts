@@ -1,6 +1,6 @@
 
-export type ClientRole = "client_admin" | "manager" | "supervisor";
+// This file is kept for backward compatibility
+// Please use types.ts or types/index.ts for type definitions
 
-// Removing the duplicate UserData interface and importing from types/index.ts
-import { UserData, Group, Team } from './types/index';
-export { UserData, Group, Team };
+// Re-export types from the main types file
+export type { ClientRole, UserData, Group, Team } from './types/index';
