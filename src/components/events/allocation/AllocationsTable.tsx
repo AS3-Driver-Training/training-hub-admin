@@ -4,12 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { StudentsList } from "./StudentsList";
+import { Input } from "@/components/ui/input";
+import { Edit } from "lucide-react";
+import { toast } from "sonner";
 
 interface Allocation {
-  id?: number;
+  id: string;
   clientId: string;
   clientName: string;
   seatsAllocated: number;
+  courseInstanceId: number;
 }
 
 interface AllocationsTableProps {

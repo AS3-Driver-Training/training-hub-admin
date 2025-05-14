@@ -43,13 +43,13 @@ export function CourseDetails() {
   });
 
   if (isLoading) {
-    return <LoadingDisplay message="Loading course details..." />;
+    return <LoadingDisplay text="Loading course details..." />;
   }
   
   if (error || !courseInstance) {
     return (
       <ErrorDisplay 
-        message="Error loading course details" 
+        title="Error loading course details" 
         error={error} 
         onBack={() => navigate('/events')}
       />

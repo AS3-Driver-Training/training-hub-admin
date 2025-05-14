@@ -1,11 +1,15 @@
 
-export function LoadingDisplay() {
+import { Loader2 } from "lucide-react";
+
+export interface LoadingDisplayProps {
+  text: string;
+}
+
+export function LoadingDisplay({ text }: LoadingDisplayProps) {
   return (
-    <div className="flex justify-center items-center min-h-[50vh]">
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        <p className="text-muted-foreground">Loading course details...</p>
-      </div>
+    <div className="flex flex-col items-center justify-center p-8 h-64">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p className="mt-4 text-muted-foreground">{text}</p>
     </div>
   );
 }

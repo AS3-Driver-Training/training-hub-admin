@@ -1,6 +1,7 @@
+
 import { TrainingEvent } from "@/types/events";
 import { format } from "date-fns";
-import { MapPin, Clock, Users, ArrowRight, MoreVertical, Edit, Trash2, Globe, Building2 } from "lucide-react";
+import { MapPin, Clock, Users, ArrowRight, MoreVertical, Edit, Trash2, Globe, Building2, Eye } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

@@ -1,26 +1,34 @@
 
-import { AlertCircle, ArrowLeft } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useNavigate } from "react-router-dom";
+import { 
+  Alert,
+  AlertTitle,
+  AlertDescription,
+} from "@/components/ui/alert";
 
-interface ErrorDisplayProps {
-  error: unknown;
+export interface ErrorDisplayProps {
+  title: string;
+  error: any;
+  onBack?: () => void;
 }
 
-export function ErrorDisplay({ error }: ErrorDisplayProps) {
-  const navigate = useNavigate();
-  const errorMessage = error instanceof Error ? error.message : String(error);
-
+export function ErrorDisplay({ title, error, onBack }: ErrorDisplayProps) {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-      <Alert variant="destructive" className="mb-6">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{errorMessage}</AlertDescription>
+    <div className="space-y-6">
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>{title}</AlertTitle>
+        <AlertDescription>
+          {error instanceof Error ? error.message : "An unknown error occurred"}
+        </AlertDescription>
       </Alert>
-      <Button onClick={() => navigate("/events")} variant="outline">
-        <ArrowLeft className="h-4 w-4 mr-2" /> Back to Events
-      </Button>
+      
+      {onBack && (
+        <Button variant="outline" onClick={onBack}>
+          Go Back
+        </Button>
+      )}
     </div>
   );
 }
