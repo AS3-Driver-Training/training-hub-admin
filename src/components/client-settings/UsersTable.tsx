@@ -107,7 +107,7 @@ export function UsersTable({ users, clientId, isLoading }: UsersTableProps) {
           <div key={i} className="p-4 border rounded-md space-y-2">
             <div className="flex items-start gap-3">
               <Skeleton className="h-5 w-5 rounded" />
-              <div className="space-y-2">
+              <div className="space-y-2 flex-1">
                 <Skeleton className="h-5 w-48" />
                 <Skeleton className="h-4 w-32" />
               </div>
@@ -119,39 +119,41 @@ export function UsersTable({ users, clientId, isLoading }: UsersTableProps) {
   }
 
   return (
-    <div className="border rounded-md">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>User</TableHead>
-            <TableHead>Access Level</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {processedUsers && processedUsers.length > 0 ? (
-            processedUsers.map((user) => (
-              <UserRow 
-                key={user.id} 
-                user={user} 
-                clientId={clientId} 
-                onEdit={handleEditUser}
-                onManageGroupsTeams={handleManageGroupsTeams}
-              />
-            ))
-          ) : (
+    <div className="border rounded-md overflow-hidden">
+      <div className="w-full overflow-x-auto">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell 
-                colSpan={4} 
-                className="h-24 text-center text-muted-foreground"
-              >
-                No users found
-              </TableCell>
+              <TableHead>User</TableHead>
+              <TableHead>Access Level</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {processedUsers && processedUsers.length > 0 ? (
+              processedUsers.map((user) => (
+                <UserRow 
+                  key={user.id} 
+                  user={user} 
+                  clientId={clientId} 
+                  onEdit={handleEditUser}
+                  onManageGroupsTeams={handleManageGroupsTeams}
+                />
+              ))
+            ) : (
+              <TableRow>
+                <TableCell 
+                  colSpan={4} 
+                  className="h-24 text-center text-muted-foreground"
+                >
+                  No users found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       <EditUserDialog
         isOpen={isEditUserOpen}

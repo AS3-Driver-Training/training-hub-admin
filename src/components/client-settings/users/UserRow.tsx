@@ -123,7 +123,7 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
       <TableRow>
         <TableCell colSpan={4} className="p-0">
           <CollapsibleContent>
-            <div className="py-4 px-6 bg-muted/20 border-t w-full">
+            <div className="py-4 px-6 bg-muted/20 border-t">
               <UserGroupsTeams 
                 user={user} 
                 clientId={clientId} 

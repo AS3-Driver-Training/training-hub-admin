@@ -98,19 +98,19 @@ export function ClientUserRow({ user, clientId }: ClientUserRowProps) {
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <TableRow className="hover:bg-muted/50">
         <TableCell>
-          <div className="flex items-center space-x-3">
-            <CollapsibleTrigger className="p-1 hover:bg-muted rounded">
+          <div className="flex items-center gap-3">
+            <CollapsibleTrigger className="p-1 hover:bg-muted rounded flex-shrink-0">
               {isOpen ? (
                 <ChevronDown className="h-4 w-4" />
               ) : (
                 <ChevronRight className="h-4 w-4" />
               )}
             </CollapsibleTrigger>
-            <div>
-              <div className="font-medium">
+            <div className="min-w-0">
+              <div className="font-medium truncate">
                 {user.profiles.first_name} {user.profiles.last_name}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground truncate">
                 {user.email}
               </div>
             </div>
@@ -120,14 +120,20 @@ export function ClientUserRow({ user, clientId }: ClientUserRowProps) {
           <Badge variant="outline">{user.role}</Badge>
         </TableCell>
         <TableCell>
-          <Badge variant={user.status === "pending" ? "warning" : "success"}>
+          <Badge 
+            variant={user.status === "active" ? "success" : 
+                   user.status === "pending" || user.status === "invited" ? "warning" :
+                   "secondary"}
+            className="capitalize"
+          >
             {user.status}
           </Badge>
         </TableCell>
         <TableCell className="text-right">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -149,7 +155,7 @@ export function ClientUserRow({ user, clientId }: ClientUserRowProps) {
       <TableRow>
         <TableCell colSpan={4} className="p-0">
           <CollapsibleContent>
-            <div className="p-4 bg-muted/50 space-y-4">
+            <div className="p-4 bg-muted/20 border-t space-y-4">
               <div>
                 <h4 className="text-sm font-semibold mb-2">Groups</h4>
                 <div className="flex flex-wrap gap-2">
