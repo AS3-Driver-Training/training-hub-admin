@@ -28,16 +28,58 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         
         console.log("Fetching users for client:", clientId);
         
-        // In a real app, this would be a real Supabase query
-        // For now we'll simulate an API call
-        setTimeout(() => {
-          // Provide the hardcoded data
-          setUsersData(createSampleUsers(clientId));
+        // Get client users with profile data
+        const { data, error: fetchError } = await supabase
+          .from('client_users')
+          .select(`
+            id,
+            user_id,
+            client_id,
+            role,
+            status,
+            created_at,
+            updated_at,
+            profiles:user_id (
+              email,
+              first_name,
+              last_name
+            )
+          `)
+          .eq('client_id', clientId);
+
+        if (fetchError) {
+          console.error("Error fetching users:", fetchError);
+          setError(fetchError.message || "Failed to load users");
           setIsLoading(false);
-        }, 1000);
+          toast.error("Failed to load users");
+          return;
+        }
+
+        // Transform data to match UserData interface
+        const transformedUsers: UserData[] = (data || []).map(user => ({
+          id: user.id,
+          user_id: user.user_id,
+          client_id: user.client_id,
+          role: user.role,
+          status: user.status,
+          created_at: user.created_at,
+          updated_at: user.updated_at,
+          email: user.profiles?.email || '',
+          profiles: {
+            first_name: user.profiles?.first_name || '',
+            last_name: user.profiles?.last_name || '',
+          },
+          // Groups and teams will be populated by UsersTable component
+          groups: [],
+          teams: []
+        }));
+        
+        setUsersData(transformedUsers);
+        setIsLoading(false);
+        console.log("Users fetched successfully:", transformedUsers);
         
       } catch (err: any) {
-        console.error("Error fetching users:", err);
+        console.error("Error in users fetch process:", err);
         setError(err.message || "Failed to load users");
         setIsLoading(false);
         toast.error("Failed to load users");
@@ -46,169 +88,6 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
     
     fetchUsers();
   }, [clientId]);
-
-  // Function to create sample users with different statuses
-  function createSampleUsers(clientId: string): UserData[] {
-    const marketingGroup = {
-      id: "marketing-group-id",
-      name: "Marketing",
-      description: "Marketing department",
-      is_default: false,
-      client_id: clientId,
-      teams: [
-        {
-          id: "social-team-id",
-          name: "Social Media",
-          group_id: "marketing-group-id"
-        },
-        {
-          id: "content-team-id",
-          name: "Content",
-          group_id: "marketing-group-id"
-        }
-      ]
-    };
-
-    const salesGroup = {
-      id: "sales-group-id",
-      name: "Sales",
-      description: "Sales department",
-      is_default: true,
-      client_id: clientId,
-      teams: [
-        {
-          id: "direct-sales-team-id",
-          name: "Direct Sales",
-          group_id: "sales-group-id"
-        },
-        {
-          id: "partners-team-id",
-          name: "Partners",
-          group_id: "sales-group-id"
-        }
-      ]
-    };
-
-    const socialTeam = {
-      id: "social-team-id",
-      name: "Social Media",
-      group_id: "marketing-group-id",
-      group: {
-        id: "marketing-group-id",
-        name: "Marketing",
-        description: "Marketing department",
-        is_default: false
-      }
-    };
-
-    const contentTeam = {
-      id: "content-team-id",
-      name: "Content",
-      group_id: "marketing-group-id",
-      group: {
-        id: "marketing-group-id",
-        name: "Marketing",
-        description: "Marketing department",
-        is_default: false
-      }
-    };
-
-    const directSalesTeam = {
-      id: "direct-sales-team-id",
-      name: "Direct Sales",
-      group_id: "sales-group-id",
-      group: {
-        id: "sales-group-id",
-        name: "Sales",
-        description: "Sales department",
-        is_default: true
-      }
-    };
-
-    // Return array of users with different statuses
-    return [
-      {
-        id: "active-admin-id",
-        user_id: "user-uuid-1",
-        client_id: clientId,
-        role: "client_admin",
-        status: "active",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        email: "john.doe@example.com",
-        profiles: {
-          first_name: "John",
-          last_name: "Doe"
-        },
-        groups: [marketingGroup, salesGroup],
-        teams: [socialTeam, directSalesTeam]
-      },
-      {
-        id: "pending-manager-id",
-        user_id: "user-uuid-2",
-        client_id: clientId,
-        role: "manager",
-        status: "pending",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        email: "jane.smith@example.com",
-        profiles: {
-          first_name: "Jane",
-          last_name: "Smith"
-        },
-        groups: [marketingGroup],
-        teams: [contentTeam]
-      },
-      {
-        id: "inactive-supervisor-id",
-        user_id: "user-uuid-3",
-        client_id: clientId,
-        role: "supervisor",
-        status: "inactive",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        email: "robert.johnson@example.com",
-        profiles: {
-          first_name: "Robert",
-          last_name: "Johnson"
-        },
-        groups: [],
-        teams: []
-      },
-      {
-        id: "suspended-manager-id",
-        user_id: "user-uuid-4",
-        client_id: clientId,
-        role: "manager",
-        status: "suspended",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        email: "sarah.williams@example.com",
-        profiles: {
-          first_name: "Sarah",
-          last_name: "Williams"
-        },
-        groups: [salesGroup],
-        teams: [directSalesTeam]
-      },
-      {
-        id: "invited-supervisor-id",
-        user_id: "user-uuid-5",
-        client_id: clientId,
-        role: "supervisor",
-        status: "invited",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        email: "michael.brown@example.com",
-        profiles: {
-          first_name: "Michael",
-          last_name: "Brown"
-        },
-        groups: [],
-        teams: []
-      }
-    ];
-  }
 
   if (error) {
     return (
@@ -238,16 +117,11 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         <AddUserDialog clientId={clientId} />
       </div>
       
-      {isLoading ? (
-        <div className="flex items-center justify-center h-32">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <UsersTable 
-          users={usersData} 
-          clientId={clientId}
-        />
-      )}
+      <UsersTable 
+        users={usersData} 
+        clientId={clientId}
+        isLoading={isLoading}
+      />
     </Card>
   );
 }
