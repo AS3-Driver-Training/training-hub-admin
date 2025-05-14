@@ -2,16 +2,11 @@
 import { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, MoreVertical } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserData } from "../types";
 import { UserGroupsTeams } from "./UserGroupsTeams";
+import { UserActions } from "../users/UserActions";
 
 interface UserRowProps {
   user: UserData;
@@ -39,6 +34,13 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
     }
   };
 
+  // For invitation rows, show different content
+  const isInvitation = user.is_invitation === true;
+
+  const userName = isInvitation 
+    ? "Invited User" 
+    : `${user.profiles.first_name} ${user.profiles.last_name}`;
+
   return (
     <>
       <TableRow>
@@ -48,9 +50,10 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
               variant="ghost" 
               size="icon" 
               className="h-6 w-6 p-0 flex-shrink-0"
-              onClick={() => setIsOpen(!isOpen)}
+              onClick={() => !isInvitation && setIsOpen(!isOpen)}
+              disabled={isInvitation}
             >
-              {isOpen ? (
+              {isOpen && !isInvitation ? (
                 <ChevronDown className="h-4 w-4" />
               ) : (
                 <ChevronRight className="h-4 w-4" />
@@ -58,7 +61,7 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
             </Button>
             <div className="min-w-0">
               <div className="font-medium truncate">
-                {user.profiles.first_name} {user.profiles.last_name}
+                {userName}
               </div>
               <div className="text-sm text-muted-foreground truncate">{user.email}</div>
             </div>
@@ -78,54 +81,15 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
           </Badge>
         </TableCell>
         <TableCell className="w-[15%] text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(user)}>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="mr-2 h-4 w-4"
-                >
-                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                  <path d="m15 5 4 4" />
-                </svg>
-                Edit User
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onManageGroupsTeams(user)}>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="mr-2 h-4 w-4"
-                >
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-                Manage Groups & Teams
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <UserActions 
+            user={user} 
+            clientId={clientId} 
+            onManageUser={isInvitation ? onEdit : onManageGroupsTeams} 
+          />
         </TableCell>
       </TableRow>
       
-      {isOpen && (
+      {isOpen && !isInvitation && (
         <TableRow>
           <TableCell colSpan={4} className="p-0">
             <div className="border-t bg-muted/20 py-4 px-6">

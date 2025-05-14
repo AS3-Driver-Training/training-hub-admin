@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -18,9 +19,9 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
   const [usersData, setUsersData] = useState<UserData[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch users data from Supabase
+  // Fetch users and invitations data from Supabase
   useEffect(() => {
-    async function fetchUsers() {
+    async function fetchUsersAndInvitations() {
       try {
         setIsLoading(true);
         setError(null);
@@ -28,7 +29,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         console.log("Fetching users for client:", clientId);
         
         // Get client users with profile data
-        const { data, error: fetchError } = await supabase
+        const { data: userData, error: userError } = await supabase
           .from('client_users')
           .select(`
             id,
@@ -46,16 +47,31 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           `)
           .eq('client_id', clientId);
 
-        if (fetchError) {
-          console.error("Error fetching users:", fetchError);
-          setError(fetchError.message || "Failed to load users");
+        if (userError) {
+          console.error("Error fetching users:", userError);
+          setError(userError.message || "Failed to load users");
           setIsLoading(false);
           toast.error("Failed to load users");
           return;
         }
 
-        // Transform data to match UserData interface
-        const transformedUsers: UserData[] = (data || []).map(user => ({
+        // Get pending invitations
+        const { data: invitationsData, error: invitationsError } = await supabase
+          .from('invitations')
+          .select('*')
+          .eq('client_id', clientId)
+          .eq('status', 'pending');
+
+        if (invitationsError) {
+          console.error("Error fetching invitations:", invitationsError);
+          setError(invitationsError.message || "Failed to load invitations");
+          setIsLoading(false);
+          toast.error("Failed to load invitations");
+          return;
+        }
+
+        // Transform user data to match UserData interface
+        const transformedUsers: UserData[] = (userData || []).map(user => ({
           id: user.id,
           user_id: user.user_id,
           client_id: user.client_id,
@@ -72,10 +88,34 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           groups: [],
           teams: []
         }));
+
+        // Transform invitations to match UserData interface
+        const transformedInvitations: UserData[] = (invitationsData || []).map(invitation => ({
+          id: invitation.id,
+          invitation_id: invitation.id, // Store the invitation ID for reference
+          user_id: null, // No user ID for pending invitations
+          client_id: invitation.client_id,
+          role: 'supervisor', // Default role for invitees
+          status: 'pending',
+          created_at: invitation.created_at,
+          updated_at: invitation.updated_at,
+          email: invitation.email,
+          is_invitation: true, // Flag to identify this as an invitation
+          profiles: {
+            first_name: 'Invited',
+            last_name: 'User',
+          },
+          groups: [],
+          teams: []
+        }));
         
-        setUsersData(transformedUsers);
+        // Combine users and invitations
+        setUsersData([...transformedUsers, ...transformedInvitations]);
         setIsLoading(false);
-        console.log("Users fetched successfully:", transformedUsers);
+        console.log("Users and invitations fetched successfully:", {
+          users: transformedUsers.length,
+          invitations: transformedInvitations.length
+        });
         
       } catch (err: any) {
         console.error("Error in users fetch process:", err);
@@ -85,7 +125,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
       }
     }
     
-    fetchUsers();
+    fetchUsersAndInvitations();
   }, [clientId]);
 
   if (error) {

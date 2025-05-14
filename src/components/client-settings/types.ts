@@ -1,40 +1,33 @@
-
-// Define client role types
-export type ClientRole = 'client_admin' | 'manager' | 'supervisor';
-
-// Team structure
-export interface Team {
-  id: string;
-  name: string;
-  group_id: string;
-  group?: {
-    id: string;
-    name: string;
-    description: string | null;
-    is_default: boolean | null;
-  };
-}
-
-// Group structure
 export interface Group {
   id: string;
+  client_id: string;
   name: string;
   description: string | null;
   is_default: boolean | null;
-  client_id: string;
-  teams: Team[];
+  created_at: string;
+  updated_at: string;
+  teams?: Team[];
 }
 
-// For backward compatibility
-export interface GroupData extends Group {}
-export interface TeamData extends Team {}
+export interface Team {
+  id: string;
+  group_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
 
-// User data structure for the client settings
+export interface ClientRole {
+  role: 'client_admin' | 'manager' | 'supervisor';
+}
+
+export type ClientUserRole = 'client_admin' | 'manager' | 'supervisor';
+
 export interface UserData {
   id: string;
-  user_id: string;
+  user_id: string | null;
   client_id: string;
-  role: ClientRole;
+  role: ClientUserRole;
   status: string;
   created_at: string;
   updated_at: string;
@@ -44,6 +37,9 @@ export interface UserData {
     last_name: string;
   };
   groups: Group[];
-  teams: Team[];
+  teams: any[];
+  // New field to identify invitations
+  is_invitation?: boolean;
+  // Store invitation ID for invitation management
+  invitation_id?: string;
 }
-

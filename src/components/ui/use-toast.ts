@@ -1,5 +1,11 @@
 
-// Update the import path to the correct location
-import { useToast, toast } from "@/hooks/use-toast";
+// Import from sonner instead
+import { toast as sonnerToast } from "sonner";
 
-export { useToast, toast };
+// Create a simple hook to ensure consistent usage
+export function useToast() {
+  return { toast: sonnerToast };
+}
+
+// Export toast for direct usage
+export const toast = sonnerToast;

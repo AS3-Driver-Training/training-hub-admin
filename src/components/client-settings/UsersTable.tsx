@@ -72,13 +72,16 @@ export function UsersTable({ users, clientId, isLoading }: UsersTableProps) {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Fetch user group and team assignments
+  // Fetch user group and team assignments only for actual users (not invitations)
+  const userIds = users
+    ?.filter(user => user.user_id !== null)
+    .map(user => user.user_id as string) || [];
+  
   const { data: userGroupAssignments = {}, isLoading: isUserGroupsLoading } = useQuery({
-    queryKey: ['user_groups_assignments', clientId, users?.map(u => u.id).join(',')],
+    queryKey: ['user_groups_assignments', clientId, userIds.join(',')],
     queryFn: async () => {
-      if (!users?.length) return {};
+      if (!userIds.length) return {};
       
-      const userIds = users.map(u => u.user_id);
       console.log('Fetching user group assignments for users:', userIds);
       
       // Get user-group assignments
@@ -116,7 +119,7 @@ export function UsersTable({ users, clientId, isLoading }: UsersTableProps) {
       console.log('Fetched user assignments:', userAssignments);
       return userAssignments;
     },
-    enabled: !!users?.length,
+    enabled: !!userIds.length,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -130,9 +133,14 @@ export function UsersTable({ users, clientId, isLoading }: UsersTableProps) {
     setIsManageGroupsOpen(true);
   };
 
-  // Enrich users with their real groups and teams
+  // Enrich users with their real groups and teams (only for actual users, not invitations)
   const processedUsers = users?.map(user => {
-    const userAssignments = userGroupAssignments[user.user_id] || { groupIds: [], teamIds: [] };
+    // Skip enrichment for invitations
+    if (user.is_invitation) {
+      return user;
+    }
+    
+    const userAssignments = userGroupAssignments[user.user_id as string] || { groupIds: [], teamIds: [] };
     
     // Find user's groups based on group_ids
     const userGroups = groups.filter(group => 

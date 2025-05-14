@@ -10,7 +10,6 @@ import { useState } from "react";
 import { ClientUsersTab } from "@/components/client-settings/ClientUsersTab";
 import { ClientSettingsTab } from "@/components/client-settings/ClientSettingsTab";
 import { ClientGroupsTab } from "@/components/client-settings/ClientGroupsTab";
-import { ClientInvitationsTab } from "@/components/client-settings/ClientInvitationsTab";
 import { toast } from "sonner";
 
 export default function ClientSettings() {
@@ -123,17 +122,12 @@ export default function ClientSettings() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="invitations">Invitations</TabsTrigger>
             <TabsTrigger value="groups">Groups & Teams</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
             <ClientUsersTab clientId={clientId!} clientName={client.name} />
-          </TabsContent>
-          
-          <TabsContent value="invitations">
-            <ClientInvitationsTab clientId={clientId!} clientName={client.name} />
           </TabsContent>
 
           <TabsContent value="groups">
