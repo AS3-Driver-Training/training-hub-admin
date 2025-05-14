@@ -24,13 +24,19 @@ export function ClientInvitationsTab({ clientId, clientName }: ClientInvitations
   const { data: invitations, isLoading, refetch } = useQuery({
     queryKey: ['invitations', clientId],
     queryFn: async () => {
+      console.log('Fetching invitations for client:', clientId);
       const { data, error } = await supabase
         .from('invitations')
         .select('*')
         .eq('client_id', clientId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching invitations:', error);
+        throw error;
+      }
+      
+      console.log('Fetched invitations:', data);
       return data;
     },
   });
@@ -115,50 +121,58 @@ export function ClientInvitationsTab({ clientId, clientName }: ClientInvitations
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invitations?.map((invitation) => (
-              <TableRow key={invitation.id}>
-                <TableCell>{invitation.email}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      invitation.status === "pending"
-                        ? "secondary"
-                        : "default"
-                    }
-                  >
-                    {invitation.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {new Date(invitation.created_at).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        handleResendInvitation(
-                          invitation.id,
-                          invitation.email
-                        )
+            {invitations && invitations.length > 0 ? (
+              invitations.map((invitation) => (
+                <TableRow key={invitation.id}>
+                  <TableCell>{invitation.email}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        invitation.status === "pending"
+                          ? "secondary"
+                          : "default"
                       }
                     >
-                      <Mail className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        handleRevokeInvitation(invitation.id)
-                      }
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                      {invitation.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(invitation.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          handleResendInvitation(
+                            invitation.id,
+                            invitation.email
+                          )
+                        }
+                      >
+                        <Mail className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          handleRevokeInvitation(invitation.id)
+                        }
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-6">
+                  No pending invitations found
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>
