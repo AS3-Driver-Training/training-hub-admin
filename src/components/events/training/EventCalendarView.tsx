@@ -30,13 +30,13 @@ export function EventCalendarView({ events, onEventDeleted }: EventCalendarViewP
     : [];
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="bg-card rounded-lg shadow p-4">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="bg-card rounded-lg shadow p-4 h-auto">
         <Calendar
           mode="single"
           selected={selectedDate}
           onSelect={setSelectedDate}
-          className="rounded-md"
+          className="rounded-md mx-auto"
           components={{
             DayContent: (props) => {
               const date = props.date;
@@ -60,15 +60,15 @@ export function EventCalendarView({ events, onEventDeleted }: EventCalendarViewP
         />
       </div>
       
-      <div className="md:col-span-2">
+      <div className="lg:col-span-2">
         <div className="bg-card rounded-lg shadow p-4 h-full">
           <h3 className="text-lg font-semibold mb-4">
             {selectedDate ? format(selectedDate, "MMMM d, yyyy") : "Select a date"}
           </h3>
           
           {eventsOnSelectedDate.length > 0 ? (
-            <ScrollArea className="h-[calc(100%-3rem)]">
-              <div className="space-y-4">
+            <ScrollArea className="h-[400px] lg:h-[calc(100%-3rem)]">
+              <div className="space-y-4 pr-4">
                 {eventsOnSelectedDate.map(event => (
                   <EventCard key={event.id} event={event} onDelete={onEventDeleted} />
                 ))}

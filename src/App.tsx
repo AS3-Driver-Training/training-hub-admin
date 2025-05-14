@@ -25,7 +25,7 @@ function App() {
         <Route path="/clients" element={<Clients />} />
         <Route path="/clients/:clientId/*" element={<ClientSettings />} />
         <Route path="/programs" element={<Programs />} />
-        <Route path="/events" element={<Events />} />
+        <Route path="/events/*" element={<Events />} />
         <Route path="/venues" element={<Venues />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/profile" element={<Profile />} />
