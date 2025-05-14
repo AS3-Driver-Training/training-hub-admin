@@ -52,7 +52,7 @@ export function RegularUserActions({ user, onManageUser }: RegularUserActionsPro
       if (error) throw error;
 
       toast.success("User deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ['client_users', user.client_id] });
+      await queryClient.invalidateQueries({ queryKey: ['client_users', user.client_id] });
       setShowDeleteDialog(false);
     } catch (error: any) {
       console.error("Error deleting user:", error);
@@ -75,7 +75,7 @@ export function RegularUserActions({ user, onManageUser }: RegularUserActionsPro
       if (error) throw error;
 
       toast.success(`User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
-      queryClient.invalidateQueries({ queryKey: ['client_users', user.client_id] });
+      await queryClient.invalidateQueries({ queryKey: ['client_users', user.client_id] });
       setShowDeactivateDialog(false);
       setShowActivateDialog(false);
     } catch (error: any) {

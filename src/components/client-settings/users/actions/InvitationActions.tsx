@@ -70,6 +70,8 @@ export function InvitationActions({ user, clientId, onManageUser }: InvitationAc
       if (emailResponse.error) throw emailResponse.error;
 
       toast.success("Invitation resent successfully to " + user.email);
+      
+      // Properly invalidate the query to refresh the table
       await queryClient.invalidateQueries({ queryKey: ['client_users', clientId] });
     } catch (error: any) {
       console.error("Error resending invitation:", error);
@@ -90,6 +92,8 @@ export function InvitationActions({ user, clientId, onManageUser }: InvitationAc
       if (error) throw error;
 
       toast.success("Invitation deleted successfully");
+      
+      // Properly invalidate the query to refresh the table
       await queryClient.invalidateQueries({ queryKey: ['client_users', clientId] });
     } catch (error: any) {
       console.error("Error deleting invitation:", error);

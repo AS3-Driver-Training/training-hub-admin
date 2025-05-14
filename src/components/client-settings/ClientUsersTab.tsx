@@ -1,10 +1,11 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import AddUserDialog from "./AddUserDialog";
 import { UsersTable } from "./UsersTable";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { UserData } from "./types";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -14,18 +15,17 @@ interface ClientUsersTabProps {
 }
 
 export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [usersData, setUsersData] = useState<UserData[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  // Fetch users and invitations data from Supabase
-  useEffect(() => {
-    async function fetchUsersAndInvitations() {
+  // Replace the useEffect with useQuery for proper query invalidation
+  const { 
+    data: usersData,
+    isLoading,
+    error
+  } = useQuery({
+    queryKey: ['client_users', clientId],
+    queryFn: async () => {
       try {
-        setIsLoading(true);
-        setError(null);
-        
         console.log("Fetching users for client:", clientId);
         
         // Get client users with profile data
@@ -49,10 +49,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
         if (userError) {
           console.error("Error fetching users:", userError);
-          setError(userError.message || "Failed to load users");
-          setIsLoading(false);
           toast.error("Failed to load users");
-          return;
+          throw userError;
         }
 
         // Get pending invitations
@@ -64,10 +62,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
 
         if (invitationsError) {
           console.error("Error fetching invitations:", invitationsError);
-          setError(invitationsError.message || "Failed to load invitations");
-          setIsLoading(false);
           toast.error("Failed to load invitations");
-          return;
+          throw invitationsError;
         }
 
         // Transform user data to match UserData interface
@@ -110,45 +106,25 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         }));
         
         // Combine users and invitations
-        setUsersData([...transformedUsers, ...transformedInvitations]);
-        setIsLoading(false);
-        console.log("Users and invitations fetched successfully:", {
-          users: transformedUsers.length,
-          invitations: transformedInvitations.length
-        });
-        
+        return [...transformedUsers, ...transformedInvitations];
       } catch (err: any) {
         console.error("Error in users fetch process:", err);
-        setError(err.message || "Failed to load users");
-        setIsLoading(false);
-        toast.error("Failed to load users");
+        throw err;
       }
-    }
-    
-    fetchUsersAndInvitations();
-    
-    // Setup a subscription to refresh data when the query is invalidated
-    const unsubscribe = queryClient.getQueryCache().subscribe(() => {
-      const queryKey = ['client_users', clientId];
-      if (queryClient.getQueryState(queryKey)?.isInvalidated) {
-        console.log("Query invalidated, refetching data");
-        fetchUsersAndInvitations();
-      }
-    });
-    
-    return () => {
-      unsubscribe();
-    };
-  }, [clientId, queryClient]);
+    },
+  });
 
-  if (error) {
+  // Handle displaying error state
+  const errorMessage = error ? (error as Error).message || "Failed to load users" : null;
+
+  if (errorMessage) {
     return (
       <Card className="p-6">
         <div className="flex flex-col items-center justify-center h-32 gap-4">
-          <p className="text-destructive">{error}</p>
+          <p className="text-destructive">{errorMessage}</p>
           <button 
             className="text-sm text-primary hover:underline" 
-            onClick={() => window.location.reload()}
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['client_users', clientId] })}
           >
             Try again
           </button>
@@ -170,7 +146,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
       </div>
       
       <UsersTable 
-        users={usersData} 
+        users={usersData || []} 
         clientId={clientId}
         isLoading={isLoading}
       />
