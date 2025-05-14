@@ -1,6 +1,6 @@
 
-import { toast } from "sonner";
 import { useState } from "react";
+import { UserData } from "../../types/index";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,16 +10,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { 
-  MoreVertical, 
-  Mail, 
-  Trash2, 
+  MoreHorizontal, 
   UserCog, 
-  Edit, 
-  Lock, 
-  UserX,
-  ShieldCheck 
+  UserX, 
+  UserCheck,
+  Trash2
 } from "lucide-react";
-import { UserData } from "../../types/index";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { 
   DeleteUserDialog, 
   DeactivateUserDialog, 
@@ -32,66 +31,29 @@ interface RegularUserActionsProps {
 }
 
 export function RegularUserActions({ user, onManageUser }: RegularUserActionsProps) {
-  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
-  const [isConfirmDeactivateOpen, setIsConfirmDeactivateOpen] = useState(false);
-  const [isConfirmActivateOpen, setIsConfirmActivateOpen] = useState(false);
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
+  const [showActivateDialog, setShowActivateDialog] = useState(false);
 
-  const handlePasswordReset = async () => {
+  const isActive = user.status === 'active';
+
+  const handleDelete = async () => {
+    setIsLoading(true);
+
     try {
-      // Simulate password reset email
-      toast.success("Password reset link sent to " + user.email);
-    } catch (error: any) {
-      console.error("Error resetting password:", error);
-      toast.error(error.message || "Failed to send password reset");
-    }
-  };
+      console.log("Deleting user:", user.id);
+      const { error } = await supabase
+        .from('client_users')
+        .delete()
+        .eq('id', user.id);
 
-  const handleEditProfile = () => {
-    // Show edit profile dialog
-    onManageUser(user);
-  };
+      if (error) throw error;
 
-  const handleActivateUser = async () => {
-    try {
-      setIsLoading(true);
-      // Simulate user activation
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      toast.success(user.profiles.first_name + " " + user.profiles.last_name + " activated successfully");
-      setIsConfirmActivateOpen(false);
-      // In a real app, you would update the database and invalidate queries
-    } catch (error: any) {
-      console.error("Error activating user:", error);
-      toast.error(error.message || "Failed to activate user");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeactivateUser = async () => {
-    try {
-      setIsLoading(true);
-      // Simulate user deactivation
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      toast.success(user.profiles.first_name + " " + user.profiles.last_name + " deactivated successfully");
-      setIsConfirmDeactivateOpen(false);
-      // In a real app, you would update the database and invalidate queries
-    } catch (error: any) {
-      console.error("Error deactivating user:", error);
-      toast.error(error.message || "Failed to deactivate user");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteUser = async () => {
-    try {
-      setIsLoading(true);
-      // Simulate user deletion
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      toast.success(user.profiles.first_name + " " + user.profiles.last_name + " removed successfully");
-      setIsConfirmDeleteOpen(false);
-      // In a real app, you would update the database and invalidate queries
+      toast.success("User deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ['client_users', user.client_id] });
+      setShowDeleteDialog(false);
     } catch (error: any) {
       console.error("Error deleting user:", error);
       toast.error(error.message || "Failed to delete user");
@@ -100,13 +62,27 @@ export function RegularUserActions({ user, onManageUser }: RegularUserActionsPro
     }
   };
 
-  // Function to handle resending invitation (for pending/invited users)
-  const handleResendInvitation = async () => {
+  const handleStatusChange = async (newStatus: 'active' | 'inactive') => {
+    setIsLoading(true);
+
     try {
-      toast.success("Invitation resent to " + user.email);
+      console.log(`Changing user status to ${newStatus}:`, user.id);
+      const { error } = await supabase
+        .from('client_users')
+        .update({ status: newStatus })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast.success(`User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
+      queryClient.invalidateQueries({ queryKey: ['client_users', user.client_id] });
+      setShowDeactivateDialog(false);
+      setShowActivateDialog(false);
     } catch (error: any) {
-      console.error("Error resending invitation:", error);
-      toast.error(error.message || "Failed to resend invitation");
+      console.error(`Error ${newStatus} user:`, error);
+      toast.error(error.message || `Failed to ${newStatus} user`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -115,76 +91,57 @@ export function RegularUserActions({ user, onManageUser }: RegularUserActionsPro
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon">
-            <MoreVertical className="h-4 w-4" />
+            <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onManageUser(user)}>
             <UserCog className="mr-2 h-4 w-4" />
-            Manage Groups & Teams
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleEditProfile}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handlePasswordReset}>
-            <Lock className="mr-2 h-4 w-4" />
-            Reset Password
+            Edit User
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          
-          {/* Show different options based on user status */}
-          {user.status === "pending" || user.status === "invited" ? (
-            <DropdownMenuItem onClick={handleResendInvitation}>
-              <Mail className="mr-2 h-4 w-4" />
-              Resend Invitation
-            </DropdownMenuItem>
-          ) : null}
-          
-          {user.status === "inactive" || user.status === "suspended" ? (
-            <DropdownMenuItem onClick={() => setIsConfirmActivateOpen(true)}>
-              <ShieldCheck className="mr-2 h-4 w-4" />
-              Activate User
+          {isActive ? (
+            <DropdownMenuItem onClick={() => setShowDeactivateDialog(true)}>
+              <UserX className="mr-2 h-4 w-4" />
+              Deactivate
             </DropdownMenuItem>
           ) : (
-            <DropdownMenuItem onClick={() => setIsConfirmDeactivateOpen(true)}>
-              <UserX className="mr-2 h-4 w-4" />
-              Deactivate User
+            <DropdownMenuItem onClick={() => setShowActivateDialog(true)}>
+              <UserCheck className="mr-2 h-4 w-4" />
+              Activate
             </DropdownMenuItem>
           )}
-          
           <DropdownMenuItem 
-            onClick={() => setIsConfirmDeleteOpen(true)}
-            className="text-destructive"
+            onClick={() => setShowDeleteDialog(true)}
+            className="text-destructive focus:text-destructive"
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            Remove User
+            Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Confirmation Dialogs */}
-      <DeleteUserDialog 
-        isOpen={isConfirmDeleteOpen} 
-        onOpenChange={setIsConfirmDeleteOpen}
+      <DeleteUserDialog
+        isOpen={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
         user={user}
-        onConfirm={handleDeleteUser}
+        onConfirm={handleDelete}
         isLoading={isLoading}
       />
 
-      <DeactivateUserDialog 
-        isOpen={isConfirmDeactivateOpen} 
-        onOpenChange={setIsConfirmDeactivateOpen}
+      <DeactivateUserDialog
+        isOpen={showDeactivateDialog}
+        onOpenChange={setShowDeactivateDialog}
         user={user}
-        onConfirm={handleDeactivateUser}
+        onConfirm={() => handleStatusChange('inactive')}
         isLoading={isLoading}
       />
 
-      <ActivateUserDialog 
-        isOpen={isConfirmActivateOpen} 
-        onOpenChange={setIsConfirmActivateOpen}
+      <ActivateUserDialog
+        isOpen={showActivateDialog}
+        onOpenChange={setShowActivateDialog}
         user={user}
-        onConfirm={handleActivateUser}
+        onConfirm={() => handleStatusChange('active')}
         isLoading={isLoading}
       />
     </>
