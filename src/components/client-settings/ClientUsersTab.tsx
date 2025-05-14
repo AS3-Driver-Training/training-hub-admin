@@ -6,7 +6,8 @@ import { AddUserDialog } from "./AddUserDialog";
 import { UsersTable } from "./UsersTable";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { UserData, GroupData, TeamData } from "./types";
+import { useEffect, useState } from "react";
+import { UserData } from "./types";
 
 interface ClientUsersTabProps {
   clientId: string;
@@ -14,28 +15,41 @@ interface ClientUsersTabProps {
 }
 
 export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
-  const { data: users, isLoading } = useQuery({
-    queryKey: ['client_users', clientId],
-    queryFn: async () => {
-      try {
-        console.log('Starting client users query for clientId:', clientId);
-        
-        // Instead of fetching from the database, we'll return hardcoded users
-        return createHardcodedUsers(clientId);
-      } catch (error: any) {
-        console.error('Error in queryFn:', error);
-        toast.error(`Error loading users: ${error.message || 'Unknown error'}`);
-        
-        // Return hardcoded users on error
-        return createHardcodedUsers(clientId);
-      }
-    },
-    retry: 1
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [usersData, setUsersData] = useState<UserData[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  // Function to create a set of hardcoded users with different statuses
-  function createHardcodedUsers(clientId: string): UserData[] {
-    const marketingGroup: GroupData = {
+  // Fetch users data from Supabase
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        console.log("Fetching users for client:", clientId);
+        
+        // In a real app, this would be a real Supabase query
+        // For now we'll simulate an API call
+        setTimeout(() => {
+          // Provide the hardcoded data
+          setUsersData(createSampleUsers(clientId));
+          setIsLoading(false);
+        }, 1000);
+        
+      } catch (err: any) {
+        console.error("Error fetching users:", err);
+        setError(err.message || "Failed to load users");
+        setIsLoading(false);
+        toast.error("Failed to load users");
+      }
+    }
+    
+    fetchUsers();
+  }, [clientId]);
+
+  // Function to create sample users with different statuses
+  function createSampleUsers(clientId: string): UserData[] {
+    const marketingGroup = {
       id: "marketing-group-id",
       name: "Marketing",
       description: "Marketing department",
@@ -55,7 +69,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
       ]
     };
 
-    const salesGroup: GroupData = {
+    const salesGroup = {
       id: "sales-group-id",
       name: "Sales",
       description: "Sales department",
@@ -75,7 +89,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
       ]
     };
 
-    const socialTeam: TeamData = {
+    const socialTeam = {
       id: "social-team-id",
       name: "Social Media",
       group_id: "marketing-group-id",
@@ -87,7 +101,19 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
       }
     };
 
-    const directSalesTeam: TeamData = {
+    const contentTeam = {
+      id: "content-team-id",
+      name: "Content",
+      group_id: "marketing-group-id",
+      group: {
+        id: "marketing-group-id",
+        name: "Marketing",
+        description: "Marketing department",
+        is_default: false
+      }
+    };
+
+    const directSalesTeam = {
       id: "direct-sales-team-id",
       name: "Direct Sales",
       group_id: "sales-group-id",
@@ -109,10 +135,10 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         status: "active",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        email: "admin@example.com",
+        email: "john.doe@example.com",
         profiles: {
-          first_name: "Admin",
-          last_name: "User"
+          first_name: "John",
+          last_name: "Doe"
         },
         groups: [marketingGroup, salesGroup],
         teams: [socialTeam, directSalesTeam]
@@ -125,13 +151,13 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         status: "pending",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        email: "pending.manager@example.com",
+        email: "jane.smith@example.com",
         profiles: {
-          first_name: "Pending",
-          last_name: "Manager"
+          first_name: "Jane",
+          last_name: "Smith"
         },
         groups: [marketingGroup],
-        teams: [socialTeam]
+        teams: [contentTeam]
       },
       {
         id: "inactive-supervisor-id",
@@ -141,10 +167,10 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         status: "inactive",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        email: "inactive.supervisor@example.com",
+        email: "robert.johnson@example.com",
         profiles: {
-          first_name: "Inactive",
-          last_name: "Supervisor"
+          first_name: "Robert",
+          last_name: "Johnson"
         },
         groups: [],
         teams: []
@@ -157,10 +183,10 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         status: "suspended",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        email: "suspended.manager@example.com",
+        email: "sarah.williams@example.com",
         profiles: {
-          first_name: "Suspended",
-          last_name: "Manager"
+          first_name: "Sarah",
+          last_name: "Williams"
         },
         groups: [salesGroup],
         teams: [directSalesTeam]
@@ -173,10 +199,10 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         status: "invited",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        email: "invited.supervisor@example.com",
+        email: "michael.brown@example.com",
         profiles: {
-          first_name: "Invited",
-          last_name: "Supervisor"
+          first_name: "Michael",
+          last_name: "Brown"
         },
         groups: [],
         teams: []
@@ -184,18 +210,21 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
     ];
   }
 
-  if (isLoading) {
+  if (error) {
     return (
       <Card className="p-6">
-        <div className="flex items-center justify-center h-32">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="flex flex-col items-center justify-center h-32 gap-4">
+          <p className="text-destructive">{error}</p>
+          <button 
+            className="text-sm text-primary hover:underline" 
+            onClick={() => window.location.reload()}
+          >
+            Try again
+          </button>
         </div>
       </Card>
     );
   }
-
-  // Always ensure we have our hardcoded users
-  const displayUsers = users || createHardcodedUsers(clientId);
 
   return (
     <Card className="p-6">
@@ -203,12 +232,22 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         <div>
           <h3 className="text-lg font-semibold">Users</h3>
           <p className="text-sm text-muted-foreground">
-            Manage client users and their permissions
+            Manage {clientName} users and their permissions
           </p>
         </div>
         <AddUserDialog clientId={clientId} />
       </div>
-      <UsersTable users={displayUsers} clientId={clientId} />
+      
+      {isLoading ? (
+        <div className="flex items-center justify-center h-32">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <UsersTable 
+          users={usersData} 
+          clientId={clientId}
+        />
+      )}
     </Card>
   );
 }
