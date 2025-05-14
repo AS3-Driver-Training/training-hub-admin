@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import { UsersTable } from "./UsersTable";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { UserData } from "./types";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ClientUsersTabProps {
   clientId: string;
@@ -16,6 +18,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [usersData, setUsersData] = useState<UserData[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   // Fetch users and invitations data from Supabase
   useEffect(() => {
@@ -93,7 +96,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           invitationId: invitation.id, // Store the invitation ID for reference
           user_id: null, // No user ID for pending invitations
           client_id: invitation.client_id,
-          role: 'supervisor', // Default role for invitees
+          role: invitation.role || 'supervisor', // Get role from invitation or default to supervisor
           status: 'pending',
           created_at: invitation.created_at,
           updated_at: invitation.updated_at,
@@ -124,7 +127,20 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
     }
     
     fetchUsersAndInvitations();
-  }, [clientId]);
+    
+    // Setup a subscription to refresh data when the query is invalidated
+    const unsubscribe = queryClient.getQueryCache().subscribe(() => {
+      const queryKey = ['client_users', clientId];
+      if (queryClient.getQueryState(queryKey)?.isInvalidated) {
+        console.log("Query invalidated, refetching data");
+        fetchUsersAndInvitations();
+      }
+    });
+    
+    return () => {
+      unsubscribe();
+    };
+  }, [clientId, queryClient]);
 
   if (error) {
     return (

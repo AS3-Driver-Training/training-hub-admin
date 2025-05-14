@@ -3,23 +3,24 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+
+import { EmailInput } from "./add-user/EmailInput";
 import { RoleSelect } from "./add-user/RoleSelect";
+import { ClientRole } from "./types";
 import { GroupSelect } from "./add-user/GroupSelect";
 import { TeamSelect } from "./add-user/TeamSelect";
-import { ClientRole, Group } from "./types";
 
 interface AddUserDialogProps {
   clientId: string;
@@ -30,217 +31,180 @@ export default function AddUserDialog({
   clientId,
   clientName,
 }: AddUserDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<ClientRole>("supervisor");
+  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
 
-  // Fetch groups for this client
-  const { data: groups = [] } = useQuery({
-    queryKey: ['client_groups', clientId],
-    queryFn: async () => {
-      console.log('Fetching groups for client:', clientId);
-      
-      // Simplified query to avoid complex joins
-      const { data: existingGroups, error: fetchError } = await supabase
-        .from('groups')
-        .select('id, name, description, is_default, teams(id, name, group_id)')
-        .eq('client_id', clientId)
-        .order('name');
+  // Reset form on close
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setEmail("");
+      setRole("supervisor");
+      setSelectedGroupId("");
+      setSelectedTeamIds([]);
+    }
+  };
 
-      if (fetchError) {
-        console.error('Error fetching groups:', fetchError);
-        throw fetchError;
-      }
+  const handleAddUser = async () => {
+    if (!email) {
+      toast.error("Please enter an email address");
+      return;
+    }
 
-      // Initialize groups with proper structure
-      const formattedGroups: Group[] = (existingGroups || []).map(group => ({
-        ...group,
-        client_id: clientId,
-        description: group.description || '',
-        is_default: group.is_default || false,
-        teams: group.teams || [],
-        created_at: undefined,
-        updated_at: undefined
-      }));
-
-      console.log('Groups fetched:', formattedGroups.length);
-      return formattedGroups;
-    },
-    enabled: isOpen, // Only fetch when dialog is open
-  });
-
-  // Combined form state for all users
-  const [userData, setUserData] = useState({
-    email: "",
-    role: "supervisor" as ClientRole,
-    groupId: "",
-    teamId: "",
-  });
-
-  // Handle adding or inviting a user
-  const handleSubmitUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+    setIsLoading(true);
+    console.log(`Adding user with email: ${email}, role: ${role}, to client: ${clientId}`);
 
     try {
-      // Call the add_user_to_client function
+      // Add user to client using database function
       const { data, error } = await supabase.rpc("add_user_to_client", {
         p_client_id: clientId,
-        p_email: userData.email,
-        p_role: userData.role,
+        p_email: email,
+        p_role: role,
       });
 
       if (error) throw error;
 
-      // Safely access properties with type checking
-      const responseData = data as { status: string; message: string; user_id?: string } | null;
-      
-      if (responseData?.status === "exists") {
-        toast.info(responseData.message);
-      } else if (responseData?.status === "added") {
-        toast.success(responseData.message);
-        
-        // Add user to selected group if specified
-        if (userData.groupId && responseData.user_id) {
-          await addUserToGroup(responseData.user_id, userData.groupId);
+      console.log("User/invitation added:", data);
+
+      // If user needs invitation
+      if (data.status === "invited" && data.invitation_id) {
+        // Store the role in the invitation table
+        await supabase
+          .from("invitations")
+          .update({ role: role })
+          .eq("id", data.invitation_id);
           
-          // Add user to selected team if specified
-          if (userData.teamId) {
-            await addUserToTeam(responseData.user_id, userData.teamId);
+        // Send invitation email
+        const emailResponse = await supabase.functions.invoke(
+          "send-invitation",
+          {
+            body: {
+              email: email,
+              token: data.token,
+              clientName: clientName,
+            },
           }
+        );
+
+        if (emailResponse.error) {
+          throw emailResponse.error;
         }
-      } else if (responseData?.status === "invited") {
-        toast.success("Invitation sent successfully");
+
+        toast.success(`Invitation sent to ${email}`);
+      } else if (data.status === "added") {
+        toast.success(`User ${email} added to ${clientName}`);
+      } else if (data.status === "exists") {
+        toast.info(data.message);
       }
 
-      // Invalidate and refetch queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["client_users", clientId] }),
-        queryClient.invalidateQueries({ queryKey: ["invitations", clientId] })
-      ]);
+      // Add user to selected group if one is selected
+      if (selectedGroupId && data.status === "added") {
+        const userId = data.user_id;
+        await addUserToGroup(userId, selectedGroupId);
+        
+        // Add user to selected teams if any
+        if (selectedTeamIds.length > 0) {
+          await addUserToTeams(userId, selectedTeamIds);
+        }
+      }
 
+      // Close dialog and refresh user list
       setIsOpen(false);
-      resetForm();
-    } catch (error: any) {
-      console.error("Error adding user:", error);
-      toast.error(error.message || "Failed to add user");
+      queryClient.invalidateQueries({ queryKey: ['client_users', clientId] });
+    } catch (err: any) {
+      console.error("Error adding user:", err);
+      toast.error(err.message || "Failed to add user");
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  // Add user to group
+  // Helper function to add user to group
   const addUserToGroup = async (userId: string, groupId: string) => {
-    const { error } = await supabase
-      .from("user_groups")
-      .insert({ user_id: userId, group_id: groupId });
-
-    if (error) throw error;
+    try {
+      const { error } = await supabase
+        .from('user_groups')
+        .insert({ user_id: userId, group_id: groupId });
+      
+      if (error) throw error;
+    } catch (err: any) {
+      console.error("Error adding user to group:", err);
+      toast.error("Added user but failed to assign group");
+    }
   };
 
-  // Add user to team
-  const addUserToTeam = async (userId: string, teamId: string) => {
-    const { error } = await supabase
-      .from("user_teams")
-      .insert({ user_id: userId, team_id: teamId });
-
-    if (error) throw error;
-  };
-
-  const resetForm = () => {
-    setUserData({
-      email: "",
-      role: "supervisor" as ClientRole,
-      groupId: "",
-      teamId: "",
-    });
-  };
-
-  // Get teams for the selected group
-  const getTeamsForGroup = (groupId: string) => {
-    const group = groups.find((g) => g.id === groupId);
-    return group ? group.teams : [];
+  // Helper function to add user to teams
+  const addUserToTeams = async (userId: string, teamIds: string[]) => {
+    try {
+      const teamRecords = teamIds.map(teamId => ({
+        user_id: userId,
+        team_id: teamId
+      }));
+      
+      const { error } = await supabase
+        .from('user_teams')
+        .insert(teamRecords);
+      
+      if (error) throw error;
+    } catch (err: any) {
+      console.error("Error adding user to teams:", err);
+      toast.error("Added user but failed to assign teams");
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>
-          <UserPlus className="h-4 w-4 mr-2" />
+          <UserPlus className="mr-2 h-4 w-4" />
           Add User
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add User</DialogTitle>
+          <DialogDescription>
+            Add a new user to {clientName}. If they don't have an account yet,
+            they'll receive an invitation email.
+          </DialogDescription>
         </DialogHeader>
-
-        <form onSubmit={handleSubmitUser} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="user@example.com"
-              value={userData.email}
-              onChange={(e) =>
-                setUserData((prev) => ({
-                  ...prev,
-                  email: e.target.value,
-                }))
-              }
-              required
-            />
-          </div>
-
+        <div className="grid gap-4 py-4">
+          <EmailInput
+            email={email}
+            onEmailChange={setEmail}
+            disabled={isLoading}
+          />
           <RoleSelect
-            role={userData.role}
-            onRoleChange={(value) =>
-              setUserData((prev) => ({
-                ...prev,
-                role: value,
-              }))
-            }
+            role={role}
+            onRoleChange={setRole}
+            value={role}
+            onChange={setRole}
           />
-
           <GroupSelect
-            groups={groups}
-            value={userData.groupId}
-            onChange={(value) =>
-              setUserData((prev) => ({
-                ...prev,
-                groupId: value,
-                teamId: "", // Reset team when group changes
-              }))
-            }
+            clientId={clientId}
+            selectedGroupId={selectedGroupId}
+            onGroupChange={setSelectedGroupId}
+            disabled={isLoading}
           />
-
-          {userData.groupId && (
+          {selectedGroupId && (
             <TeamSelect
-              availableTeams={getTeamsForGroup(userData.groupId)}
-              selectedGroup={userData.groupId}
-              selectedTeam={userData.teamId}
-              onTeamChange={(value) =>
-                setUserData((prev) => ({
-                  ...prev,
-                  teamId: value || "",
-                }))
-              }
+              groupId={selectedGroupId}
+              selectedTeamIds={selectedTeamIds}
+              onTeamsChange={setSelectedTeamIds}
+              disabled={isLoading}
             />
           )}
-
-          <p className="text-sm text-muted-foreground">
-            If the user doesn't exist in the system, an invitation will be sent to join.
-          </p>
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Processing..." : "Add User"}
+        </div>
+        <DialogFooter>
+          <Button type="submit" onClick={handleAddUser} disabled={isLoading}>
+            {isLoading ? "Adding..." : "Add User"}
           </Button>
-        </form>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

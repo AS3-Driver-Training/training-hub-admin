@@ -13,6 +13,7 @@ export interface UserData {
   last_login?: string | null;
   is_invitation?: boolean;
   invitationId?: string;
+  clientName?: string; // Add this for use in invitation emails
   profiles: {
     first_name: string | null;
     last_name: string | null;

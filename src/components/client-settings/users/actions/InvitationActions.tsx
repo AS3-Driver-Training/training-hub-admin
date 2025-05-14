@@ -50,6 +50,8 @@ export function InvitationActions({ user, clientId, onManageUser }: InvitationAc
           token: tokenData,
           status: 'pending',
           expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          // Preserve the existing role from the user object
+          role: user.role
         })
         .eq('id', user.invitationId);
 
@@ -61,6 +63,7 @@ export function InvitationActions({ user, clientId, onManageUser }: InvitationAc
           clientId,
           email: user.email,
           token: tokenData,
+          clientName: user.clientName || '',
         },
       });
 
