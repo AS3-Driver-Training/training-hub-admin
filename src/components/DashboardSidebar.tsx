@@ -6,6 +6,7 @@ import {
   Settings,
   BookOpen,
   Building,
+  GraduationCap,
 } from "lucide-react";
 import {
   Sidebar,
@@ -42,6 +43,11 @@ const menuItems: MenuItem[] = [
     title: "Training Events",
     icon: Calendar,
     path: "/events",
+  },
+  {
+    title: "Students",
+    icon: GraduationCap,
+    path: "/students/list",
   },
   {
     title: "Programs",

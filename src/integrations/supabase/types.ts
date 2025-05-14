@@ -383,6 +383,110 @@ export type Database = {
         }
         Relationships: []
       }
+      session_attendees: {
+        Row: {
+          attendance_confirmed_at: string | null
+          course_instance_id: number
+          created_at: string
+          id: string
+          reschedule_preferred_dates: string | null
+          reschedule_request: string | null
+          special_requests: string | null
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          attendance_confirmed_at?: string | null
+          course_instance_id: number
+          created_at?: string
+          id?: string
+          reschedule_preferred_dates?: string | null
+          reschedule_request?: string | null
+          special_requests?: string | null
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          attendance_confirmed_at?: string | null
+          course_instance_id?: number
+          created_at?: string
+          id?: string
+          reschedule_preferred_dates?: string | null
+          reschedule_request?: string | null
+          special_requests?: string | null
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_attendees_course_instance_id_fkey"
+            columns: ["course_instance_id"]
+            isOneToOne: false
+            referencedRelation: "course_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_attendees_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          created_at: string
+          email: string
+          employee_number: string | null
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          status: string
+          team_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          employee_number?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          phone?: string | null
+          status?: string
+          team_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          employee_number?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          status?: string
+          team_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams: {
         Row: {
           created_at: string
@@ -675,7 +779,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "superadmin" | "admin" | "staff"
+      app_role: "superadmin" | "admin" | "staff" | "student"
       client_role: "client_admin" | "manager" | "supervisor"
     }
     CompositeTypes: {
@@ -792,7 +896,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["superadmin", "admin", "staff"],
+      app_role: ["superadmin", "admin", "staff", "student"],
       client_role: ["client_admin", "manager", "supervisor"],
     },
   },

@@ -13,6 +13,7 @@ import { Toaster } from "sonner";
 import Auth from "@/pages/Auth";
 import Invitation from "@/pages/Invitation";
 import ResetPassword from "@/pages/ResetPassword";
+import Students from "@/pages/Students";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="/programs" element={<Programs />} />
         <Route path="/events/*" element={<Events />} />
         <Route path="/venues" element={<Venues />} />
+        <Route path="/students/*" element={<Students />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<NotFound />} />
