@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { UserData, Group } from "./types";
+import { UserData } from "./types";
 import { EditUserDialog } from "./users/EditUserDialog";
 import { UserRow } from "./users/UserRow";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -119,14 +119,14 @@ export function UsersTable({ users, clientId, isLoading }: UsersTableProps) {
   }
 
   return (
-    <div className="border rounded-md overflow-hidden">
+    <div className="border rounded-md">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>User</TableHead>
-            <TableHead>Access Level</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="w-[50%]">User</TableHead>
+            <TableHead className="w-[20%]">Access Level</TableHead>
+            <TableHead className="w-[15%]">Status</TableHead>
+            <TableHead className="w-[15%] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
