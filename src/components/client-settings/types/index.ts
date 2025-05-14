@@ -1,9 +1,11 @@
 
+export type ClientRole = 'client_admin' | 'manager' | 'supervisor';
+
 export interface UserData {
   id: string;
   user_id: string | null;
   client_id: string;
-  role: 'client_admin' | 'manager' | 'supervisor' | string;
+  role: ClientRole;
   status: string;
   created_at: string;
   updated_at: string;

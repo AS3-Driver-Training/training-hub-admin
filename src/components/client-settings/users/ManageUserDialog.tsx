@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,7 +24,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { UserData, Group, Team } from "../types";
+import { UserData, Group, Team, ClientRole } from "../types";
 
 interface ManageUserDialogProps {
   isOpen: boolean;
@@ -40,14 +41,14 @@ export function ManageUserDialog({
   clientId,
   groups = []
 }: ManageUserDialogProps) {
-  const [selectedRole, setSelectedRole] = useState<'client_admin' | 'manager' | 'supervisor'>(user?.role || 'supervisor');
+  const [selectedRole, setSelectedRole] = useState<ClientRole>(user?.role || 'supervisor');
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (user) {
-      setSelectedRole(user.role);
+      setSelectedRole(user.role as ClientRole);
       if (user.groups?.[0]) {
         setSelectedGroup(user.groups[0].id);
         setSelectedTeams(user.teams?.map(t => t.id) || []);
@@ -169,7 +170,10 @@ export function ManageUserDialog({
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label>Role</Label>
-            <Select value={selectedRole} onValueChange={(value: 'client_admin' | 'manager' | 'supervisor') => setSelectedRole(value)}>
+            <Select 
+              value={selectedRole} 
+              onValueChange={(value: ClientRole) => setSelectedRole(value)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

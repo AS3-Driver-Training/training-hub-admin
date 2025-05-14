@@ -2,17 +2,22 @@
 import { toast as sonnerToast } from "sonner";
 
 // Helper function to ensure proper structure of toast calls
-export function toast(content: string | { title: string; description?: string }) {
+export function toast(content: string | { title: string; description?: string; variant?: string }) {
   if (typeof content === 'string') {
     return sonnerToast(content);
   }
   
-  const { title, description } = content;
+  const { title, description, variant } = content;
+  // For destructive variant, use error toast
+  if (variant === 'destructive') {
+    return sonnerToast.error(title, { description });
+  }
+  
   return sonnerToast(title, { description });
 }
 
 // Re-export other toast methods for convenience
-export const success = (content: string | { title: string; description?: string }) => {
+export const success = (content: string | { title: string; description?: string; variant?: string }) => {
   if (typeof content === 'string') {
     return sonnerToast.success(content);
   }
@@ -21,7 +26,7 @@ export const success = (content: string | { title: string; description?: string 
   return sonnerToast.success(title, { description });
 };
 
-export const error = (content: string | { title: string; description?: string }) => {
+export const error = (content: string | { title: string; description?: string; variant?: string }) => {
   if (typeof content === 'string') {
     return sonnerToast.error(content);
   }
@@ -30,7 +35,7 @@ export const error = (content: string | { title: string; description?: string })
   return sonnerToast.error(title, { description });
 };
 
-export const info = (content: string | { title: string; description?: string }) => {
+export const info = (content: string | { title: string; description?: string; variant?: string }) => {
   if (typeof content === 'string') {
     return sonnerToast.info(content);
   }
@@ -39,7 +44,7 @@ export const info = (content: string | { title: string; description?: string }) 
   return sonnerToast.info(title, { description });
 };
 
-export const warning = (content: string | { title: string; description?: string }) => {
+export const warning = (content: string | { title: string; description?: string; variant?: string }) => {
   if (typeof content === 'string') {
     return sonnerToast.warning(content);
   }
