@@ -1,11 +1,11 @@
 
 // Import from sonner instead
-import { toast } from "sonner";
+import { toast as sonnerToast } from "sonner";
 
 // Create a simple hook to ensure consistent usage
 export function useToast() {
-  return { toast };
+  return { toast: sonnerToast };
 }
 
 // Export toast for direct usage
-export { toast };
+export const toast = sonnerToast;

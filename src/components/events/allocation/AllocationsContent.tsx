@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { AllocationForm } from "./AllocationForm";
 import { AllocationsTable } from "./AllocationsTable";
 
@@ -60,8 +60,8 @@ export function AllocationsContent({
   // Save all allocations
   const handleSaveAllocations = () => {
     if (allocations.length === 0 && !isPrivateCourse) {
-      toast({
-        title: "Warning",
+      // Updated toast syntax: use the toast function directly instead of as a React element
+      toast("Warning", {
         description: "There are no seat allocations to save",
       });
       return;
