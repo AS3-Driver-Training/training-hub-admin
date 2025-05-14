@@ -5,8 +5,7 @@ import { Card } from "@/components/ui/card";
 import AddUserDialog from "./AddUserDialog";
 import { UsersTable } from "./UsersTable";
 import { toast } from "sonner";
-import { useState } from "react";
-import { UserData } from "./types";
+import { UserData, ClientRole } from "./types";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface ClientUsersTabProps {
@@ -53,10 +52,10 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           throw userError;
         }
 
-        // Get pending invitations
+        // Get pending invitations - now including the role field
         const { data: invitationsData, error: invitationsError } = await supabase
           .from('invitations')
-          .select('*')
+          .select('id, client_id, email, status, created_at, updated_at, role')
           .eq('client_id', clientId)
           .eq('status', 'pending');
 
@@ -65,6 +64,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           toast.error("Failed to load invitations");
           throw invitationsError;
         }
+
+        console.log("Fetched invitations with roles:", invitationsData);
 
         // Transform user data to match UserData interface
         const transformedUsers: UserData[] = (userData || []).map(user => ({
@@ -85,13 +86,13 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           teams: []
         }));
 
-        // Transform invitations to match UserData interface
+        // Transform invitations to match UserData interface - using the role from the invitation
         const transformedInvitations: UserData[] = (invitationsData || []).map(invitation => ({
           id: invitation.id,
           invitationId: invitation.id, // Store the invitation ID for reference
           user_id: null, // No user ID for pending invitations
           client_id: invitation.client_id,
-          role: 'supervisor', // Default role for invitations since it's not stored in the invitations table
+          role: invitation.role || 'supervisor', // Use the role stored in the invitation
           status: 'pending',
           created_at: invitation.created_at,
           updated_at: invitation.updated_at,

@@ -43,7 +43,7 @@ export function InvitationActions({ user, clientId, onManageUser }: InvitationAc
 
       if (tokenError) throw tokenError;
 
-      // Update existing invitation with new token
+      // Update existing invitation with new token, preserving the role
       const { error: updateError } = await supabase
         .from('invitations')
         .update({
