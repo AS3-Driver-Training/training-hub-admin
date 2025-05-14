@@ -26,7 +26,8 @@ import { Separator } from "@/components/ui/separator";
 import { Save } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { UserData, Group } from "../types";
+import { Badge } from "@/components/ui/badge";
+import { UserData, Group } from "@/components/client-settings/types";
 
 interface EditUserDialogProps {
   isOpen: boolean;
@@ -48,7 +49,7 @@ export function EditUserDialog({
   groups = [],
   initialTab = "basic"
 }: EditUserDialogProps) {
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState<"basic" | "access">(initialTab);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -205,6 +206,11 @@ export function EditUserDialog({
     }
   };
 
+  // Create a typed handler for tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as "basic" | "access");
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
@@ -212,7 +218,7 @@ export function EditUserDialog({
           <DialogTitle>{activeTab === "basic" ? "Edit User" : "Manage Groups & Teams"}</DialogTitle>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="grid grid-cols-2">
             <TabsTrigger value="basic">Basic Information</TabsTrigger>
             <TabsTrigger value="access">Groups & Teams</TabsTrigger>
