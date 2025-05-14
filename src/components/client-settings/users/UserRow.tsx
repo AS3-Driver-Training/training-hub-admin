@@ -41,16 +41,18 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
   };
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
+    <>
       <TableRow className="hover:bg-muted/50">
         <TableCell>
           <div className="flex items-center gap-3">
-            <CollapsibleTrigger className="p-1 hover:bg-muted rounded flex-shrink-0">
-              {isOpen ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
+            <CollapsibleTrigger asChild className="p-1 hover:bg-muted rounded flex-shrink-0">
+              <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
+                {isOpen ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </Button>
             </CollapsibleTrigger>
             <div className="min-w-0">
               <div className="font-medium truncate">
@@ -67,7 +69,7 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
         </TableCell>
         <TableCell>
           <Badge 
-            variant={getStatusVariant(user.status) as "default" | "secondary" | "destructive" | "success" | "warning"}
+            variant={getStatusVariant(user.status)}
             className="capitalize"
           >
             {user.status}
@@ -120,19 +122,21 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
           </DropdownMenu>
         </TableCell>
       </TableRow>
-      <TableRow>
-        <TableCell colSpan={4} className="p-0">
-          <CollapsibleContent>
-            <div className="py-4 px-6 bg-muted/20 border-t">
-              <UserGroupsTeams 
-                user={user} 
-                clientId={clientId} 
-                onManageAccess={() => onManageGroupsTeams(user)}
-              />
-            </div>
-          </CollapsibleContent>
-        </TableCell>
-      </TableRow>
-    </Collapsible>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <TableRow>
+          <TableCell colSpan={4} className="p-0">
+            <CollapsibleContent>
+              <div className="py-4 px-6 bg-muted/20 border-t">
+                <UserGroupsTeams 
+                  user={user} 
+                  clientId={clientId} 
+                  onManageAccess={() => onManageGroupsTeams(user)}
+                />
+              </div>
+            </CollapsibleContent>
+          </TableCell>
+        </TableRow>
+      </Collapsible>
+    </>
   );
 }
