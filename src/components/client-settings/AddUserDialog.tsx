@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
@@ -23,7 +24,6 @@ import { ClientRole, Group } from "./types";
 interface AddUserDialogProps {
   clientId: string;
   clientName: string;
-  groups: { id: string; name: string; teams: any[] }[];
 }
 
 export default function AddUserDialog({
