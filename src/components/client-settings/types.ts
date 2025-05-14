@@ -46,3 +46,4 @@ export interface UserData {
   groups: Group[];
   teams: Team[];
 }
+

@@ -25,10 +25,10 @@ export function RoleSelect({ role, onRoleChange }: RoleSelectProps) {
     <div>
       <Label htmlFor="role">Role</Label>
       <Select value={role} onValueChange={handleRoleChange}>
-        <SelectTrigger className="w-full z-50">
+        <SelectTrigger className="w-full">
           <SelectValue placeholder="Select a role" />
         </SelectTrigger>
-        <SelectContent className="z-[100]">
+        <SelectContent className="z-[9999]">
           <SelectItem value="client_admin">Client Admin</SelectItem>
           <SelectItem value="manager">Manager</SelectItem>
           <SelectItem value="supervisor">Supervisor (View Only)</SelectItem>

@@ -48,10 +48,10 @@ export function TeamSelect({
         onValueChange={handleTeamChange}
         disabled={!selectedGroup || availableTeams.length === 0}
       >
-        <SelectTrigger className="w-full z-50">
+        <SelectTrigger className="w-full">
           <SelectValue placeholder={placeholderText} />
         </SelectTrigger>
-        <SelectContent className="z-[100]">
+        <SelectContent className="z-[9999]">
           <SelectGroup>
             {availableTeams.map((team) => (
               <SelectItem key={team.id} value={team.id}>

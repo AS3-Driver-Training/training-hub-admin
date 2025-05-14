@@ -31,10 +31,10 @@ export function GroupSelect({ groups, selectedGroup, onGroupChange }: GroupSelec
         value={selectedGroup || undefined} 
         onValueChange={handleGroupChange}
       >
-        <SelectTrigger className="w-full z-50">
+        <SelectTrigger className="w-full">
           <SelectValue placeholder="Select a group" />
         </SelectTrigger>
-        <SelectContent className="z-[100]">
+        <SelectContent className="z-[9999]">
           <SelectGroup>
             {groups.map((group) => (
               <SelectItem key={group.id} value={group.id}>
