@@ -81,8 +81,8 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           updated_at: user.updated_at,
           email: user.profiles?.email || '',
           profiles: {
-            first_name: user.profiles?.first_name || '',
-            last_name: user.profiles?.last_name || '',
+            first_name: user.profiles?.first_name || null,
+            last_name: user.profiles?.last_name || null
           },
           // Groups and teams will be populated by UsersTable component
           groups: [],
@@ -92,7 +92,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
         // Transform invitations to match UserData interface
         const transformedInvitations: UserData[] = (invitationsData || []).map(invitation => ({
           id: invitation.id,
-          invitation_id: invitation.id, // Store the invitation ID for reference
+          invitationId: invitation.id, // Store the invitation ID for reference
           user_id: null, // No user ID for pending invitations
           client_id: invitation.client_id,
           role: 'supervisor', // Default role for invitees
@@ -103,7 +103,7 @@ export function ClientUsersTab({ clientId, clientName }: ClientUsersTabProps) {
           is_invitation: true, // Flag to identify this as an invitation
           profiles: {
             first_name: 'Invited',
-            last_name: 'User',
+            last_name: 'User'
           },
           groups: [],
           teams: []

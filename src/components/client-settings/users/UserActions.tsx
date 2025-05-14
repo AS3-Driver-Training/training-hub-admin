@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { useState } from "react";
 import {
@@ -57,7 +58,7 @@ export function UserActions({ user, clientId, onManageUser }: UserActionsProps) 
           status: 'pending',
           expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         })
-        .eq('id', user.invitation_id);
+        .eq('id', user.invitationId);
 
       if (updateError) throw updateError;
 
@@ -90,7 +91,7 @@ export function UserActions({ user, clientId, onManageUser }: UserActionsProps) 
       const { error } = await supabase
         .from('invitations')
         .delete()
-        .eq('id', user.invitation_id);
+        .eq('id', user.invitationId);
 
       if (error) throw error;
 

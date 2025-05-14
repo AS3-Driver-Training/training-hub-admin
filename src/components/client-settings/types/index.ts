@@ -1,16 +1,19 @@
 
 export interface UserData {
   id: string;
+  user_id: string | null;
+  client_id: string;
   role: 'client_admin' | 'manager' | 'supervisor' | string;
   status: string;
-  user_id: string;
-  client_id: string;
   created_at: string;
   updated_at: string;
   email: string;
+  last_login?: string | null;
+  is_invitation?: boolean;
+  invitationId?: string;
   profiles: {
-    first_name: string;
-    last_name: string;
+    first_name: string | null;
+    last_name: string | null;
   };
   groups: Array<Group>;
   teams: Array<Team>;
