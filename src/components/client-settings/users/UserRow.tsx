@@ -41,7 +41,7 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
   };
 
   return (
-    <>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <TableRow className="hover:bg-muted/50">
         <TableCell>
           <div className="flex items-center gap-3">
@@ -122,21 +122,20 @@ export function UserRow({ user, clientId, onEdit, onManageGroupsTeams }: UserRow
           </DropdownMenu>
         </TableCell>
       </TableRow>
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <TableRow>
-          <TableCell colSpan={4} className="p-0">
-            <CollapsibleContent>
-              <div className="py-4 px-6 bg-muted/20 border-t">
-                <UserGroupsTeams 
-                  user={user} 
-                  clientId={clientId} 
-                  onManageAccess={() => onManageGroupsTeams(user)}
-                />
-              </div>
-            </CollapsibleContent>
-          </TableCell>
-        </TableRow>
-      </Collapsible>
-    </>
+      
+      <TableRow>
+        <TableCell colSpan={4} className="p-0">
+          <CollapsibleContent>
+            <div className="py-4 px-6 bg-muted/20 border-t">
+              <UserGroupsTeams 
+                user={user} 
+                clientId={clientId} 
+                onManageAccess={() => onManageGroupsTeams(user)}
+              />
+            </div>
+          </CollapsibleContent>
+        </TableCell>
+      </TableRow>
+    </Collapsible>
   );
 }
