@@ -4,27 +4,25 @@ import { Input } from "@/components/ui/input";
 
 interface EmailInputProps {
   email: string;
-  onEmailChange: (value: string) => void;
+  onEmailChange: (email: string) => void;
+  description?: string;
 }
 
-export function EmailInput({ email, onEmailChange }: EmailInputProps) {
-  console.log("EmailInput rendered with email:", email);
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("Email changed to:", e.target.value);
-    onEmailChange(e.target.value);
-  };
-  
+export function EmailInput({ email, onEmailChange, description }: EmailInputProps) {
   return (
-    <div>
+    <div className="space-y-1">
       <Label htmlFor="email">Email</Label>
       <Input
         id="email"
         type="email"
-        value={email}
-        onChange={handleChange}
         placeholder="user@example.com"
+        value={email}
+        onChange={(e) => onEmailChange(e.target.value)}
+        required
       />
+      {description && (
+        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+      )}
     </div>
   );
 }

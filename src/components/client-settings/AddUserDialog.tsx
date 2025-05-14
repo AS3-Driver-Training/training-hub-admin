@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Mail } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -19,6 +19,7 @@ import { GroupSelect } from "./add-user/GroupSelect";
 import { TeamSelect } from "./add-user/TeamSelect";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Group, Team } from "./types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface AddUserDialogProps {
   clientId: string;
@@ -31,7 +32,26 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"existing" | "invite">("existing");
+  const [clientName, setClientName] = useState<string>("");
   const queryClient = useQueryClient();
+
+  // Fetch client name for invitation emails
+  useEffect(() => {
+    const getClientName = async () => {
+      const { data } = await supabase
+        .from('clients')
+        .select('name')
+        .eq('id', clientId)
+        .single();
+      
+      if (data) {
+        setClientName(data.name);
+      }
+    };
+    
+    getClientName();
+  }, [clientId]);
 
   useEffect(() => {
     if (!isDialogOpen) {
@@ -41,6 +61,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       setSelectedGroup(null);
       setSelectedTeam(null);
       setError(null);
+      setActiveTab("existing");
     }
   }, [isDialogOpen]);
 
@@ -70,13 +91,12 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       }
       
       console.log('Fetched groups:', data);
-      // Ensure we return properly formatted Group objects with all required properties
       return (data || []).map(group => ({
         ...group,
-        client_id: clientId, // Make sure client_id is included
+        client_id: clientId,
         description: group.description || '',
         is_default: group.is_default || false,
-        teams: group.teams || [] // Ensure teams is always an array
+        teams: group.teams || []
       })) as Group[];
     },
   });
@@ -93,8 +113,6 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
   const availableTeams = selectedGroup 
     ? groups.find(g => g.id === selectedGroup)?.teams || []
     : [];
-    
-  console.log("Available teams:", availableTeams);
 
   // Role change handler with proper type
   const handleRoleChange = (newRole: 'client_admin' | 'manager' | 'supervisor') => {
@@ -115,6 +133,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
     setSelectedTeam(teamId);
   };
 
+  // Add existing user mutation
   const addUserMutation = useMutation({
     mutationFn: async ({ email, role, groupId, teamId }: { 
       email: string; 
@@ -123,7 +142,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
       teamId: string | null;
     }) => {
       setError(null);
-      console.log('Adding user with data:', { email, role, groupId, teamId });
+      console.log('Adding existing user with data:', { email, role, groupId, teamId });
       
       try {
         // Check if email exists in the system
@@ -140,7 +159,7 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
         }
 
         if (!userData?.user) {
-          const message = 'User not found. Please make sure the email is correct.';
+          const message = 'User not found. Please make sure the email is correct or use the "Invite" tab to invite a new user.';
           setError(message);
           throw new Error(message);
         }
@@ -201,7 +220,6 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
           console.error('Error creating client user:', insertError);
           let message = insertError.message;
           
-          // Check if it's the superadmin error
           if (message.includes('Superadmin users cannot be added as client users')) {
             message = 'This user has superadmin privileges and cannot be added as a client user';
           } else {
@@ -274,18 +292,91 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
     },
   });
 
+  // Invite new user mutation
+  const inviteUserMutation = useMutation({
+    mutationFn: async ({ email, role, groupId }: {
+      email: string;
+      role: 'client_admin' | 'manager' | 'supervisor';
+      groupId: string | null;
+    }) => {
+      setError(null);
+      console.log('Inviting new user with data:', { email, role, groupId });
+      
+      try {
+        // Generate a new token for the invitation
+        const { data: tokenData, error: tokenError } = await supabase
+          .rpc('generate_invitation_token');
+
+        if (tokenError) {
+          console.error('Error generating token:', tokenError);
+          throw new Error(`Error generating invitation token: ${tokenError.message}`);
+        }
+
+        // Create an invitation record
+        const { data: invitation, error: invitationError } = await supabase
+          .from('invitations')
+          .insert({
+            client_id: clientId,
+            email: email,
+            token: tokenData,
+            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days expiry
+            status: 'pending'
+          })
+          .select()
+          .single();
+
+        if (invitationError) {
+          console.error('Error creating invitation:', invitationError);
+          throw new Error(`Error creating invitation: ${invitationError.message}`);
+        }
+
+        // Send invitation email
+        const emailResponse = await supabase.functions.invoke('send-invitation', {
+          body: {
+            clientName: clientName,
+            email: email,
+            token: tokenData,
+          },
+        });
+
+        if (emailResponse.error) {
+          console.error('Error sending invitation email:', emailResponse.error);
+          throw new Error(`Error sending invitation email: ${emailResponse.error.message}`);
+        }
+
+        return invitation;
+      } catch (error: any) {
+        console.error('Error in invite user mutation:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invitations', clientId] });
+      setIsDialogOpen(false);
+      setEmail("");
+      setRole('supervisor');
+      setSelectedGroup(groups[0]?.id || null);
+      setSelectedTeam(null);
+      setError(null);
+      toast.success("Invitation sent successfully");
+    },
+    onError: (error: Error) => {
+      console.error('Error in invitation mutation:', error);
+      toast.error(error.message);
+    },
+  });
+
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    console.log('Form submitted with:', { email, role, selectedGroup, selectedTeam });
     
-    if (!selectedGroup) {
-      setError("Please select a group");
+    if (!email) {
+      setError("Please enter an email address");
       return;
     }
 
-    if (!email) {
-      setError("Please enter an email address");
+    if (!selectedGroup) {
+      setError("Please select a group");
       return;
     }
 
@@ -301,6 +392,31 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
     }
   };
 
+  const handleInviteUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    
+    if (!email) {
+      setError("Please enter an email address");
+      return;
+    }
+
+    if (!selectedGroup) {
+      setError("Please select a group");
+      return;
+    }
+
+    try {
+      await inviteUserMutation.mutate({
+        email,
+        role,
+        groupId: selectedGroup
+      });
+    } catch (error) {
+      console.error('Error in handleInviteUser:', error);
+    }
+  };
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
@@ -313,32 +429,76 @@ export function AddUserDialog({ clientId }: AddUserDialogProps) {
         <DialogHeader>
           <DialogTitle>Add User</DialogTitle>
           <DialogDescription>
-            Add a user to this client. The user must already have an account in the system.
+            Add an existing user or invite a new user to this client.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleAddUser} className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          <EmailInput email={email} onEmailChange={setEmail} />
-          <RoleSelect role={role} onRoleChange={handleRoleChange} />
-          <GroupSelect 
-            groups={groups} 
-            selectedGroup={selectedGroup} 
-            onGroupChange={handleGroupChange} 
-          />
-          <TeamSelect
-            selectedGroup={selectedGroup}
-            selectedTeam={selectedTeam}
-            onTeamChange={handleTeamChange}
-            availableTeams={availableTeams}
-          />
-          <Button type="submit" className="w-full" disabled={addUserMutation.isPending}>
-            {addUserMutation.isPending ? 'Adding...' : 'Add User'}
-          </Button>
-        </form>
+        
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "existing" | "invite")}>
+          <TabsList className="grid grid-cols-2 mb-4">
+            <TabsTrigger value="existing">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add Existing User
+            </TabsTrigger>
+            <TabsTrigger value="invite">
+              <Mail className="h-4 w-4 mr-2" />
+              Invite New User
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="existing">
+            <form onSubmit={handleAddUser} className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              <EmailInput 
+                email={email} 
+                onEmailChange={setEmail} 
+                description="Enter the email of an existing user" 
+              />
+              <RoleSelect role={role} onRoleChange={handleRoleChange} />
+              <GroupSelect 
+                groups={groups} 
+                selectedGroup={selectedGroup} 
+                onGroupChange={handleGroupChange} 
+              />
+              <TeamSelect
+                selectedGroup={selectedGroup}
+                selectedTeam={selectedTeam}
+                onTeamChange={handleTeamChange}
+                availableTeams={availableTeams}
+              />
+              <Button type="submit" className="w-full" disabled={addUserMutation.isPending}>
+                {addUserMutation.isPending ? 'Adding...' : 'Add Existing User'}
+              </Button>
+            </form>
+          </TabsContent>
+          
+          <TabsContent value="invite">
+            <form onSubmit={handleInviteUser} className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              <EmailInput 
+                email={email} 
+                onEmailChange={setEmail} 
+                description="Enter the email to send an invitation" 
+              />
+              <RoleSelect role={role} onRoleChange={handleRoleChange} />
+              <GroupSelect 
+                groups={groups} 
+                selectedGroup={selectedGroup} 
+                onGroupChange={handleGroupChange} 
+              />
+              <Button type="submit" className="w-full" disabled={inviteUserMutation.isPending}>
+                {inviteUserMutation.isPending ? 'Sending Invitation...' : 'Send Invitation'}
+              </Button>
+            </form>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
