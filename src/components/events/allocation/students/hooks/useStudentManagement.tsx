@@ -73,7 +73,7 @@ export function useStudentManagement(courseInstanceId: number, clientId: string)
         
         if (error) throw error;
         
-        // Filter to just get enrolled students or students from this client
+        // Mark students as enrolled if their ID is in the enrolledStudentIds array
         let formattedStudents = (data || []).map(student => ({
           ...student,
           enrolled: enrolledStudentIds.includes(student.id),

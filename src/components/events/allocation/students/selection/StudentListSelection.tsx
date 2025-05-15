@@ -53,6 +53,7 @@ export function StudentListSelection({
   const [selectedGroupId, setSelectedGroupId] = useState<string>("all");
   const [selectedTeamId, setSelectedTeamId] = useState<string>("all");
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   // Count for already enrolled students
   const { data: enrolledCount = 0, isLoading: isLoadingEnrolled } = useQuery({
@@ -99,6 +100,16 @@ export function StudentListSelection({
       return data || [];
     },
     enabled: !!selectedClientId,
+    onSuccess: (data) => {
+      // Only automatically select default group on initial load
+      if (!initialLoadComplete && selectedGroupId === "all" && data.length > 0) {
+        const defaultGroup = data.find(g => g.is_default);
+        if (defaultGroup) {
+          setSelectedGroupId(defaultGroup.id);
+        }
+        setInitialLoadComplete(true);
+      }
+    }
   });
 
   // Fetch teams based on selected group
@@ -118,6 +129,13 @@ export function StudentListSelection({
     },
     enabled: !!selectedGroupId && selectedGroupId !== "all",
   });
+
+  // Only reset team selection when group changes
+  useEffect(() => {
+    if (selectedGroupId === "all" || groups.length === 0) {
+      setSelectedTeamId("all");
+    }
+  }, [selectedGroupId, groups.length]);
 
   // Fetch students with filtering options
   const { data: students = [], isLoading: isLoadingStudents } = useQuery({
@@ -183,24 +201,6 @@ export function StudentListSelection({
     },
     enabled: !!selectedClientId || isOpenEnrollment,
   });
-
-  // Only auto-select default group when initializing
-  useEffect(() => {
-    if (groups.length > 0 && selectedGroupId === "all" && !teams.length) {
-      // Try to find default group first, but ONLY on initial load when no team is selected
-      const defaultGroup = groups.find(g => g.is_default);
-      if (defaultGroup) {
-        setSelectedGroupId(defaultGroup.id);
-      }
-    }
-  }, [groups, selectedGroupId, teams.length]);
-
-  // Reset team selection when group changes
-  useEffect(() => {
-    if (selectedGroupId === "all" || groups.length === 0) {
-      setSelectedTeamId("all");
-    }
-  }, [selectedGroupId, groups.length]);
 
   // Toggle student selection
   const toggleStudentSelection = (studentId: string) => {
