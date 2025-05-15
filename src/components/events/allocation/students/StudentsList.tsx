@@ -1,14 +1,16 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, X, Users } from "lucide-react";
-import { StudentForm } from "./StudentForm";
 import { StudentTable } from "./StudentTable";
 import { EmptyState } from "./EmptyState";
 import { useStudentManagement } from "./hooks/useStudentManagement";
 import { StudentFormValues } from "./types";
+import { EnhancedStudentSelection } from "./EnhancedStudentSelection";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface StudentsListProps {
   clientId: string;
@@ -26,6 +28,25 @@ export function StudentsList({
   courseInstanceId
 }: StudentsListProps) {
   const [showForm, setShowForm] = useState(false);
+  
+  // Fetch course information to determine if it's open enrollment
+  const { data: courseInstance, isLoading: isLoadingCourse } = useQuery({
+    queryKey: ['courseInstance', courseInstanceId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('course_instances')
+        .select('is_open_enrollment, start_date, end_date')
+        .eq('id', courseInstanceId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+  
+  // Determine if course is in the past (completed)
+  const isCompleted = courseInstance && new Date(courseInstance.end_date || courseInstance.start_date) < new Date();
+  const isOpenEnrollment = courseInstance?.is_open_enrollment || false;
   
   const {
     students,
@@ -51,7 +72,7 @@ export function StudentsList({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">
-            Manage Students - {clientName}
+            {isCompleted ? "View Students" : "Manage Students"} - {clientName}
           </DialogTitle>
           <Button
             variant="ghost"
@@ -73,17 +94,17 @@ export function StudentsList({
               </span>
             </div>
             
-            {!showForm && students.length > 0 && (
+            {!showForm && students.length > 0 && !isCompleted && (
               <Button 
                 onClick={() => setShowForm(true)}
                 disabled={availableSeats <= 0}
               >
-                Add New Student
+                Add Students
               </Button>
             )}
           </div>
           
-          {availableSeats <= 0 && (
+          {availableSeats <= 0 && !isCompleted && (
             <Alert className="mb-4 bg-amber-50 text-amber-800 border-amber-200">
               <AlertCircle className="h-4 w-4 text-amber-600" />
               <AlertDescription className="font-medium text-amber-800">
@@ -92,17 +113,29 @@ export function StudentsList({
             </Alert>
           )}
           
-          {isLoading ? (
+          {isCompleted && (
+            <Alert className="mb-4 bg-blue-50 text-blue-800 border-blue-200">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="font-medium text-blue-800">
+                This course has been completed. Student roster can only be viewed.
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {isLoading || isLoadingCourse ? (
             <div className="flex items-center justify-center h-40">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
             </div>
           ) : (
             <>
-              {showForm && (
-                <StudentForm 
+              {showForm && !isCompleted && (
+                <EnhancedStudentSelection
+                  courseInstanceId={courseInstanceId}
+                  clientId={clientId}
+                  isOpenEnrollment={isOpenEnrollment}
+                  availableSeats={seatsAllocated}
                   onAddStudent={handleAddStudent}
-                  onCancel={() => setShowForm(false)}
-                  availableSeats={availableSeats}
+                  onClose={() => setShowForm(false)}
                 />
               )}
               
@@ -111,13 +144,14 @@ export function StudentsList({
                   students={students}
                   enrolledCount={enrolledCount}
                   maxSeats={seatsAllocated}
-                  onEnrollStudent={enrollStudent}
-                  onUnenrollStudent={unenrollStudent}
+                  onEnrollStudent={isCompleted ? undefined : enrollStudent}
+                  onUnenrollStudent={isCompleted ? undefined : unenrollStudent}
                 />
               ) : (
                 <EmptyState 
-                  onAddNew={() => setShowForm(true)} 
+                  onAddNew={isCompleted ? undefined : () => setShowForm(true)} 
                   availableSeats={availableSeats}
+                  isCompleted={isCompleted}
                 />
               )}
             </>
