@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -82,7 +83,7 @@ export function useStudentManagement(courseInstanceId: number, clientId: string)
         // For open enrollment, only show enrolled students
         if (isOpenEnrollment) {
           formattedStudents = formattedStudents.filter(student => 
-            student.enrolled || student.id in enrolledStudentIds
+            student.enrolled || enrolledStudentIds.includes(student.id)
           );
         }
         

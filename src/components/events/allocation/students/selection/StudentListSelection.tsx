@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,7 +105,7 @@ export function StudentListSelection({
   const { data: teams = [], isLoading: isLoadingTeams } = useQuery({
     queryKey: ['teams', selectedGroupId],
     queryFn: async () => {
-      if (!selectedGroupId) return [];
+      if (!selectedGroupId || selectedGroupId === "all") return [];
       
       const { data, error } = await supabase
         .from('teams')
@@ -146,15 +147,15 @@ export function StudentListSelection({
       
       // Apply team filter if selected
       if (selectedTeamId && selectedTeamId !== "all") {
-        query = query.eq('team_id', selectedTeamId);
+        query = query.eq('teams.id', selectedTeamId);
       } 
       // Apply group filter through teams if selected (and team not selected)
       else if (selectedGroupId && selectedGroupId !== "all") {
-        query = query.eq('teams.group_id', selectedGroupId);
+        query = query.eq('teams.groups.id', selectedGroupId);
       }
       // Apply client filter if selected (and neither team nor group selected)
       else if (selectedClientId && selectedClientId !== "all") {
-        query = query.eq('teams.groups.client_id', selectedClientId);
+        query = query.eq('teams.groups.clients.id', selectedClientId);
       }
       
       // Apply search query if provided
@@ -183,25 +184,23 @@ export function StudentListSelection({
     enabled: !!selectedClientId || isOpenEnrollment,
   });
 
-  // Auto-select first group and team when client is selected
+  // Only auto-select default group when initializing
   useEffect(() => {
-    if (groups.length > 0 && selectedGroupId === "all") {
-      // Try to find default group first
+    if (groups.length > 0 && selectedGroupId === "all" && !teams.length) {
+      // Try to find default group first, but ONLY on initial load when no team is selected
       const defaultGroup = groups.find(g => g.is_default);
-      setSelectedGroupId(defaultGroup ? defaultGroup.id : groups[0].id);
-    } else if (groups.length === 0) {
-      setSelectedGroupId("all");
-      setSelectedTeamId("all");
+      if (defaultGroup) {
+        setSelectedGroupId(defaultGroup.id);
+      }
     }
-  }, [groups, selectedGroupId]);
+  }, [groups, selectedGroupId, teams.length]);
 
+  // Reset team selection when group changes
   useEffect(() => {
-    if (teams.length > 0 && selectedTeamId === "all") {
-      setSelectedTeamId(teams[0].id);
-    } else if (teams.length === 0) {
+    if (selectedGroupId === "all" || groups.length === 0) {
       setSelectedTeamId("all");
     }
-  }, [teams, selectedTeamId]);
+  }, [selectedGroupId, groups.length]);
 
   // Toggle student selection
   const toggleStudentSelection = (studentId: string) => {
@@ -209,10 +208,10 @@ export function StudentListSelection({
       setSelectedStudents(selectedStudents.filter(id => id !== studentId));
     } else {
       // Check if we haven't reached the maximum number of available seats
-      if (selectedStudents.length < availableSeats - enrolledCount) {
+      if (selectedStudents.length < availableSeats) {
         setSelectedStudents([...selectedStudents, studentId]);
       } else {
-        toast.error(`Cannot select more than ${availableSeats - enrolledCount} students`);
+        toast.error(`Cannot select more than ${availableSeats} students`);
       }
     }
   };
@@ -260,7 +259,7 @@ export function StudentListSelection({
       <div className="mb-4">
         <h3 className="text-lg font-medium mb-2">Select Students to Enroll</h3>
         <p className="text-muted-foreground text-sm">
-          Select the students you want to enroll in this course. You can select up to {availableSeats - enrolledCount} students.
+          Select the students you want to enroll in this course. You can select up to {availableSeats} students.
         </p>
       </div>
 
@@ -274,7 +273,6 @@ export function StudentListSelection({
                 <SelectValue placeholder={isLoadingClients ? "Loading..." : "All Clients"} />
               </SelectTrigger>
               <SelectContent>
-                {/* Changed from empty string to "all" for the value */}
                 <SelectItem value="all">All Clients</SelectItem>
                 {clients.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
@@ -294,7 +292,6 @@ export function StudentListSelection({
                 <SelectValue placeholder={isLoadingGroups ? "Loading..." : "All Groups"} />
               </SelectTrigger>
               <SelectContent>
-                {/* Changed from empty string to "all" for the value */}
                 <SelectItem value="all">All Groups</SelectItem>
                 {groups.map((group) => (
                   <SelectItem key={group.id} value={group.id}>
@@ -309,12 +306,15 @@ export function StudentListSelection({
         {selectedGroupId && (
           <div>
             <Label htmlFor="team">Team</Label>
-            <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+            <Select 
+              value={selectedTeamId} 
+              onValueChange={setSelectedTeamId} 
+              disabled={selectedGroupId === "all" || teams.length === 0}
+            >
               <SelectTrigger id="team">
                 <SelectValue placeholder={isLoadingTeams ? "Loading..." : "All Teams"} />
               </SelectTrigger>
               <SelectContent>
-                {/* Changed from empty string to "all" for the value */}
                 <SelectItem value="all">All Teams</SelectItem>
                 {teams.map((team) => (
                   <SelectItem key={team.id} value={team.id}>
@@ -344,7 +344,7 @@ export function StudentListSelection({
       {/* Selection info */}
       <Alert className="bg-blue-50 border-blue-200 text-blue-800">
         <AlertDescription>
-          {selectedStudents.length} of {availableSeats - enrolledCount} available seats selected
+          {selectedStudents.length} of {availableSeats} available seats selected
         </AlertDescription>
       </Alert>
 
@@ -374,7 +374,7 @@ export function StudentListSelection({
                   className="mr-3"
                   disabled={
                     !selectedStudents.includes(student.id) &&
-                    selectedStudents.length >= availableSeats - enrolledCount
+                    selectedStudents.length >= availableSeats
                   }
                 />
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full">
