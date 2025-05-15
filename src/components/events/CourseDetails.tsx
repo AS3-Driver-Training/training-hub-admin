@@ -6,6 +6,7 @@ import { Edit, ArrowLeft, MapPin, Calendar, Users, Building2, Globe, Clock, Chec
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingDisplay } from "./allocation/LoadingDisplay";
 import { ErrorDisplay } from "./allocation/ErrorDisplay";
