@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,8 +49,8 @@ export function StudentListSelection({
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClientId, setSelectedClientId] = useState(clientId);
-  const [selectedGroupId, setSelectedGroupId] = useState<string>("");
-  const [selectedTeamId, setSelectedTeamId] = useState<string>("");
+  const [selectedGroupId, setSelectedGroupId] = useState<string>("all");
+  const [selectedTeamId, setSelectedTeamId] = useState<string>("all");
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 
   // Count for already enrolled students
@@ -116,7 +115,7 @@ export function StudentListSelection({
       if (error) throw error;
       return data || [];
     },
-    enabled: !!selectedGroupId,
+    enabled: !!selectedGroupId && selectedGroupId !== "all",
   });
 
   // Fetch students with filtering options
@@ -146,15 +145,15 @@ export function StudentListSelection({
         .eq('status', 'active');
       
       // Apply team filter if selected
-      if (selectedTeamId) {
+      if (selectedTeamId && selectedTeamId !== "all") {
         query = query.eq('team_id', selectedTeamId);
       } 
       // Apply group filter through teams if selected (and team not selected)
-      else if (selectedGroupId) {
+      else if (selectedGroupId && selectedGroupId !== "all") {
         query = query.eq('teams.group_id', selectedGroupId);
       }
       // Apply client filter if selected (and neither team nor group selected)
-      else if (selectedClientId) {
+      else if (selectedClientId && selectedClientId !== "all") {
         query = query.eq('teams.groups.client_id', selectedClientId);
       }
       
@@ -186,21 +185,21 @@ export function StudentListSelection({
 
   // Auto-select first group and team when client is selected
   useEffect(() => {
-    if (groups.length > 0 && !selectedGroupId) {
+    if (groups.length > 0 && selectedGroupId === "all") {
       // Try to find default group first
       const defaultGroup = groups.find(g => g.is_default);
       setSelectedGroupId(defaultGroup ? defaultGroup.id : groups[0].id);
     } else if (groups.length === 0) {
-      setSelectedGroupId("");
-      setSelectedTeamId("");
+      setSelectedGroupId("all");
+      setSelectedTeamId("all");
     }
   }, [groups, selectedGroupId]);
 
   useEffect(() => {
-    if (teams.length > 0 && !selectedTeamId) {
+    if (teams.length > 0 && selectedTeamId === "all") {
       setSelectedTeamId(teams[0].id);
     } else if (teams.length === 0) {
-      setSelectedTeamId("");
+      setSelectedTeamId("all");
     }
   }, [teams, selectedTeamId]);
 
@@ -275,7 +274,8 @@ export function StudentListSelection({
                 <SelectValue placeholder={isLoadingClients ? "Loading..." : "All Clients"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Clients</SelectItem>
+                {/* Changed from empty string to "all" for the value */}
+                <SelectItem value="all">All Clients</SelectItem>
                 {clients.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
                     {client.name}
@@ -294,7 +294,8 @@ export function StudentListSelection({
                 <SelectValue placeholder={isLoadingGroups ? "Loading..." : "All Groups"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Groups</SelectItem>
+                {/* Changed from empty string to "all" for the value */}
+                <SelectItem value="all">All Groups</SelectItem>
                 {groups.map((group) => (
                   <SelectItem key={group.id} value={group.id}>
                     {group.name} {group.is_default ? "(Default)" : ""}
@@ -313,7 +314,8 @@ export function StudentListSelection({
                 <SelectValue placeholder={isLoadingTeams ? "Loading..." : "All Teams"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Teams</SelectItem>
+                {/* Changed from empty string to "all" for the value */}
+                <SelectItem value="all">All Teams</SelectItem>
                 {teams.map((team) => (
                   <SelectItem key={team.id} value={team.id}>
                     {team.name}

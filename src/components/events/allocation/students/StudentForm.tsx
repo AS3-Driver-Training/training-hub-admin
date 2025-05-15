@@ -57,7 +57,7 @@ export function StudentForm({ onAddStudent, onCancel, availableSeats, isOpenEnro
       email: "",
       phone: "",
       employee_number: "",
-      client_id: clients[0]?.id || "",
+      client_id: clients.length > 0 ? clients[0].id : undefined,
     },
   });
 
@@ -111,7 +111,7 @@ export function StudentForm({ onAddStudent, onCancel, availableSeats, isOpenEnro
                     <Select 
                       value={field.value} 
                       onValueChange={field.onChange}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isLoadingClients || clients.length === 0}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder={isLoadingClients ? "Loading..." : "Select a client"} />
