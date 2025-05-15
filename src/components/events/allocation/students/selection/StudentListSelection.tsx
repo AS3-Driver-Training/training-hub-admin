@@ -96,7 +96,11 @@ export function StudentListSelection({
         .eq('client_id', selectedClientId)
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching groups:', error);
+        throw error;
+      }
+      console.log('Groups loaded:', data);
       return data || [];
     },
     enabled: !!selectedClientId,
@@ -106,8 +110,10 @@ export function StudentListSelection({
   useEffect(() => {
     // Only automatically select default group on initial load
     if (!initialLoadComplete && selectedGroupId === "all" && groups.length > 0) {
+      console.log('Finding default group from:', groups);
       const defaultGroup = groups.find(g => g.is_default);
       if (defaultGroup) {
+        console.log('Setting default group:', defaultGroup.name);
         setSelectedGroupId(defaultGroup.id);
       }
       setInitialLoadComplete(true);
@@ -126,7 +132,11 @@ export function StudentListSelection({
         .eq('group_id', selectedGroupId)
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching teams:', error);
+        throw error;
+      }
+      console.log('Teams loaded:', data);
       return data || [];
     },
     enabled: !!selectedGroupId && selectedGroupId !== "all",
@@ -143,63 +153,95 @@ export function StudentListSelection({
   const { data: students = [], isLoading: isLoadingStudents } = useQuery({
     queryKey: ['filteredStudents', courseInstanceId, selectedClientId, selectedGroupId, selectedTeamId, searchQuery],
     queryFn: async () => {
-      let query = supabase
-        .from('students')
-        .select(`
-          id,
-          first_name,
-          last_name,
-          email,
-          employee_number,
-          status,
-          teams!inner (
-            name,
-            groups!inner (
+      try {
+        console.log('Fetching students with filters:', {
+          courseInstanceId,
+          selectedClientId,
+          selectedGroupId,
+          selectedTeamId,
+          searchQuery
+        });
+
+        let query = supabase
+          .from('students')
+          .select(`
+            id,
+            first_name,
+            last_name,
+            email,
+            employee_number,
+            status,
+            teams (
               name,
-              clients!inner (
+              groups (
                 name,
-                id
+                clients (
+                  name,
+                  id
+                )
               )
             )
-          )
-        `)
-        .eq('status', 'active');
-      
-      // Apply team filter if selected
-      if (selectedTeamId && selectedTeamId !== "all") {
-        query = query.eq('teams.id', selectedTeamId);
-      } 
-      // Apply group filter through teams if selected (and team not selected)
-      else if (selectedGroupId && selectedGroupId !== "all") {
-        query = query.eq('teams.groups.id', selectedGroupId);
+          `)
+          .eq('status', 'active');
+        
+        // Apply team filter if selected
+        if (selectedTeamId && selectedTeamId !== "all") {
+          query = query.eq('teams.id', selectedTeamId);
+        } 
+        // Apply group filter through teams if selected (and team not selected)
+        else if (selectedGroupId && selectedGroupId !== "all") {
+          query = query.eq('teams.groups.id', selectedGroupId);
+        }
+        // Apply client filter if selected (and neither team nor group selected)
+        if (selectedClientId) {
+          if (isOpenEnrollment) {
+            if (selectedClientId !== "all") {
+              query = query.eq('teams.groups.clients.id', selectedClientId);
+            }
+          } else {
+            // For private courses, always filter by the given client ID
+            query = query.eq('teams.groups.clients.id', selectedClientId);
+          }
+        }
+        
+        // Apply search query if provided
+        if (searchQuery.trim()) {
+          query = query.or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+        }
+        
+        const { data, error } = await query.order('last_name');
+        
+        if (error) {
+          console.error('Error in student query:', error);
+          throw error;
+        }
+
+        console.log('Students raw data:', data);
+        
+        // Fetch already enrolled students to exclude them
+        const { data: enrolled, error: enrolledError } = await supabase
+          .from('session_attendees')
+          .select('student_id')
+          .eq('course_instance_id', courseInstanceId)
+          .neq('status', 'cancelled');
+        
+        if (enrolledError) {
+          console.error('Error fetching enrolled students:', enrolledError);
+          throw enrolledError;
+        }
+        
+        const enrolledIds = new Set((enrolled || []).map(e => e.student_id));
+        console.log('Already enrolled student IDs:', Array.from(enrolledIds));
+        
+        // Filter out already enrolled students
+        const filteredStudents = (data || []).filter(student => !enrolledIds.has(student.id));
+        console.log(`Found ${filteredStudents.length} available students after filtering enrolled ones`);
+        
+        return filteredStudents;
+      } catch (error) {
+        console.error('Error in filteredStudents query:', error);
+        throw error;
       }
-      // Apply client filter if selected (and neither team nor group selected)
-      else if (selectedClientId && selectedClientId !== "all") {
-        query = query.eq('teams.groups.clients.id', selectedClientId);
-      }
-      
-      // Apply search query if provided
-      if (searchQuery.trim()) {
-        query = query.or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
-      }
-      
-      const { data, error } = await query.order('last_name');
-      
-      if (error) throw error;
-      
-      // Fetch already enrolled students to exclude them
-      const { data: enrolled, error: enrolledError } = await supabase
-        .from('session_attendees')
-        .select('student_id')
-        .eq('course_instance_id', courseInstanceId)
-        .neq('status', 'cancelled');
-      
-      if (enrolledError) throw enrolledError;
-      
-      const enrolledIds = new Set((enrolled || []).map(e => e.student_id));
-      
-      // Filter out already enrolled students
-      return (data || []).filter(student => !enrolledIds.has(student.id));
     },
     enabled: !!selectedClientId || isOpenEnrollment,
   });
@@ -289,7 +331,14 @@ export function StudentListSelection({
         {selectedClientId && (
           <div>
             <Label htmlFor="group">Group</Label>
-            <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+            <Select value={selectedGroupId} onValueChange={(value) => {
+              console.log('Group selection changed to:', value);
+              setSelectedGroupId(value);
+              if (value === "all") {
+                // User explicitly selected "All Groups", respect that choice
+                console.log('User selected All Groups explicitly');
+              }
+            }}>
               <SelectTrigger id="group">
                 <SelectValue placeholder={isLoadingGroups ? "Loading..." : "All Groups"} />
               </SelectTrigger>
@@ -310,7 +359,10 @@ export function StudentListSelection({
             <Label htmlFor="team">Team</Label>
             <Select 
               value={selectedTeamId} 
-              onValueChange={setSelectedTeamId} 
+              onValueChange={(value) => {
+                console.log('Team selection changed to:', value);
+                setSelectedTeamId(value);
+              }} 
               disabled={selectedGroupId === "all" || teams.length === 0}
             >
               <SelectTrigger id="team">
@@ -359,6 +411,7 @@ export function StudentListSelection({
         ) : students.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6">
             <p className="text-muted-foreground">No students found for the selected filters</p>
+            <p className="text-sm text-muted-foreground mt-2">Try changing your filter criteria</p>
           </div>
         ) : (
           <div className="divide-y">

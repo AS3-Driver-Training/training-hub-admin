@@ -33,6 +33,7 @@ export function useStudentManagement(courseInstanceId: number, clientId: string)
     queryFn: async () => {
       try {
         setIsLoading(true);
+        console.log('Loading students for client:', clientId, 'course:', courseInstanceId);
         
         // First, check if there are already enrolled students
         const { data: attendees, error: attendeesError } = await supabase
@@ -44,12 +45,17 @@ export function useStudentManagement(courseInstanceId: number, clientId: string)
           `)
           .eq('course_instance_id', courseInstanceId);
           
-        if (attendeesError) throw attendeesError;
+        if (attendeesError) {
+          console.error('Error fetching attendees:', attendeesError);
+          throw attendeesError;
+        }
         
         // Get student IDs that are already enrolled
         const enrolledStudentIds = attendees?.filter(a => a.status !== 'cancelled')
           .map(a => a.student_id) || [];
-        
+          
+        console.log('Enrolled student IDs:', enrolledStudentIds);
+
         // For open enrollment, we may have students from different clients
         // For private courses, only fetch students from this client
         let query = supabase
@@ -61,17 +67,37 @@ export function useStudentManagement(courseInstanceId: number, clientId: string)
             email,
             phone,
             employee_number,
-            status
+            status,
+            teams (
+              name,
+              id,
+              groups (
+                name, 
+                id,
+                clients (
+                  name,
+                  id
+                )
+              )
+            )
           `);
-          
+
         if (!isOpenEnrollment) {
-          // For private courses, only show students from the specific client's team
-          query = query.eq('team_id', clientId);
+          // For private courses, only show students from the specific client
+          query = query.eq('teams.groups.clients.id', clientId);
         }
 
+        // Always filter for active students
+        query = query.eq('status', 'active');
+        
         const { data, error } = await query.order('last_name');
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching students:', error);
+          throw error;
+        }
+
+        console.log('Raw students data:', data);
         
         // Mark students as enrolled if their ID is in the enrolledStudentIds array
         let formattedStudents = (data || []).map(student => ({
@@ -79,8 +105,10 @@ export function useStudentManagement(courseInstanceId: number, clientId: string)
           enrolled: enrolledStudentIds.includes(student.id),
         }));
 
-        // For private courses, show all client students
+        console.log(`Found ${formattedStudents.length} students before enrollment filtering`);
+
         // For open enrollment, only show enrolled students
+        // For private courses, show all client students
         if (isOpenEnrollment) {
           formattedStudents = formattedStudents.filter(student => 
             student.enrolled || enrolledStudentIds.includes(student.id)
@@ -89,6 +117,7 @@ export function useStudentManagement(courseInstanceId: number, clientId: string)
         
         // Update enrolled count
         setEnrolledCount(enrolledStudentIds.length);
+        console.log(`Returning ${formattedStudents.length} final students`);
         
         return formattedStudents;
       } catch (error) {
@@ -274,7 +303,7 @@ export function useStudentManagement(courseInstanceId: number, clientId: string)
     onError: (error: any) => {
       console.error('Error adding student:', error);
       
-      if (error.message.includes('already enrolled')) {
+      if (error.message?.includes('already enrolled')) {
         toast.error('Student is already enrolled in this course');
       } else {
         toast.error('Failed to add student: ' + (error.message || 'Unknown error'));
