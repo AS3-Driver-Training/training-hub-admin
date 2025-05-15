@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -62,7 +61,7 @@ export function StudentsList({
   const handleAddStudent = async (studentData: StudentFormValues) => {
     await addStudent({
       ...studentData,
-      status: 'active',
+      // status will now be handled in useStudentManagement instead
     });
     setShowForm(false);
   };

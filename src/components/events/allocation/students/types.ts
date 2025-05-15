@@ -6,6 +6,7 @@ export interface StudentFormValues {
   phone?: string;
   employee_number?: string;
   client_id?: string;
+  status?: string; // Add the status field as optional
 }
 
 export interface Student {

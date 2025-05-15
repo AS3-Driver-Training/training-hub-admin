@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -219,7 +218,7 @@ export function useStudentManagement(courseInstanceId: number, clientId: string)
             phone: newStudent.phone || null,
             employee_number: newStudent.employee_number || null,
             team_id: targetTeamId,
-            status: newStudent.status || 'active'
+            status: 'active' // Default status for new students
           })
           .select('id')
           .single();
