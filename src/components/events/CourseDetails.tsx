@@ -2,7 +2,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Edit, ArrowLeft, MapPin, Calendar, Users, Building2, Globe } from "lucide-react";
+import { Edit, ArrowLeft, MapPin, Calendar, Users, Building2, Globe, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +62,10 @@ export function CourseDetails() {
     ? `${format(startDate, "MMMM d, yyyy")} - ${format(endDate, "MMMM d, yyyy")}` 
     : format(startDate, "MMMM d, yyyy");
 
+  // Determine if the course is completed (end date is in the past)
+  const isCompleted = endDate ? endDate < new Date() : startDate < new Date();
+  const status = isCompleted ? "completed" : "scheduled";
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -71,10 +75,13 @@ export function CourseDetails() {
         </Button>
         <h1 className="text-2xl font-bold">{courseInstance.programs?.name}</h1>
         <div className="flex-1"></div>
-        <Button onClick={() => navigate(`/events/${courseInstance.id}/edit`)}>
-          <Edit className="mr-2 h-4 w-4" />
-          Edit
-        </Button>
+        
+        {!isCompleted && (
+          <Button onClick={() => navigate(`/events/${courseInstance.id}/edit`)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </Button>
+        )}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -93,9 +100,17 @@ export function CourseDetails() {
                 <div className="space-y-1">
                   <div className="text-sm text-muted-foreground">Status</div>
                   <div>
-                    <Badge variant={new Date(courseInstance.start_date) > new Date() ? "outline" : "secondary"}>
-                      {new Date(courseInstance.start_date) > new Date() ? "Scheduled" : "Completed"}
-                    </Badge>
+                    {isCompleted ? (
+                      <Badge variant="secondary" className="bg-gray-200">
+                        <CheckCircle className="h-3 w-3 mr-1 text-green-600" /> 
+                        Completed
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary">
+                        <Clock className="h-3 w-3 mr-1" /> 
+                        Scheduled
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 
@@ -169,14 +184,22 @@ export function CourseDetails() {
                 <Users className="mr-2 h-4 w-4" />
                 Manage Seat Allocations
               </Button>
-              <Button 
-                className="w-full justify-start" 
-                variant="outline"
-                onClick={() => navigate(`/events/${courseInstance.id}/edit`)}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Course
-              </Button>
+              
+              {isCompleted ? (
+                <Alert className="bg-amber-50 border-amber-200 text-amber-800">
+                  <AlertCircle className="h-4 w-4 text-amber-600 mr-2" />
+                  <p className="text-sm">This course has been completed and cannot be edited.</p>
+                </Alert>
+              ) : (
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => navigate(`/events/${courseInstance.id}/edit`)}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Course
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>

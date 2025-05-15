@@ -15,7 +15,7 @@ interface StudentsListProps {
   clientName: string;
   seatsAllocated: number;
   onClose: () => void;
-  courseInstanceId?: number;
+  courseInstanceId: number;
 }
 
 export function StudentsList({ 
@@ -23,7 +23,7 @@ export function StudentsList({
   clientName, 
   seatsAllocated, 
   onClose,
-  courseInstanceId = 0 // Use 0 as default if not provided
+  courseInstanceId
 }: StudentsListProps) {
   const [showForm, setShowForm] = useState(false);
   

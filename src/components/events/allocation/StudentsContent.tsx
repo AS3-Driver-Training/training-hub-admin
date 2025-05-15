@@ -26,6 +26,10 @@ export function StudentsContent({ courseInstance, maxStudents }: StudentsContent
   const clientName = courseInstance?.host_client?.name || 'Unknown Client';
   const allocatedSeats = courseInstance?.private_seats_allocated || 0;
   
+  // Determine if course is in the past (completed)
+  const isCompleted = courseInstance && new Date(courseInstance.end_date || courseInstance.start_date) < new Date();
+  const buttonLabel = isCompleted ? "View Students" : "Manage Students";
+  
   return (
     <Card className="border shadow-sm mb-8">
       <CardHeader className="border-b bg-slate-50">
@@ -33,17 +37,20 @@ export function StudentsContent({ courseInstance, maxStudents }: StudentsContent
           <div>
             <CardTitle className="text-xl">Students Management</CardTitle>
             <CardDescription>
-              Manage students for this private course for {clientName}
+              {isCompleted 
+                ? `View students who attended this completed course for ${clientName}`
+                : `Manage students for this private course for ${clientName}`
+              }
             </CardDescription>
           </div>
           
           <Button 
             onClick={() => setShowStudentsList(true)}
             size="sm"
-            className="bg-rose-600 hover:bg-rose-700 text-white"
+            className={`${isCompleted ? 'bg-blue-600 hover:bg-blue-700' : 'bg-rose-600 hover:bg-rose-700'} text-white`}
           >
             <Plus className="h-4 w-4 mr-2" />
-            Manage Students
+            {buttonLabel}
           </Button>
         </div>
       </CardHeader>
@@ -63,8 +70,9 @@ export function StudentsContent({ courseInstance, maxStudents }: StudentsContent
             <Button 
               onClick={() => setShowStudentsList(true)}
               className="mt-2"
+              disabled={isCompleted}
             >
-              Add Students
+              {isCompleted ? "View Students" : "Add Students"}
             </Button>
           </div>
         ) : (
@@ -103,6 +111,7 @@ export function StudentsContent({ courseInstance, maxStudents }: StudentsContent
             clientName={clientName}
             seatsAllocated={allocatedSeats}
             onClose={() => setShowStudentsList(false)}
+            courseInstanceId={courseInstance?.id}
           />
         )}
 
