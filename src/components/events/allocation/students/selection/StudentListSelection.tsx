@@ -100,17 +100,19 @@ export function StudentListSelection({
       return data || [];
     },
     enabled: !!selectedClientId,
-    onSuccess: (data) => {
-      // Only automatically select default group on initial load
-      if (!initialLoadComplete && selectedGroupId === "all" && data.length > 0) {
-        const defaultGroup = data.find(g => g.is_default);
-        if (defaultGroup) {
-          setSelectedGroupId(defaultGroup.id);
-        }
-        setInitialLoadComplete(true);
-      }
-    }
   });
+
+  // Handle default group selection separately using useEffect
+  useEffect(() => {
+    // Only automatically select default group on initial load
+    if (!initialLoadComplete && selectedGroupId === "all" && groups.length > 0) {
+      const defaultGroup = groups.find(g => g.is_default);
+      if (defaultGroup) {
+        setSelectedGroupId(defaultGroup.id);
+      }
+      setInitialLoadComplete(true);
+    }
+  }, [groups, selectedGroupId, initialLoadComplete]);
 
   // Fetch teams based on selected group
   const { data: teams = [], isLoading: isLoadingTeams } = useQuery({
