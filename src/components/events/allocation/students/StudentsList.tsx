@@ -71,7 +71,6 @@ export function StudentsList({
   const handleAddStudent = async (studentData: StudentFormValues) => {
     await addStudent({
       ...studentData,
-      // status will now be handled in useStudentManagement instead
     });
     setShowForm(false);
   };
@@ -164,6 +163,7 @@ export function StudentsList({
                   onAddNew={isReadOnly ? undefined : () => setShowForm(true)} 
                   availableSeats={availableSeats}
                   isCompleted={isCompleted}
+                  hasAdminPrivileges={hasAdminPrivileges}
                 />
               )}
             </>

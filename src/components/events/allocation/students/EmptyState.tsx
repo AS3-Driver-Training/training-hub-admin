@@ -6,9 +6,23 @@ interface EmptyStateProps {
   onAddNew?: () => void;
   availableSeats: number;
   isCompleted?: boolean;
+  hasAdminPrivileges?: boolean;
 }
 
-export function EmptyState({ onAddNew, availableSeats, isCompleted = false }: EmptyStateProps) {
+export function EmptyState({ 
+  onAddNew, 
+  availableSeats, 
+  isCompleted = false,
+  hasAdminPrivileges = false
+}: EmptyStateProps) {
+  // Show add button if:
+  // 1. Not completed OR admin with privileges for completed courses
+  // 2. Has callback function
+  // 3. Has available seats
+  const showAddButton = onAddNew && 
+                         availableSeats > 0 && 
+                         (!isCompleted || (isCompleted && hasAdminPrivileges));
+  
   return (
     <div className="text-center py-8 border rounded-md bg-slate-50">
       <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
@@ -19,7 +33,7 @@ export function EmptyState({ onAddNew, availableSeats, isCompleted = false }: Em
           : 'There are no students enrolled in this course yet.'
         }
       </p>
-      {onAddNew && !isCompleted && availableSeats > 0 && (
+      {showAddButton && (
         <Button 
           onClick={onAddNew}
           className="mt-2"
