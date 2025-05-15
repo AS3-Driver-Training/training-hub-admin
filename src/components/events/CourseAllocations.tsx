@@ -32,12 +32,12 @@ export function CourseAllocations() {
 
   // Loading state
   if (isLoading) {
-    return <LoadingDisplay />;
+    return <LoadingDisplay text="Loading course allocations..." />;
   }
 
   // Error state
   if (error) {
-    return <ErrorDisplay error={error} />;
+    return <ErrorDisplay title="Error loading course allocations" error={error} />;
   }
 
   // Check if this is a private course
