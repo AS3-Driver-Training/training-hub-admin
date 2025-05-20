@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Plus, Users, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -28,7 +27,6 @@ export function StudentsContent({ courseInstance, maxStudents }: StudentsContent
   
   // Determine if course is in the past (completed)
   const isCompleted = courseInstance && new Date(courseInstance.end_date || courseInstance.start_date) < new Date();
-  const buttonLabel = isCompleted ? "View Students" : "Manage Students";
   
   return (
     <Card className="border shadow-sm mb-8">
@@ -50,7 +48,7 @@ export function StudentsContent({ courseInstance, maxStudents }: StudentsContent
             variant="default"
           >
             <Users className="h-4 w-4 mr-2" />
-            {buttonLabel}
+            Manage Students
           </Button>
         </div>
       </CardHeader>
