@@ -70,6 +70,12 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
     }
   };
 
+  // Helper function to safely get a substring of ID
+  const getIdDisplayText = (id: string | number): string => {
+    const idString = id.toString();
+    return idString.substring(0, 6);
+  };
+
   return (
     <>
       <div className="border rounded-md overflow-hidden">
@@ -112,7 +118,7 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
                           SKU: {program.sku}
                         </span>
                         <span className="text-muted-foreground">
-                          ID: {program.id.substring(0, 6)}
+                          ID: {getIdDisplayText(program.id)}
                         </span>
                       </div>
                     </div>
