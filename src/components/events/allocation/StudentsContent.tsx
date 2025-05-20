@@ -1,11 +1,15 @@
+
 import { useState } from "react";
-import { Plus, Users, Info } from "lucide-react";
+import { Users, Info, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { StudentsList } from "./StudentsList";
-import { useManageStudents } from "./hooks/useManageStudents";
+import { useStudentManagement } from "./students/hooks/useStudentManagement";
+import { EmptyState } from "./students/EmptyState";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { useProfile } from "@/hooks/useProfile";
 
 interface StudentsContentProps {
   courseInstance: any;
@@ -15,18 +19,25 @@ interface StudentsContentProps {
 export function StudentsContent({ courseInstance, maxStudents }: StudentsContentProps) {
   const navigate = useNavigate();
   const [showStudentsList, setShowStudentsList] = useState(false);
+  const { userRole } = useProfile();
+  
+  // Check if user has admin privileges (superadmin or admin role)
+  const hasAdminPrivileges = userRole === 'superadmin' || userRole === 'admin';
   
   const { 
     students, 
     enrolledCount,
     isLoading
-  } = useManageStudents(courseInstance?.id);
+  } = useStudentManagement(courseInstance?.id, courseInstance?.host_client?.id || '');
   
   const clientName = courseInstance?.host_client?.name || 'Unknown Client';
   const allocatedSeats = courseInstance?.private_seats_allocated || 0;
   
   // Determine if course is in the past (completed)
   const isCompleted = courseInstance && new Date(courseInstance.end_date || courseInstance.start_date) < new Date();
+  
+  // Admin users can edit even completed courses
+  const isReadOnly = isCompleted && !hasAdminPrivileges;
   
   return (
     <Card className="border shadow-sm mb-8">
@@ -59,37 +70,37 @@ export function StudentsContent({ courseInstance, maxStudents }: StudentsContent
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600" />
           </div>
         ) : students.length === 0 ? (
-          <div className="text-center py-8 border rounded-md bg-slate-50 mb-6">
-            <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-            <h3 className="text-base font-medium mb-1">No Students Added</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              There are no students enrolled in this course yet.
-            </p>
-            <Button 
-              onClick={() => setShowStudentsList(true)}
-              className="mt-2"
-              disabled={isCompleted}
-            >
-              {isCompleted ? "View Students" : "Add Students"}
-            </Button>
-          </div>
+          <EmptyState 
+            onAddNew={isReadOnly ? undefined : () => setShowStudentsList(true)} 
+            availableSeats={allocatedSeats - enrolledCount}
+            isCompleted={isCompleted}
+            hasAdminPrivileges={hasAdminPrivileges}
+          />
         ) : (
           <div className="space-y-4">
             <div className="border rounded-md overflow-hidden">
               <div className="bg-slate-50 px-4 py-3 border-b">
                 <h3 className="font-medium">Enrolled Students ({enrolledCount})</h3>
               </div>
-              <div className="p-4">
-                <ul className="divide-y">
-                  {students.filter(s => s.enrolled).map((student) => (
-                    <li key={student.id} className="py-3 flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{student.firstName} {student.lastName}</p>
-                        <p className="text-sm text-muted-foreground">{student.email}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+              <div className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50">
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {students.filter(s => s.enrolled).map((student) => (
+                      <TableRow key={student.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium">
+                          {student.first_name} {student.last_name}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{student.email}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </div>
             
@@ -99,6 +110,19 @@ export function StudentsContent({ courseInstance, maxStudents }: StudentsContent
                 {enrolledCount} of {allocatedSeats} available seats filled.
               </AlertDescription>
             </Alert>
+            
+            {!isReadOnly && (
+              <div className="flex justify-center mt-4">
+                <Button 
+                  onClick={() => setShowStudentsList(true)}
+                  variant="outline"
+                  className="w-full md:w-auto"
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Manage Students
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
