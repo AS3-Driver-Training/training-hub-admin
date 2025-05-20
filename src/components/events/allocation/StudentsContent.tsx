@@ -10,10 +10,12 @@ import { useStudentManagement } from "./students/hooks/useStudentManagement";
 import { EmptyState } from "./students/EmptyState";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { useProfile } from "@/hooks/useProfile";
+
 interface StudentsContentProps {
   courseInstance: any;
   maxStudents: number;
 }
+
 export function StudentsContent({
   courseInstance,
   maxStudents
@@ -43,7 +45,8 @@ export function StudentsContent({
   // Count enrolled students directly from the students array
   const actualEnrolledCount = students.filter(s => s.enrolled).length;
   
-  return <Card className="border shadow-sm mb-8">
+  return (
+    <Card className="border shadow-sm mb-8">
       <CardHeader className="border-b bg-slate-50">
         <div className="flex justify-between items-center">
           <div>
@@ -61,9 +64,19 @@ export function StudentsContent({
       </CardHeader>
       
       <CardContent className="p-6">
-        {isLoading ? <div className="flex items-center justify-center h-40">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-40">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600" />
-          </div> : students.length === 0 ? <EmptyState onAddNew={isReadOnly ? undefined : () => setShowStudentsList(true)} availableSeats={allocatedSeats - actualEnrolledCount} isCompleted={isCompleted} hasAdminPrivileges={hasAdminPrivileges} /> : <div className="space-y-4">
+          </div>
+        ) : students.length === 0 ? (
+          <EmptyState 
+            onAddNew={isReadOnly ? undefined : () => setShowStudentsList(true)} 
+            availableSeats={allocatedSeats - actualEnrolledCount} 
+            isCompleted={isCompleted} 
+            hasAdminPrivileges={hasAdminPrivileges} 
+          />
+        ) : (
+          <div className="space-y-4">
             <div className="border rounded-md overflow-hidden">
               <div className="bg-slate-50 px-4 py-3 border-b">
                 <h3 className="font-medium">Enrolled Students ({actualEnrolledCount})</h3>
@@ -77,12 +90,14 @@ export function StudentsContent({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {students.filter(s => s.enrolled).map(student => <TableRow key={student.id} className="hover:bg-slate-50">
+                    {students.filter(s => s.enrolled).map(student => (
+                      <TableRow key={student.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium">
                           {student.first_name} {student.last_name}
                         </TableCell>
                         <TableCell className="text-muted-foreground">{student.email}</TableCell>
-                      </TableRow>)}
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </div>
@@ -94,10 +109,19 @@ export function StudentsContent({
                 {actualEnrolledCount} of {allocatedSeats} available seats filled.
               </AlertDescription>
             </Alert>
-          </div>}
+          </div>
+        )}
 
         {/* Student Management Dialog */}
-        {showStudentsList && <StudentsList clientId={courseInstance?.host_client?.id || ''} clientName={clientName} seatsAllocated={allocatedSeats} onClose={() => setShowStudentsList(false)} courseInstanceId={courseInstance?.id} />}
+        {showStudentsList && (
+          <StudentsList 
+            clientId={courseInstance?.host_client?.id || ''} 
+            clientName={clientName} 
+            seatsAllocated={allocatedSeats} 
+            onClose={() => setShowStudentsList(false)} 
+            courseInstanceId={courseInstance?.id} 
+          />
+        )}
 
         <div className="flex items-center justify-end mt-4 pt-4 border-t">
           <Button onClick={() => navigate("/events")}>
@@ -105,5 +129,6 @@ export function StudentsContent({
           </Button>
         </div>
       </CardContent>
-    </Card>;
+    </Card>
+  );
 }

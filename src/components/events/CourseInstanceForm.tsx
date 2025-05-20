@@ -7,7 +7,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, addDays } from "date-fns";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Calendar, PlusCircle } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Users, PlusCircle, Building } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -21,6 +21,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { CreateProgramDialog } from "@/components/programs/CreateProgramDialog";
 import { CreateVenueDialog } from "@/components/venues/CreateVenueDialog";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 // Define the form schema with Zod
 const formSchema = z.object({
@@ -42,6 +43,7 @@ export function CourseInstanceForm() {
   const queryClient = useQueryClient();
   const isEditMode = Boolean(id);
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
+  const [selectedVenue, setSelectedVenue] = useState<any>(null);
   
   // State for dialogs
   const [isProgramDialogOpen, setProgramDialogOpen] = useState(false);
@@ -106,7 +108,7 @@ export function CourseInstanceForm() {
     },
   });
 
-  // Function to calculate end date (fixed to include start date in duration)
+  // Function to calculate end date based on program duration
   const calculateEndDate = (startDate: Date, durationDays: number) => {
     // Subtract 1 from duration to fix calculation (if duration is 2 days and starts on 22nd, ends on 23rd)
     return addDays(startDate, durationDays - 1);
@@ -208,6 +210,9 @@ export function CourseInstanceForm() {
       const program = programs?.find(p => p.id === courseInstance.program_id);
       setSelectedProgram(program);
       
+      const venue = venues?.find(v => v.id === courseInstance.venue_id);
+      setSelectedVenue(venue);
+      
       form.reset({
         programId: courseInstance.program_id.toString(),
         venueId: courseInstance.venue_id.toString(),
@@ -217,7 +222,7 @@ export function CourseInstanceForm() {
         privateSeatsAllocated: courseInstance.private_seats_allocated || undefined,
       });
     }
-  }, [isEditMode, courseInstance, courseInstanceLoading, programs, form]);
+  }, [isEditMode, courseInstance, courseInstanceLoading, programs, venues, form]);
 
   // Handle program selection
   const handleProgramChange = (value: string) => {
@@ -227,6 +232,22 @@ export function CourseInstanceForm() {
     // Update private seats if in non-open enrollment mode
     if (!form.getValues("isOpenEnrollment") && program) {
       form.setValue("privateSeatsAllocated", program.min_students || 0);
+    }
+  };
+  
+  // Handle venue selection
+  const handleVenueChange = (value: string) => {
+    const venue = venues?.find(v => v.id.toString() === value);
+    setSelectedVenue(venue);
+  };
+
+  // Get level badge color for display
+  const getLevelBadgeColor = (level: string): string => {
+    switch(level) {
+      case "Basic": return "bg-blue-100 text-blue-800";
+      case "Intermediate": return "bg-purple-100 text-purple-800";
+      case "Advanced": return "bg-orange-100 text-orange-800";
+      default: return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -380,7 +401,12 @@ export function CourseInstanceForm() {
                               <SelectContent>
                                 {programs?.map((program) => (
                                   <SelectItem key={program.id} value={program.id.toString()}>
-                                    {program.name} ({program.min_students}-{program.max_students} students)
+                                    <div className="flex flex-col">
+                                      <span>{program.name}</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        {program.min_students}-{program.max_students} students | {program.duration_days} day(s)
+                                      </span>
+                                    </div>
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -388,15 +414,45 @@ export function CourseInstanceForm() {
                           </div>
                         </div>
                         {selectedProgram && (
-                          <div className="mt-3 grid grid-cols-2 gap-4">
-                            <div className="bg-slate-50 p-3 rounded-md flex flex-col">
-                              <span className="text-sm text-slate-500">Duration</span>
-                              <span className="font-medium">{selectedProgram.duration_days} day(s)</span>
+                          <div className="mt-4 p-4 border rounded-lg bg-slate-50/80">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <h4 className="font-semibold">{selectedProgram.name}</h4>
+                              <Badge 
+                                variant="secondary" 
+                                className={getLevelBadgeColor(selectedProgram.lvl)}
+                              >
+                                {selectedProgram.lvl}
+                              </Badge>
                             </div>
-                            <div className="bg-slate-50 p-3 rounded-md flex flex-col">
-                              <span className="text-sm text-slate-500">Capacity</span>
-                              <span className="font-medium">{selectedProgram.min_students}-{selectedProgram.max_students} students</span>
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+                              <div className="bg-white p-3 rounded-md border shadow-sm">
+                                <div className="text-xs text-muted-foreground">Duration</div>
+                                <div className="font-medium flex items-center">
+                                  <Calendar className="h-3.5 w-3.5 mr-1.5 text-primary" />
+                                  {selectedProgram.duration_days} day(s)
+                                </div>
+                              </div>
+                              <div className="bg-white p-3 rounded-md border shadow-sm">
+                                <div className="text-xs text-muted-foreground">Capacity</div>
+                                <div className="font-medium flex items-center">
+                                  <Users className="h-3.5 w-3.5 mr-1.5 text-primary" />
+                                  {selectedProgram.min_students}-{selectedProgram.max_students} students
+                                </div>
+                              </div>
+                              <div className="bg-white p-3 rounded-md border shadow-sm">
+                                <div className="text-xs text-muted-foreground">Program Price</div>
+                                <div className="font-medium">
+                                  ${selectedProgram.price}
+                                </div>
+                              </div>
                             </div>
+                            
+                            {selectedProgram.description && (
+                              <div className="mt-3 text-sm text-muted-foreground">
+                                {selectedProgram.description}
+                              </div>
+                            )}
                           </div>
                         )}
                         <FormMessage />
@@ -431,7 +487,10 @@ export function CourseInstanceForm() {
                       <FormItem>
                         <FormLabel className="text-base font-medium">Location</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            handleVenueChange(value);
+                          }}
                           value={field.value}
                         >
                           <FormControl>
@@ -442,14 +501,32 @@ export function CourseInstanceForm() {
                           <SelectContent>
                             {venues?.map((venue) => (
                               <SelectItem key={venue.id} value={venue.id.toString()}>
-                                {venue.name} - {venue.region}
+                                <div className="flex flex-col">
+                                  <span>{venue.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {venue.region}
+                                  </span>
+                                </div>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <FormDescription className="text-muted-foreground text-xs">
-                          Select the location where the course will be held
-                        </FormDescription>
+                        
+                        {selectedVenue && (
+                          <div className="mt-4 p-4 border rounded-lg bg-slate-50/80">
+                            <div className="font-semibold mb-2">{selectedVenue.name}</div>
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center text-sm">
+                                <MapPin className="h-3.5 w-3.5 mr-1.5 text-primary" />
+                                <span>{selectedVenue.address || 'Address not provided'}</span>
+                              </div>
+                              <div className="flex items-center text-sm">
+                                <Building className="h-3.5 w-3.5 mr-1.5 text-primary" />
+                                <span>Region: {selectedVenue.region || 'Not specified'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
@@ -460,7 +537,7 @@ export function CourseInstanceForm() {
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Start Date Selection */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Date</h3>
+                    <h3 className="text-lg font-medium">Schedule</h3>
                     <Separator className="my-2" />
                     
                     <FormField
@@ -468,7 +545,7 @@ export function CourseInstanceForm() {
                       name="startDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Start Date</FormLabel>
+                          <FormLabel>Course Dates</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
@@ -476,10 +553,13 @@ export function CourseInstanceForm() {
                                   variant={"outline"}
                                   className="h-10 w-full pl-3 text-left font-normal flex justify-between items-center"
                                 >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
+                                  {field.value && selectedProgram ? (
+                                    <span>
+                                      {format(field.value, "MMM d, yyyy")} - {format(calculateEndDate(field.value, selectedProgram.duration_days || 1), "MMM d, yyyy")}
+                                      <span className="ml-1 text-muted-foreground text-xs">({selectedProgram.duration_days} day{selectedProgram.duration_days !== 1 ? 's' : ''})</span>
+                                    </span>
                                   ) : (
-                                    <span className="text-muted-foreground">Pick a date</span>
+                                    <span className="text-muted-foreground">Select start date</span>
                                   )}
                                   <Calendar className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
@@ -496,11 +576,20 @@ export function CourseInstanceForm() {
                               />
                             </PopoverContent>
                           </Popover>
+                          
                           {selectedProgram && field.value && (
-                            <div className="mt-3 bg-slate-50 p-3 rounded-md">
-                              <span className="text-sm text-slate-500">End Date</span>
-                              <div className="font-medium">
-                                {format(calculateEndDate(field.value, selectedProgram.duration_days || 1), "PPP")}
+                            <div className="mt-3 bg-white p-3 rounded-md border shadow-sm">
+                              <div className="flex items-start space-x-2">
+                                <div className="flex-1">
+                                  <div className="text-xs font-medium">Start Date</div>
+                                  <div className="font-medium">{format(field.value, "EEEE, MMMM d, yyyy")}</div>
+                                </div>
+                                <div className="flex-1">
+                                  <div className="text-xs font-medium">End Date</div>
+                                  <div className="font-medium">
+                                    {format(calculateEndDate(field.value, selectedProgram.duration_days || 1), "EEEE, MMMM d, yyyy")}
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
