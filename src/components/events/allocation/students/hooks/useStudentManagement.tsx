@@ -115,8 +115,10 @@ export function useStudentManagement(courseInstanceId: number, clientId: string)
           );
         }
         
-        // Update enrolled count
-        setEnrolledCount(enrolledStudentIds.length);
+        // Update enrolled count - calculate directly from the formatted students
+        const actualEnrolledCount = formattedStudents.filter(s => s.enrolled).length;
+        setEnrolledCount(actualEnrolledCount);
+        console.log(`Enrolled count set to: ${actualEnrolledCount}`);
         console.log(`Returning ${formattedStudents.length} final students`);
         
         return formattedStudents;
@@ -130,6 +132,15 @@ export function useStudentManagement(courseInstanceId: number, clientId: string)
     },
     enabled: !!clientId && !!courseInstanceId,
   });
+
+  // Make sure enrolled count is updated whenever students array changes
+  useEffect(() => {
+    if (students && students.length > 0) {
+      const count = students.filter(s => s.enrolled).length;
+      setEnrolledCount(count);
+      console.log(`Updated enrolled count to ${count} based on students array`);
+    }
+  }, [students]);
   
   // Mutation to enroll a student
   const enrollStudentMutation = useMutation({

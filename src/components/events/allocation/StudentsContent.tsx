@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Users, Info, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -38,6 +39,10 @@ export function StudentsContent({
 
   // Admin users can edit even completed courses
   const isReadOnly = isCompleted && !hasAdminPrivileges;
+  
+  // Count enrolled students directly from the students array
+  const actualEnrolledCount = students.filter(s => s.enrolled).length;
+  
   return <Card className="border shadow-sm mb-8">
       <CardHeader className="border-b bg-slate-50">
         <div className="flex justify-between items-center">
@@ -58,10 +63,10 @@ export function StudentsContent({
       <CardContent className="p-6">
         {isLoading ? <div className="flex items-center justify-center h-40">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600" />
-          </div> : students.length === 0 ? <EmptyState onAddNew={isReadOnly ? undefined : () => setShowStudentsList(true)} availableSeats={allocatedSeats - enrolledCount} isCompleted={isCompleted} hasAdminPrivileges={hasAdminPrivileges} /> : <div className="space-y-4">
+          </div> : students.length === 0 ? <EmptyState onAddNew={isReadOnly ? undefined : () => setShowStudentsList(true)} availableSeats={allocatedSeats - actualEnrolledCount} isCompleted={isCompleted} hasAdminPrivileges={hasAdminPrivileges} /> : <div className="space-y-4">
             <div className="border rounded-md overflow-hidden">
               <div className="bg-slate-50 px-4 py-3 border-b">
-                <h3 className="font-medium">Enrolled Students ({enrolledCount})</h3>
+                <h3 className="font-medium">Enrolled Students ({actualEnrolledCount})</h3>
               </div>
               <div className="p-0">
                 <Table>
@@ -86,13 +91,9 @@ export function StudentsContent({
             <Alert className="mb-4 bg-blue-50 text-blue-800 border-blue-200">
               <Info className="h-4 w-4 text-blue-600" />
               <AlertDescription className="font-medium text-blue-800">
-                {enrolledCount} of {allocatedSeats} available seats filled.
+                {actualEnrolledCount} of {allocatedSeats} available seats filled.
               </AlertDescription>
             </Alert>
-            
-            {!isReadOnly && <div className="flex justify-center mt-4">
-                
-              </div>}
           </div>}
 
         {/* Student Management Dialog */}

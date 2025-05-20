@@ -66,6 +66,14 @@ export function StudentsList({
     addStudent
   } = useStudentManagement(courseInstanceId, clientId);
   
+  // Double-check enrolled count calculation
+  useEffect(() => {
+    if (students && students.length > 0) {
+      console.log("Students array:", students);
+      console.log("Enrolled students:", students.filter(s => s.enrolled).length);
+    }
+  }, [students]);
+  
   const availableSeats = seatsAllocated - enrolledCount;
   
   const handleAddStudent = async (studentData: StudentFormValues) => {
@@ -98,7 +106,7 @@ export function StudentsList({
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-muted-foreground" />
               <span className="font-medium">
-                {enrolledCount} of {seatsAllocated} seats filled
+                {students.filter(s => s.enrolled).length} of {seatsAllocated} seats filled
               </span>
             </div>
             
@@ -153,7 +161,7 @@ export function StudentsList({
               {students.length > 0 ? (
                 <StudentTable 
                   students={students}
-                  enrolledCount={enrolledCount}
+                  enrolledCount={students.filter(s => s.enrolled).length} // Use direct count from filtered students
                   maxSeats={seatsAllocated}
                   onEnrollStudent={isReadOnly ? undefined : enrollStudent}
                   onUnenrollStudent={isReadOnly ? undefined : unenrollStudent}
