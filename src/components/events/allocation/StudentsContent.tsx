@@ -47,9 +47,9 @@ export function StudentsContent({ courseInstance, maxStudents }: StudentsContent
           <Button 
             onClick={() => setShowStudentsList(true)}
             size="sm"
-            className={`${isCompleted ? 'bg-blue-600 hover:bg-blue-700' : 'bg-rose-600 hover:bg-rose-700'} text-white`}
+            variant="default"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Users className="h-4 w-4 mr-2" />
             {buttonLabel}
           </Button>
         </div>
