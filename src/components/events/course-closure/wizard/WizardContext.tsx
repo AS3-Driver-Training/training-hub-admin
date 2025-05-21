@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { CourseClosureData } from "@/types/programs";
 
@@ -80,6 +79,7 @@ export const WizardProvider: React.FC<WizardProviderProps> = ({ children, course
   ];
 
   const updateFormData = (stepData: Partial<CourseClosureData>) => {
+    console.log("Updating form data with:", stepData);
     setFormData(prevData => ({
       ...prevData,
       ...stepData

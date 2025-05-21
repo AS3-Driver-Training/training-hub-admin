@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWizardContext } from "./WizardContext";
@@ -41,7 +40,8 @@ export const WizardContent: React.FC<WizardContentProps> = ({ courseInstance, on
         lane_change: { chord: 120, mo: 20 }
       }
     },
-    notes: formData.notes
+    notes: formData.notes,
+    additional_exercises: formData.additional_exercises || []
   };
 
   // Get help text for the current step
