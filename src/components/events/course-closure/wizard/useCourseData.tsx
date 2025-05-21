@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseClosureData } from "@/types/programs";
 import { apiTransformer } from "@/utils/dataTransformUtils";
-import { toast, success, error as toastError } from "@/utils/toast";
+import { toast } from "sonner";
 import { CourseInstanceWithClient } from "../CourseClosureWizard";
 import { useWizardContext } from "./WizardContext";
 
@@ -255,7 +254,11 @@ export const useCourseData = (courseId?: number) => {
             
             if (vehicleError) {
               console.error("Error inserting vehicles:", vehicleError);
-              toast.warning("Warning: Failed to save vehicle information");
+              // Fix: Use toast directly from sonner instead of toast.warning
+              toast(`Warning: Failed to save vehicle information`, {
+                style: { backgroundColor: "#FEF3C7" },
+                description: "Vehicle information may be incomplete."
+              });
             } else {
               console.log("Successfully saved vehicle data:", vehiclesToInsert);
             }
@@ -274,7 +277,10 @@ export const useCourseData = (courseId?: number) => {
       setCurrentStep('completed');
     },
     onError: (err: any) => {
-      toastError(`Error: ${err.message}`);
+      toast(`Error: ${err.message}`, {
+        style: { backgroundColor: "#FEF3C7" },
+        description: "Please check your input and try again."
+      });
     },
   });
 

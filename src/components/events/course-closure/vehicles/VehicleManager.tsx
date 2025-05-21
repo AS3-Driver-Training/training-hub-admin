@@ -132,7 +132,7 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
       make: vehicle.make,
       model: vehicle.model,
       year: vehicle.year,
-      latAcc: vehicle.latacc
+      latAcc: vehicle.latAcc // Fixed: Changed from latacc to latAcc
     };
     onVehiclesChange(updatedVehicles);
     
