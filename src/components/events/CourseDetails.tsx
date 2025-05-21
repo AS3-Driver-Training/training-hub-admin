@@ -1,8 +1,7 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Edit, ArrowLeft, MapPin, Calendar, Users, Building2, Globe, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { Edit, ArrowLeft, MapPin, Calendar, Users, Building2, Globe, Clock, CheckCircle, AlertCircle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -186,12 +185,7 @@ export function CourseDetails() {
                 Manage Seat Allocations
               </Button>
               
-              {isCompleted ? (
-                <Alert className="bg-amber-50 border-amber-200 text-amber-800">
-                  <AlertCircle className="h-4 w-4 text-amber-600 mr-2" />
-                  <p className="text-sm">This course has been completed and cannot be edited.</p>
-                </Alert>
-              ) : (
+              {!isCompleted && (
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
@@ -200,6 +194,23 @@ export function CourseDetails() {
                   <Edit className="mr-2 h-4 w-4" />
                   Edit Course
                 </Button>
+              )}
+              
+              {/* Add Close Course button */}
+              <Button 
+                className="w-full justify-start" 
+                variant={isCompleted ? "default" : "outline"}
+                onClick={() => navigate(`/events/${courseInstance.id}/close`)}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                {isCompleted ? "Finalize Course" : "Close Course"}
+              </Button>
+              
+              {isCompleted && (
+                <Alert className="bg-amber-50 border-amber-200 text-amber-800">
+                  <AlertCircle className="h-4 w-4 text-amber-600 mr-2" />
+                  <p className="text-sm">This course has been completed and cannot be edited.</p>
+                </Alert>
               )}
             </CardContent>
           </Card>

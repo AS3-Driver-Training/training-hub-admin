@@ -5,6 +5,7 @@ import { TrainingEvents } from "@/components/events/TrainingEvents";
 import { CourseInstanceForm } from "@/components/events/CourseInstanceForm";
 import { CourseAllocations } from "@/components/events/CourseAllocations";
 import { CourseDetails } from "@/components/events/CourseDetails";
+import { CourseClosure } from "@/components/events/CourseClosure";
 
 export default function Events() {
   return (
@@ -15,6 +16,7 @@ export default function Events() {
         <Route path="/:id" element={<CourseDetails />} />
         <Route path="/:id/edit" element={<CourseInstanceForm />} />
         <Route path="/:id/allocations" element={<CourseAllocations />} />
+        <Route path="/:id/close" element={<CourseClosure />} />
       </Routes>
     </DashboardLayout>
   );
