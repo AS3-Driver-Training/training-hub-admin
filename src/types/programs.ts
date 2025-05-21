@@ -1,4 +1,3 @@
-
 export interface Program {
   id: string;
   name: string;
@@ -112,4 +111,3 @@ export interface CourseClosureData {
   course_layout: CourseLayout;
   notes?: string; // Adding notes field here
 }
-

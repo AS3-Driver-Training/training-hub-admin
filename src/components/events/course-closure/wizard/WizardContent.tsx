@@ -1,0 +1,140 @@
+
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useWizardContext } from "./WizardContext";
+import { NavigationButtons } from "./NavigationButtons";
+import { CourseInstanceWithClient } from "../CourseClosureWizard";
+import { BasicInfoStep } from "../steps/BasicInfoStep";
+import { VehiclesStep } from "../steps/VehiclesStep";
+import { ExercisesStep } from "../steps/ExercisesStep";
+import { ReviewStep } from "../steps/ReviewStep";
+import { CompletedView } from "../steps/CompletedView";
+
+interface WizardContentProps {
+  courseInstance: CourseInstanceWithClient;
+  onSubmit: () => void;
+}
+
+export const WizardContent: React.FC<WizardContentProps> = ({ courseInstance, onSubmit }) => {
+  const { currentStep, wizardSteps, formData, updateFormData, file, setFile, completedClosureId, jumpToStep, courseId } = useWizardContext();
+
+  // Render current step content
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 'basic':
+        return (
+          <BasicInfoStep 
+            courseInstance={courseInstance} 
+            formData={formData} 
+            onUpdate={updateFormData}
+            onFileChange={setFile}
+            file={file}
+          />
+        );
+      case 'vehicles':
+        return (
+          <VehiclesStep 
+            formData={formData} 
+            onUpdate={updateFormData}
+          />
+        );
+      case 'exercises':
+        return (
+          <ExercisesStep 
+            formData={formData} 
+            onUpdate={updateFormData}
+          />
+        );
+      case 'review':
+        return (
+          <ReviewStep 
+            formData={formData}
+            courseInstance={courseInstance}
+            file={file}
+            onJumpToStep={jumpToStep}
+          />
+        );
+      case 'completed':
+        return (
+          <CompletedView 
+            formData={formData}
+            courseId={courseId!}
+            closureId={completedClosureId}
+            onEdit={() => jumpToStep('review')}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Render help text for the current step
+  const renderHelpText = () => {
+    switch (currentStep) {
+      case 'basic':
+        return "Enter the basic information about the course closure. Some fields are auto-populated from course details.";
+      case 'vehicles':
+        return "Add all vehicles used during the course. You can search for existing vehicles or add new ones.";
+      case 'exercises':
+        return "Configure parameters for all exercises used in the course, including core exercises and any additional ones.";
+      case 'review':
+        return "Review all information before finalizing the course closure. You can go back to any section to make changes.";
+      case 'completed':
+        return "The course has been closed successfully. You can still make edits if needed.";
+      default:
+        return "";
+    }
+  };
+
+  // Render alert message for the current step
+  const renderAlertMessage = () => {
+    switch (currentStep) {
+      case 'basic':
+        return "Country information is automatically pulled from the venue data to ensure consistency.";
+      case 'vehicles':
+        return "Each vehicle requires make, model, and lateral acceleration value. Consider using the search feature to avoid duplication.";
+      case 'exercises':
+        return "Parameters for the Final Exercise will auto-copy from the standalone exercises but can be adjusted separately.";
+      default:
+        return null;
+    }
+  };
+
+  const currentStepInfo = wizardSteps.find(step => step.key === currentStep);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="md:col-span-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {currentStepInfo?.title || "Course Closure"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {renderStepContent()}
+            <NavigationButtons onSubmit={onSubmit} />
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div>
+        <Card>
+          <CardHeader>
+            <CardTitle>About {currentStepInfo?.title}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm">{renderHelpText()}</p>
+            
+            {renderAlertMessage() && (
+              <Alert>
+                <AlertDescription>{renderAlertMessage()}</AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
