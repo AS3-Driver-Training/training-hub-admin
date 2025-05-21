@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useWizardContext } from "./WizardContext";
-import { toast } from "@/utils/toast";
+import { toast } from "sonner";
 
 interface NavigationButtonsProps {
   onSubmit: () => void;
@@ -14,14 +14,15 @@ export const NavigationButtons: React.FC<NavigationButtonsProps> = ({ onSubmit }
   
   // Move to next step
   const handleNext = () => {
-    if (currentStep === 'basic' && !file) {
-      toast({
-        title: "Missing course data",
-        description: "Please upload the course data ZIP file before continuing",
-        variant: "destructive"
-      });
-      return;
-    }
+    // Remove file validation requirement since we're not using file upload for now
+    // if (currentStep === 'basic' && !file) {
+    //   toast({
+    //     title: "Missing course data",
+    //     description: "Please upload the course data ZIP file before continuing",
+    //     variant: "destructive"
+    //   });
+    //   return;
+    // }
     
     const currentIndex = wizardSteps.findIndex(step => step.key === currentStep);
     if (currentIndex < wizardSteps.length - 1) {
@@ -39,20 +40,20 @@ export const NavigationButtons: React.FC<NavigationButtonsProps> = ({ onSubmit }
 
   // Handle submission
   const handleSubmit = () => {
-    if (!file) {
-      toast({
-        title: "Missing course data",
-        description: "Please upload the course data ZIP file before submitting",
-        variant: "destructive"
-      });
-      return;
-    }
+    // Remove file validation requirement since we're not using file upload for now
+    // if (!file) {
+    //   toast({
+    //     title: "Missing course data",
+    //     description: "Please upload the course data ZIP file before submitting",
+    //     variant: "destructive"
+    //   });
+    //   return;
+    // }
     
     if (!formData.vehicles?.length) {
-      toast({
-        title: "No vehicles added",
-        description: "Please add at least one vehicle before submitting",
-        variant: "destructive"
+      toast("No vehicles added", {
+        style: { backgroundColor: "#FEF3C7" },
+        description: "Please add at least one vehicle before submitting"
       });
       return;
     }

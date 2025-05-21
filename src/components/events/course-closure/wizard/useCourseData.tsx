@@ -192,28 +192,14 @@ export const useCourseData = (courseId?: number) => {
         const closureData: CourseClosureData = formData as CourseClosureData;
         closureDataJson = JSON.stringify(apiTransformer.toApi(closureData));
         
-        // Handle file upload if a file is selected
+        // Skip file upload for now as the bucket doesn't exist
+        // Only attempt file upload if file exists and user still wants to proceed
         if (file) {
-          // Upload file to storage
-          const timestamp = Date.now();
-          const fileExt = file.name.split('.').pop();
-          const fileName = `course-${courseId}-${timestamp}.${fileExt}`;
-          const filePath = `course-closures/${fileName}`;
-          
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from("course-documents")
-            .upload(filePath, file);
-          
-          if (uploadError) {
-            throw new Error(`File upload failed: ${uploadError.message}`);
-          }
-          
-          // Get the URL for the uploaded file
-          const { data: urlData } = await supabase.storage
-            .from("course-documents")
-            .getPublicUrl(filePath);
-            
-          zipfileUrl = urlData.publicUrl;
+          console.log("File upload skipped - storage bucket not available");
+          toast(`File upload will be available in a future update`, {
+            style: { backgroundColor: "#FEF3C7" },
+            description: "Your course closure data will be saved without the file."
+          });
         }
         
         // Create the record payload
@@ -255,7 +241,6 @@ export const useCourseData = (courseId?: number) => {
             
             if (vehicleError) {
               console.error("Error inserting vehicles:", vehicleError);
-              // Fix: Use toast directly from sonner instead of toast.warning
               toast(`Warning: Failed to save vehicle information`, {
                 style: { backgroundColor: "#FEF3C7" },
                 description: "Vehicle information may be incomplete."
