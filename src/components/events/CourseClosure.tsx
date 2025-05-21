@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -14,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { toast } from "@/utils/toast";
+import { toast, success, error } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingDisplay } from "./allocation/LoadingDisplay";
 import { ErrorDisplay } from "./allocation/ErrorDisplay";
@@ -132,11 +131,11 @@ export function CourseClosure() {
       return data;
     },
     onSuccess: () => {
-      toast.success("Course closure process initiated successfully");
+      success("Course closure process initiated successfully");
       navigate(`/events/${courseId}`);
     },
     onError: (error) => {
-      toast.error(`Error: ${error.message}`);
+      error(`Error: ${error.message}`);
     },
   });
 
