@@ -1,3 +1,4 @@
+
 export interface Program {
   id: string;
   name: string;
@@ -100,6 +101,7 @@ export interface CourseInfo {
 export interface CourseVehicle {
   car: number;
   make: string;
+  model?: string; // Add model as optional property
   year?: number;
   latAcc?: number;
 }
@@ -108,5 +110,5 @@ export interface CourseClosureData {
   course_info: CourseInfo;
   vehicles: CourseVehicle[];
   course_layout: CourseLayout;
-  notes?: string; // This field is now properly defined
+  notes?: string;
 }

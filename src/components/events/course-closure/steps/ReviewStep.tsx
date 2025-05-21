@@ -110,9 +110,9 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
                 {formData.vehicles.map((vehicle, i) => (
                   <TableRow key={i}>
                     <TableCell>{vehicle.car}</TableCell>
-                    <TableCell>{vehicle.make} {vehicle.model}</TableCell>
+                    <TableCell>{vehicle.make} {vehicle.model || ''}</TableCell>
                     <TableCell>{vehicle.year || "N/A"}</TableCell>
-                    <TableCell>{vehicle.latAcc.toFixed(2)}</TableCell>
+                    <TableCell>{vehicle.latAcc ? vehicle.latAcc.toFixed(2) : "N/A"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
