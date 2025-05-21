@@ -98,9 +98,12 @@ export function ExercisesList({ exercises, onChange, measured }: ExercisesListPr
     }
   }, [measured, missingCoreExercises.length]);
 
-  // Handle editing an exercise - Fix: Use stopPropagation to prevent the click from bubbling up
+  // Fixed: Use stopPropagation correctly to prevent click event bubbling
   const handleEditExercise = (e: React.MouseEvent, exercise: ProgramExercise) => {
-    e.stopPropagation(); // This prevents the event from bubbling up to parent elements
+    if (e && e.stopPropagation) {
+      e.stopPropagation();
+      e.preventDefault(); // Add preventDefault to be extra safe
+    }
     setEditingExercise(exercise);
   };
 
@@ -165,10 +168,16 @@ export function ExercisesList({ exercises, onChange, measured }: ExercisesListPr
                     </div>
                   </div>
                   <div className="flex gap-2">
+                    {/* Fix: Using the updated event handler and ensuring stopPropagation is applied */}
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={(e) => handleEditExercise(e, exercise)} // Fixed: Pass event object to handle stopPropagation
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setEditingExercise(exercise);
+                      }}
+                      data-stop-propagation="true"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -176,10 +185,12 @@ export function ExercisesList({ exercises, onChange, measured }: ExercisesListPr
                       size="sm"
                       variant="ghost"
                       onClick={(e) => {
-                        e.stopPropagation(); // Fixed: Prevent event bubbling
+                        e.stopPropagation();
+                        e.preventDefault();
                         setExerciseToDelete(exercise);
                       }}
                       disabled={exercise.isCore && measured}
+                      data-stop-propagation="true"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -206,10 +217,12 @@ export function ExercisesList({ exercises, onChange, measured }: ExercisesListPr
         <Button 
           variant="outline"
           onClick={(e) => {
-            e.stopPropagation(); // Fixed: Prevent event bubbling
+            e.stopPropagation();
+            e.preventDefault();
             setIsAddingExercise(true);
           }}
           className="w-full"
+          data-stop-propagation="true"
         >
           <PlusCircle className="h-4 w-4 mr-2" />
           Add Exercise
