@@ -19,22 +19,26 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
   // Track status of each vehicle (new vs existing, saved to DB or not)
   const [vehicleStatuses, setVehicleStatuses] = useState<Record<number, VehicleStatus>>({});
 
-  // Initialize vehicle statuses on component load
+  // Initialize vehicle statuses on component load or when vehicles change
   useEffect(() => {
     const initialStatuses: Record<number, VehicleStatus> = {};
     
     vehicles.forEach((vehicle, index) => {
       // If we have a vehicle with a known make/model but no isNew flag,
       // we assume it's an existing vehicle from a previous session
-      initialStatuses[index] = {
-        isNew: false,
-        isSavedToDb: true, // Assume existing vehicles are already in DB
-        dbId: undefined
-      };
+      if (!vehicleStatuses[index]) {
+        initialStatuses[index] = {
+          isNew: false,
+          isSavedToDb: true, // Assume existing vehicles are already in DB
+          dbId: undefined
+        };
+      } else {
+        initialStatuses[index] = vehicleStatuses[index];
+      }
     });
     
     setVehicleStatuses(initialStatuses);
-  }, []);
+  }, [vehicles.length]);
 
   // Add a new vehicle to the list
   const handleAddVehicle = () => {

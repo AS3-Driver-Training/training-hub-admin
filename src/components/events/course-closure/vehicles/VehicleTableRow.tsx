@@ -4,7 +4,7 @@ import { CourseVehicle } from "@/types/programs";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Lock, Trash, Save, Check } from "lucide-react";
+import { Lock, Trash, Save, Check, Edit } from "lucide-react";
 import { VehicleSearch } from "./VehicleSearch";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
@@ -32,17 +32,23 @@ export function VehicleTableRow({
   const isSuperAdmin = userRole === "superadmin";
 
   // Determine which fields can be edited by the current user
+  // Only allow editing sensitive fields (year and latAcc) if:
+  // 1. User is a superadmin OR
+  // 2. The vehicle is new and not yet saved to DB
   const canEditSensitiveFields = isSuperAdmin || (isNewVehicle && !isSavedToDb);
-
+  
+  // For the make field, we only allow search/edit if it's a new vehicle and not saved yet
+  const canEditMakeModel = isNewVehicle && !isSavedToDb;
+  
   return (
-    <TableRow>
+    <TableRow className={isNewVehicle ? "bg-blue-50" : ""}>
       <TableCell>
         <div className="w-20 text-center py-2">{vehicle.car}</div>
       </TableCell>
       
       <TableCell>
         <div className="flex gap-2">
-          {isNewVehicle ? (
+          {canEditMakeModel ? (
             <VehicleSearch
               defaultValue={vehicle.make}
               onSelectVehicle={(selected) => {
@@ -55,11 +61,20 @@ export function VehicleTableRow({
               }}
             />
           ) : (
-            <Input
-              value={vehicle.make}
-              onChange={e => onUpdate(index, 'make', e.target.value)}
-              placeholder="e.g. Ford Explorer"
-            />
+            <div className="flex-1 relative">
+              <Input
+                value={vehicle.make}
+                onChange={e => onUpdate(index, 'make', e.target.value)}
+                placeholder="e.g. Ford Explorer"
+                disabled={true}
+                className="bg-gray-50"
+              />
+              {!isSuperAdmin && (
+                <div className="absolute right-2 top-2.5" aria-label="Vehicle information locked">
+                  <Lock className="h-3 w-3 text-muted-foreground" />
+                </div>
+              )}
+            </div>
           )}
         </div>
       </TableCell>
@@ -104,7 +119,8 @@ export function VehicleTableRow({
       </TableCell>
       
       <TableCell>
-        <div className="flex gap-2">
+        <div className="flex gap-2 justify-end">
+          {/* Remove button */}
           <Button 
             variant="ghost"
             size="icon"
@@ -114,6 +130,7 @@ export function VehicleTableRow({
             <Trash className="h-4 w-4" />
           </Button>
           
+          {/* Save to DB button - only for new vehicles that haven't been saved yet */}
           {isNewVehicle && !isSavedToDb && (
             <Button
               variant="outline"
@@ -127,6 +144,21 @@ export function VehicleTableRow({
             </Button>
           )}
           
+          {/* Edit button - only for superadmins and saved vehicles */}
+          {isSavedToDb && isSuperAdmin && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                toast.info("Super admin vehicle editing will be implemented in a future update");
+              }}
+              aria-label="Edit vehicle"
+            >
+              <Edit className="h-3 w-3" />
+            </Button>
+          )}
+          
+          {/* Show saved indicator */}
           {isSavedToDb && (
             <span className="text-green-600 flex items-center text-xs">
               <Check className="h-3 w-3 mr-1" />

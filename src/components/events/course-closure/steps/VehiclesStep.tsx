@@ -50,38 +50,57 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
       </div>
       
       <div className="border rounded-md p-4">
-        <p className="text-sm text-muted-foreground mb-4">
-          Add all vehicles used during this course program. Each vehicle requires a make/model and lateral acceleration value.
-          {!isSuperAdmin && (
-            <span className="block mt-2 text-amber-600">
-              Note: Only super admins can modify Year and LatAcc values for existing vehicles.
-            </span>
-          )}
-        </p>
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <InfoTooltip 
+                text="Add vehicles by searching for existing ones in the database or creating new ones. After creating a new vehicle, save it to the database. Note that only superadmins can edit Year and LatAcc values of saved vehicles."
+              />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-blue-700">
+                <span className="font-medium">Adding Vehicles:</span> Search for existing vehicles or create new ones. 
+                {!isSuperAdmin && (
+                  <span className="block mt-1 text-amber-600">
+                    Note: Only super admins can modify Year and LatAcc values for existing vehicles.
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
         
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Car #</TableHead>
+              <TableHead className="w-[80px]">Car #</TableHead>
               <TableHead>Make/Model</TableHead>
-              <TableHead>Year</TableHead>
-              <TableHead>LatAcc</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead className="w-[100px]">Year</TableHead>
+              <TableHead className="w-[100px]">LatAcc</TableHead>
+              <TableHead className="w-[140px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {vehicles.map((vehicle, i) => (
-              <VehicleTableRow
-                key={i}
-                vehicle={vehicle}
-                index={i}
-                isNewVehicle={isVehicleNew(i)}
-                isSavedToDb={isVehicleSavedToDb(i)}
-                onUpdate={handleUpdateVehicle}
-                onRemove={handleRemoveVehicle}
-                onSaveToDatabase={handleSaveToDatabase}
-              />
-            ))}
+            {vehicles.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  No vehicles added yet. Click "Add Vehicle" to start.
+                </TableCell>
+              </TableRow>
+            ) : (
+              vehicles.map((vehicle, i) => (
+                <VehicleTableRow
+                  key={i}
+                  vehicle={vehicle}
+                  index={i}
+                  isNewVehicle={isVehicleNew(i)}
+                  isSavedToDb={isVehicleSavedToDb(i)}
+                  onUpdate={handleUpdateVehicle}
+                  onRemove={handleRemoveVehicle}
+                  onSaveToDatabase={handleSaveToDatabase}
+                />
+              ))
+            )}
           </TableBody>
         </Table>
         

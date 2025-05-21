@@ -3,9 +3,10 @@ import React, { useState, useEffect } from "react";
 import { Vehicle } from "@/types/programs";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/use-debounce";
 
 interface VehicleSearchProps {
@@ -13,6 +14,7 @@ interface VehicleSearchProps {
   onCreateNew: (makeModel: string) => void;
   defaultValue?: string;
   placeholder?: string;
+  disabled?: boolean;
 }
 
 // Helper function to map database vehicle to frontend vehicle model
@@ -22,7 +24,7 @@ const mapDbVehicleToModel = (dbVehicle: any): Vehicle => {
     make: dbVehicle.make || '',
     model: dbVehicle.model || '',
     year: dbVehicle.year || new Date().getFullYear(),
-    latAcc: dbVehicle.latacc || 0.8 // Map latacc to latAcc with a default value
+    latAcc: dbVehicle.latacc || 0.8
   };
 };
 
@@ -30,7 +32,8 @@ export function VehicleSearch({
   onSelectVehicle,
   onCreateNew,
   defaultValue = "",
-  placeholder = "e.g. Ford Explorer"
+  placeholder = "e.g. Ford Explorer",
+  disabled = false
 }: VehicleSearchProps) {
   const [searchTerm, setSearchTerm] = useState(defaultValue);
   const [isOpen, setIsOpen] = useState(false);
@@ -77,28 +80,36 @@ export function VehicleSearch({
       setSearchTerm(`${selected.make} ${selected.model}`.trim());
     } else {
       // Create new vehicle if no match
+      handleCreateNew();
+    }
+  };
+
+  const handleCreateNew = () => {
+    if (searchTerm.trim()) {
       onCreateNew(searchTerm);
       setIsOpen(false);
     }
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen && !disabled} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <div className="flex-1 relative">
           <Input 
             value={searchTerm}
             onChange={e => {
               setSearchTerm(e.target.value);
+              if (!isOpen && !disabled) setIsOpen(true);
             }}
-            onClick={() => setIsOpen(true)}
+            onClick={() => !disabled && setIsOpen(true)}
             placeholder={placeholder}
             className="pr-8"
+            disabled={disabled}
           />
           <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
         </div>
       </PopoverTrigger>
-      <PopoverContent className="p-0 z-50 bg-white" align="start" side="bottom" alignOffset={0} sideOffset={5}>
+      <PopoverContent className="p-0 w-[300px]" align="start" side="bottom" sideOffset={5}>
         <Command>
           <CommandInput 
             placeholder="Search vehicles..." 
@@ -106,30 +117,44 @@ export function VehicleSearch({
             onValueChange={setSearchTerm}
           />
           <CommandList>
+            {isSearching && (
+              <div className="py-2 px-4 text-sm text-muted-foreground">
+                Searching...
+              </div>
+            )}
+            
             <CommandEmpty>
-              {isSearching ? (
-                "Searching..."
-              ) : (
-                <div className="py-2 px-4">
-                  <p className="text-sm">No vehicles found.</p>
-                  <button 
-                    onClick={() => handleSelect(searchTerm)} 
-                    className="text-sm text-blue-500 hover:text-blue-700 mt-1"
-                  >
-                    Create "{searchTerm}" as new vehicle
-                  </button>
-                </div>
-              )}
+              <div className="py-2 px-4">
+                <p className="text-sm text-muted-foreground">No vehicles found.</p>
+                <Button 
+                  onClick={handleCreateNew}
+                  variant="ghost"
+                  className="mt-2 w-full justify-start text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                >
+                  <Plus className="mr-2 h-4 w-4" /> 
+                  Create "{searchTerm}" as new vehicle
+                </Button>
+              </div>
             </CommandEmpty>
+            
             <CommandGroup>
               {searchResults.map((result) => (
                 <CommandItem
                   key={result.id}
-                  onSelect={() => handleSelect(`${result.make} ${result.model}`.trim())}
-                  className="cursor-pointer"
+                  value={`${result.make} ${result.model}`.trim()}
+                  onSelect={handleSelect}
+                  className="cursor-pointer flex justify-between"
                 >
-                  <span>
-                    {result.make} {result.model || ''} ({result.year || 'Unknown'})
+                  <div className="flex-1">
+                    <span className="font-medium">
+                      {result.make} {result.model || ''}
+                    </span>
+                    <span className="ml-2 text-muted-foreground">
+                      ({result.year || 'Unknown'})
+                    </span>
+                  </div>
+                  <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                    LatAcc: {result.latAcc || 0.8}
                   </span>
                 </CommandItem>
               ))}
