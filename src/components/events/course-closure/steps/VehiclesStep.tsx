@@ -10,6 +10,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { apiTransformer } from "@/utils/dataTransformUtils";
 
 interface VehiclesStepProps {
   formData: Partial<CourseClosureData>;

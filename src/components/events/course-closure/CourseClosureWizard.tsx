@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -11,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LoadingDisplay } from "../allocation/LoadingDisplay";
 import { ErrorDisplay } from "../allocation/ErrorDisplay";
 import { CourseClosureData } from "@/types/programs";
+import { apiTransformer } from "@/utils/dataTransformUtils";
 
 import { BasicInfoStep } from "./steps/BasicInfoStep";
 import { VehiclesStep } from "./steps/VehiclesStep";
@@ -176,13 +178,43 @@ export function CourseClosureWizard() {
       setCurrentStep('completed');
       setCompletedClosureId(existingClosure.id);
       
-      // Try to parse closure data JSON
+      // Initialize formData with existing closure details
+      const baseFormData: Partial<CourseClosureData> = {
+        course_info: {
+          units: existingClosure.units || "MPH",
+          country: existingClosure.country || "USA",
+          program: formData.course_info?.program || "",
+          date: formData.course_info?.date || "",
+          client: formData.course_info?.client || ""
+        }
+      };
+
+      // Try to load any additional JSON data that might be stored as a stringified object
       try {
-        const closureData = JSON.parse(existingClosure.closure_data || '{}');
-        setFormData(closureData);
+        // Check if there's a JSON string property that could contain the full data
+        for (const key of Object.keys(existingClosure)) {
+          if (typeof existingClosure[key] === 'string' && 
+              existingClosure[key].startsWith('{') && 
+              existingClosure[key].endsWith('}')) {
+            try {
+              const parsedData = JSON.parse(existingClosure[key]);
+              if (parsedData && typeof parsedData === 'object') {
+                // Apply to formData
+                setFormData({...baseFormData, ...apiTransformer.fromApi(parsedData)});
+                return;
+              }
+            } catch (e) {
+              // Not valid JSON, continue checking other properties
+              console.error("Failed to parse potential JSON data:", e);
+            }
+          }
+        }
       } catch (e) {
-        console.error("Failed to parse closure data:", e);
+        console.error("Error processing closure data:", e);
       }
+      
+      // If no JSON data found, just use the base form data
+      setFormData(baseFormData);
     }
   }, [existingClosure]);
 
@@ -198,7 +230,7 @@ export function CourseClosureWizard() {
       try {
         // Convert formData to proper CourseClosureData
         const closureData: CourseClosureData = formData as CourseClosureData;
-        closureDataJson = JSON.stringify(closureData);
+        closureDataJson = JSON.stringify(apiTransformer.toApi(closureData));
         
         // Handle file upload if a file is selected
         if (file) {
@@ -224,20 +256,38 @@ export function CourseClosureWizard() {
           zipfileUrl = urlData.publicUrl;
         }
         
+        // Create the record payload
+        const payload = {
+          course_instance_id: courseId,
+          status: "draft",
+          units: formData.course_info?.units,
+          country: formData.course_info?.country,
+          zipfile_url: zipfileUrl,
+          closed_by: "00000000-0000-0000-0000-000000000000" // Placeholder UUID, should be replaced with actual user ID
+        };
+
+        // Add closure_data JSON if available - this will only work if there's a column for it
+        if (closureDataJson) {
+          try {
+            // Check if closure_data column exists (this will only run once)
+            const { data: columnsData } = await supabase
+              .from('course_closures')
+              .select('*')
+              .limit(1);
+              
+            if (columnsData && columnsData[0] && 'closure_data' in columnsData[0]) {
+              // If the column exists, include it in the payload
+              Object.assign(payload, { closure_data: closureDataJson });
+            }
+          } catch (e) {
+            console.error("Error checking for closure_data column:", e);
+          }
+        }
+        
         // Create course closure record
         const { data, error } = await supabase
           .from("course_closures")
-          .insert({
-            course_instance_id: courseId,
-            status: "draft",
-            units: formData.course_info?.units,
-            country: formData.course_info?.country,
-            zipfile_url: zipfileUrl,
-            closed_by: "00000000-0000-0000-0000-000000000000", // Placeholder UUID, should be replaced with actual user ID
-            // Store the JSON data in a custom column if your database schema supports it
-            // If 'closure_data' is not in your schema, you can omit this line
-            ...(closureDataJson ? { closure_data: closureDataJson } : {})
-          })
+          .insert(payload)
           .select();
           
         if (error) throw error;
@@ -518,3 +568,4 @@ export function CourseClosureWizard() {
     </div>
   );
 }
+

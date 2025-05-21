@@ -35,7 +35,7 @@ export function BasicInfoStep({ courseInstance, formData, onUpdate, onFileChange
     resolver: zodResolver(formSchema),
     defaultValues: {
       units: (formData.course_info?.units as "MPH" | "KPH") || "MPH",
-      notes: "",
+      notes: formData.notes || "",
     },
   });
 
