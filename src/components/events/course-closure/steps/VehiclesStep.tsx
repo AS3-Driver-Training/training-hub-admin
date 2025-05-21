@@ -29,9 +29,7 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
     handleUpdateVehicle,
     handleSelectVehicle,
     handleCreateNewVehicle,
-    handleSaveToDatabase,
     isVehicleNew,
-    isVehicleSavedToDb,
     isVehicleSelected
   } = useVehicleManager({
     vehicles,
@@ -46,32 +44,24 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-medium">Course Vehicles</h3>
           <InfoTooltip 
-            text="Add all vehicles used during the course. You can search for existing vehicles or add new ones."
+            text="Add vehicles used during the course. Search for existing vehicles or create new ones."
             side="top"
           />
         </div>
       </div>
       
       <div className="border rounded-md p-4">
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <InfoTooltip 
-                text="Search for existing vehicles by typing in the Make/Model field, or create new ones. Year and LatAcc values are automatically locked for non-superadmins after selecting or creating a vehicle."
-              />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-blue-700">
-                <span className="font-medium">Adding Vehicles:</span> Search for existing vehicles or create new ones by typing in the Make/Model field.
-                {!isSuperAdmin && (
-                  <span className="block mt-1 text-amber-600">
-                    Note: Year and LatAcc values will be locked after selecting or creating a vehicle.
-                  </span>
-                )}
-              </p>
+        {!isSuperAdmin && (
+          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+            <div className="flex">
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">
+                  <span className="font-medium">Note:</span> Year and LatAcc values will be locked after selecting or creating a vehicle.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
         
         <Table>
           <TableHeader>
@@ -87,7 +77,7 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
             {vehicles.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  Initializing vehicles...
+                  Loading vehicles...
                 </TableCell>
               </TableRow>
             ) : (
@@ -97,11 +87,9 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
                   vehicle={vehicle}
                   index={i}
                   isNewVehicle={isVehicleNew(i)}
-                  isSavedToDb={isVehicleSavedToDb(i)}
                   isSelected={isVehicleSelected(i)}
                   onUpdate={handleUpdateVehicle}
                   onRemove={handleRemoveVehicle}
-                  onSaveToDatabase={handleSaveToDatabase}
                   onSelectVehicle={handleSelectVehicle}
                   onCreateNewVehicle={handleCreateNewVehicle}
                 />

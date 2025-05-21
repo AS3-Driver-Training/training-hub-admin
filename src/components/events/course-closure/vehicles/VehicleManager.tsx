@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { CourseVehicle, Vehicle } from "@/types/programs";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,13 +11,12 @@ interface VehicleManagerProps {
 
 interface VehicleStatus {
   isNew: boolean;
-  isSavedToDb: boolean;
   isSelected: boolean;
   dbId?: number;
 }
 
 export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManagerProps) {
-  // Track status of each vehicle (new vs existing, saved to DB or not)
+  // Track status of each vehicle (new vs selected)
   const [vehicleStatuses, setVehicleStatuses] = useState<Record<number, VehicleStatus>>({});
 
   // Initialize with 3 empty vehicles if none exist
@@ -36,7 +36,6 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
       initialVehicles.forEach((_, index) => {
         initialStatuses[index] = {
           isNew: true,
-          isSavedToDb: false,
           isSelected: false
         };
       });
@@ -55,7 +54,6 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
         if (!initialStatuses[index]) {
           initialStatuses[index] = {
             isNew: true,
-            isSavedToDb: false,
             isSelected: false
           };
         }
@@ -82,12 +80,11 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     const updatedVehicles = [...vehicles, newVehicle];
     onVehiclesChange(updatedVehicles);
     
-    // Set status as new and not saved to DB
+    // Set status as new and not selected
     setVehicleStatuses(prev => ({
       ...prev,
       [updatedVehicles.length - 1]: {
         isNew: true,
-        isSavedToDb: false,
         isSelected: false
       }
     }));
@@ -135,19 +132,17 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     handleUpdateVehicle(index, 'year', vehicle.year);
     handleUpdateVehicle(index, 'latAcc', vehicle.latAcc || 0.8);
     
-    // Mark this vehicle as selected and from database
+    // Mark this vehicle as selected
     setVehicleStatuses(prev => ({
       ...prev,
       [index]: {
         ...prev[index],
         isNew: false,
-        isSavedToDb: true,
         isSelected: true,
         dbId: vehicle.id
       }
     }));
     
-    // Show success feedback
     toast.success(`Selected ${vehicle.make} ${vehicle.model || ''}`);
   };
 
@@ -188,12 +183,11 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
       if (error) throw error;
       
       if (data) {
-        // Update status to indicate this is now saved to DB
+        // Update status to indicate this is now selected
         setVehicleStatuses(prev => ({
           ...prev,
           [index]: {
             isNew: false,
-            isSavedToDb: true,
             isSelected: true,
             dbId: data.id
           }
@@ -204,26 +198,6 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     } catch (error: any) {
       console.error("Error creating vehicle:", error);
       toast.error(`Failed to create vehicle: ${error.message}`);
-      
-      // Mark as new but not saved to DB
-      setVehicleStatuses(prev => ({
-        ...prev,
-        [index]: {
-          isNew: true,
-          isSavedToDb: false,
-          isSelected: false
-        }
-      }));
-    }
-  };
-
-  // These functions are just kept for compatibility, but now handleCreateNewVehicle does the saving automatically
-  const handleSaveToDatabase = async (index: number) => {
-    // This function is now essentially a no-op as all vehicles are auto-saved
-    // We keep it for API compatibility
-    if (!vehicles[index].make) {
-      toast.error("Vehicle make/model is required");
-      return;
     }
   };
 
@@ -232,12 +206,7 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     return vehicleStatuses[index]?.isNew || false;
   };
 
-  // Check if a vehicle has been saved to the database
-  const isVehicleSavedToDb = (index: number): boolean => {
-    return vehicleStatuses[index]?.isSavedToDb || false;
-  };
-
-  // Check if a vehicle has been selected (either from search or created and saved)
+  // Check if a vehicle has been selected (either from search or created)
   const isVehicleSelected = (index: number): boolean => {
     return vehicleStatuses[index]?.isSelected || false;
   };
@@ -248,9 +217,7 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     handleUpdateVehicle,
     handleSelectVehicle,
     handleCreateNewVehicle,
-    handleSaveToDatabase, // Kept for compatibility
     isVehicleNew,
-    isVehicleSavedToDb,
     isVehicleSelected
   };
 }

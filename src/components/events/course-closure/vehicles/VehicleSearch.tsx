@@ -1,13 +1,12 @@
 
 import React, { useState, useEffect } from "react";
 import { Vehicle } from "@/types/programs";
-import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
 import { Search } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 
 interface VehicleSearchProps {
   onSelectVehicle: (vehicle: Vehicle) => void;
@@ -32,7 +31,7 @@ export function VehicleSearch({
   onSelectVehicle,
   onCreateNew,
   defaultValue = "",
-  placeholder = "Search or type to create new",
+  placeholder = "Search vehicles...",
   disabled = false
 }: VehicleSearchProps) {
   const [searchTerm, setSearchTerm] = useState(defaultValue);
@@ -72,16 +71,10 @@ export function VehicleSearch({
     fetchVehicles();
   }, [debouncedSearchTerm]);
 
-  const handleSelect = (value: string) => {
-    const selected = searchResults.find(v => `${v.make} ${v.model}`.trim() === value);
-    if (selected) {
-      onSelectVehicle(selected);
-      setIsOpen(false);
-      setSearchTerm(`${selected.make} ${selected.model}`.trim());
-    } else {
-      // Create new vehicle if no match
-      handleCreateNew();
-    }
+  const handleSelectVehicle = (vehicle: Vehicle) => {
+    onSelectVehicle(vehicle);
+    setIsOpen(false);
+    setSearchTerm(`${vehicle.make} ${vehicle.model}`.trim());
   };
 
   const handleCreateNew = () => {
@@ -91,33 +84,25 @@ export function VehicleSearch({
     }
   };
 
-  // Always focus the search field when opening the popover
-  const handleOpenChange = (open: boolean) => {
-    if (open && !disabled) {
-      setIsOpen(true);
-    } else {
-      setIsOpen(false);
-    }
-  };
-
   return (
-    <Popover open={isOpen} onOpenChange={handleOpenChange}>
+    <Popover open={isOpen && !disabled} onOpenChange={(open) => !disabled && setIsOpen(open)}>
       <PopoverTrigger asChild>
-        <div className="flex-1 relative">
-          <Input 
+        <div className="relative">
+          <Input
             value={searchTerm}
-            onChange={e => {
+            onChange={(e) => {
               setSearchTerm(e.target.value);
-              if (!isOpen && !disabled) setIsOpen(true);
+              if (!isOpen && e.target.value && !disabled) setIsOpen(true);
             }}
             onClick={() => !disabled && setIsOpen(true)}
             placeholder={placeholder}
-            className="pr-8"
+            className="w-full pr-8"
+            disabled={disabled}
           />
           <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
         </div>
       </PopoverTrigger>
-      <PopoverContent className="p-0 w-[300px]" align="start" side="bottom" sideOffset={5}>
+      <PopoverContent className="p-0 w-[300px]" align="start">
         <Command>
           <CommandInput 
             placeholder="Search vehicles..." 
@@ -127,45 +112,39 @@ export function VehicleSearch({
           />
           <CommandList>
             {isSearching && (
-              <div className="py-2 px-4 text-sm text-muted-foreground">
+              <div className="py-2 px-3 text-xs text-muted-foreground">
                 Searching...
               </div>
             )}
             
-            <CommandEmpty>
-              <div className="py-2 px-4">
-                <p className="text-sm text-muted-foreground">No vehicles found.</p>
+            {!isSearching && searchResults.length === 0 && (
+              <CommandEmpty className="py-2">
+                <div className="px-1 text-sm text-muted-foreground">
+                  No vehicles found.
+                </div>
                 {searchTerm.trim().length > 0 && (
-                  <Button 
+                  <div 
                     onClick={handleCreateNew}
-                    variant="ghost"
-                    className="mt-2 w-full justify-start text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                    className="flex items-center px-1 py-2 text-blue-500 hover:text-blue-700 cursor-pointer"
                   >
-                    <span className="mr-2">+</span> 
+                    <span className="text-blue-500 mr-1">+</span>
                     Create "{searchTerm}" as new vehicle
-                  </Button>
+                  </div>
                 )}
-              </div>
-            </CommandEmpty>
+              </CommandEmpty>
+            )}
             
             <CommandGroup>
               {searchResults.map((result) => (
                 <CommandItem
                   key={result.id}
                   value={`${result.make} ${result.model}`.trim()}
-                  onSelect={handleSelect}
-                  className="cursor-pointer flex justify-between"
+                  onSelect={() => handleSelectVehicle(result)}
+                  className="cursor-pointer"
                 >
-                  <div className="flex-1">
-                    <span className="font-medium">
-                      {result.make} {result.model || ''}
-                    </span>
-                    <span className="ml-2 text-muted-foreground">
-                      ({result.year || 'Unknown'})
-                    </span>
-                  </div>
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                    LatAcc: {result.latAcc || 0.8}
+                  <span>
+                    {result.make} {result.model || ''} 
+                    <span className="ml-1 text-muted-foreground">({result.year || 'Unknown'})</span>
                   </span>
                 </CommandItem>
               ))}
