@@ -11,7 +11,7 @@ import { ExercisesStep } from "../steps/ExercisesStep";
 import { ReviewStep } from "../steps/ReviewStep";
 import { CompletedView } from "../steps/CompletedView";
 import { CourseClosureData } from "@/types/programs";
-import { AlertCircle, Info } from "lucide-react";
+import { Info } from "lucide-react";
 
 interface WizardContentProps {
   courseInstance: CourseInstanceWithClient;
@@ -113,47 +113,27 @@ export const WizardContent: React.FC<WizardContentProps> = ({ courseInstance, on
     }
   };
 
-  // Render alert message for the current step
-  const renderAlertMessage = () => {
-    switch (currentStep) {
-      case 'basic':
-        return "Country information is automatically pulled from the venue data to ensure consistency.";
-      case 'vehicles':
-        return "Each vehicle requires make, model, and lateral acceleration value. Consider using the search feature to avoid duplication.";
-      case 'exercises':
-        return "Parameters for the Final Exercise will auto-copy from the standalone exercises but can be adjusted separately.";
-      default:
-        return null;
-    }
-  };
-
   const currentStepInfo = wizardSteps.find(step => step.key === currentStep);
 
   return (
     <div className="w-full">
       <Card className="w-full">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle>
             {currentStepInfo?.title || "Course Closure"}
           </CardTitle>
-          
-          {renderAlertMessage() && (
-            <div className="flex items-start">
-              <Alert className="border-0 bg-transparent p-0">
-                <div className="flex items-center gap-2">
-                  <Info className="h-4 w-4 text-primary" />
-                  <AlertDescription className="text-sm text-muted-foreground">
-                    {renderAlertMessage()}
-                  </AlertDescription>
-                </div>
+        </CardHeader>
+        <CardContent>
+          {currentStep !== 'vehicles' && (
+            <div className="mb-4">
+              <Alert className="bg-transparent border-0 p-0 flex items-center">
+                <Info className="h-4 w-4 text-primary mr-2" />
+                <AlertDescription className="text-sm text-muted-foreground">
+                  {renderHelpText()}
+                </AlertDescription>
               </Alert>
             </div>
           )}
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <p className="text-sm text-muted-foreground">{renderHelpText()}</p>
-          </div>
           
           {renderStepContent()}
           <NavigationButtons onSubmit={onSubmit} />

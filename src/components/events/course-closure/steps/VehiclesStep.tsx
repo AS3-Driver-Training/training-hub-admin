@@ -5,12 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash, Plus, Search } from "lucide-react";
+import { Trash, Plus, Search, Info } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { apiTransformer } from "@/utils/dataTransformUtils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface VehiclesStepProps {
   formData: Partial<CourseClosureData>;
@@ -158,9 +158,19 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-medium">Course Vehicles</h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-medium">Course Vehicles</h3>
+        <Alert className="max-w-md bg-transparent p-0 border-0 flex items-center">
+          <Info className="h-4 w-4 text-primary mr-2" />
+          <AlertDescription className="text-sm text-muted-foreground">
+            Each vehicle requires make, model, and lateral acceleration value. Consider using the search feature to avoid duplication.
+          </AlertDescription>
+        </Alert>
+      </div>
       
       <div className="border rounded-md p-4">
+        <p className="text-sm text-muted-foreground mb-4">Add all vehicles used during the course. You can search for existing vehicles or add new ones.</p>
+        
         <Table>
           <TableHeader>
             <TableRow>
@@ -205,7 +215,7 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
                           <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         </div>
                       </PopoverTrigger>
-                      <PopoverContent className="p-0" align="start" side="bottom" alignOffset={0} sideOffset={5}>
+                      <PopoverContent className="p-0 z-50 bg-white" align="start" side="bottom" alignOffset={0} sideOffset={5}>
                         <Command>
                           <CommandInput 
                             placeholder="Search vehicles..." 
@@ -303,7 +313,7 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
                     <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   </div>
                 </PopoverTrigger>
-                <PopoverContent className="p-0" align="start">
+                <PopoverContent className="p-0 z-50 bg-white" align="start">
                   <Command>
                     <CommandInput 
                       placeholder="Search vehicles..." 

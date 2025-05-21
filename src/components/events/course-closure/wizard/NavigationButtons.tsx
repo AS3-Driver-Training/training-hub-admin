@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { WizardStep, useWizardContext } from "./WizardContext";
+import { useWizardContext } from "./WizardContext";
 import { toast } from "@/utils/toast";
 
 interface NavigationButtonsProps {
