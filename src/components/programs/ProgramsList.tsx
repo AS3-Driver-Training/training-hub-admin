@@ -6,23 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgramsTable } from "@/components/programs/ProgramsTable";
 import { CreateProgramDialog } from "@/components/programs/CreateProgramDialog";
-import { Program } from "@/types/programs";
+import { Program, ProgramExercise, ExerciseParameter } from "@/types/programs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 // Function to fetch programs from Supabase
 const fetchPrograms = async (): Promise<Program[]> => {
-  const { data, error } = await supabase
+  // Fetch programs
+  const { data: programsData, error: programsError } = await supabase
     .from('programs')
     .select('*');
   
-  if (error) {
-    console.error("Error fetching programs:", error);
+  if (programsError) {
+    console.error("Error fetching programs:", programsError);
     throw new Error("Failed to fetch programs");
   }
   
-  // Transform the data to match our frontend model
-  return (data || []).map(program => ({
+  // Transform the programs data
+  const programs = (programsData || []).map(program => ({
     id: program.id.toString(),
     name: program.name,
     sku: program.sku,
@@ -32,7 +33,57 @@ const fetchPrograms = async (): Promise<Program[]> => {
     minStudents: program.min_students || 0,
     price: program.price || 0,
     lvl: getLevelString(program.lvl),
+    measured: program.measured || false,
+    exercises: [], // Will be populated below
   }));
+
+  // Fetch exercises for all programs
+  for (const program of programs) {
+    const { data: exercisesData, error: exercisesError } = await supabase
+      .from('program_exercises')
+      .select('*')
+      .eq('program_id', parseInt(program.id));
+    
+    if (exercisesError) {
+      console.error(`Error fetching exercises for program ${program.id}:`, exercisesError);
+      continue;
+    }
+
+    // Transform exercises data
+    const exercises: ProgramExercise[] = (exercisesData || []).map(exercise => ({
+      id: exercise.id.toString(),
+      name: exercise.name,
+      isCore: exercise.is_core,
+      isMeasured: exercise.is_measured,
+      measurementType: exercise.measurement_type as 'latacc' | 'time',
+      order: exercise.order,
+      parameters: [],
+    }));
+
+    // Fetch parameters for each exercise
+    for (const exercise of exercises) {
+      const { data: parametersData, error: parametersError } = await supabase
+        .from('exercise_parameters')
+        .select('*')
+        .eq('exercise_id', parseInt(exercise.id));
+      
+      if (parametersError) {
+        console.error(`Error fetching parameters for exercise ${exercise.id}:`, parametersError);
+        continue;
+      }
+
+      // Transform parameters data
+      exercise.parameters = (parametersData || []).map(param => ({
+        id: param.id.toString(),
+        name: param.parameter_name,
+        value: param.parameter_value,
+      }));
+    }
+
+    program.exercises = exercises;
+  }
+  
+  return programs;
 };
 
 // Helper function to convert numeric level to string representation
@@ -78,12 +129,21 @@ export function ProgramsList() {
 
   const handleDeleteProgram = async (programId: string) => {
     try {
-      const { error } = await supabase
+      // First, delete related exercises (cascade will handle parameters)
+      const { error: exercisesError } = await supabase
+        .from('program_exercises')
+        .delete()
+        .eq('program_id', parseInt(programId));
+      
+      if (exercisesError) throw exercisesError;
+      
+      // Then delete the program
+      const { error: programError } = await supabase
         .from('programs')
         .delete()
         .eq('id', parseInt(programId));
       
-      if (error) throw error;
+      if (programError) throw programError;
       
       toast({
         title: "Program deleted",

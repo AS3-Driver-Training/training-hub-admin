@@ -150,6 +150,53 @@ export type Database = {
           },
         ]
       }
+      course_closures: {
+        Row: {
+          closed_at: string
+          closed_by: string
+          country: string
+          course_instance_id: number
+          created_at: string
+          id: number
+          status: string
+          units: string
+          updated_at: string
+          zipfile_url: string | null
+        }
+        Insert: {
+          closed_at?: string
+          closed_by: string
+          country?: string
+          course_instance_id: number
+          created_at?: string
+          id?: number
+          status?: string
+          units?: string
+          updated_at?: string
+          zipfile_url?: string | null
+        }
+        Update: {
+          closed_at?: string
+          closed_by?: string
+          country?: string
+          course_instance_id?: number
+          created_at?: string
+          id?: number
+          status?: string
+          units?: string
+          updated_at?: string
+          zipfile_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_closures_course_instance_id_fkey"
+            columns: ["course_instance_id"]
+            isOneToOne: true
+            referencedRelation: "course_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_instances: {
         Row: {
           created_at: string
@@ -210,6 +257,83 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_vehicles: {
+        Row: {
+          car_number: number
+          course_instance_id: number
+          created_at: string
+          id: number
+          updated_at: string
+          vehicle_id: number
+        }
+        Insert: {
+          car_number: number
+          course_instance_id: number
+          created_at?: string
+          id?: number
+          updated_at?: string
+          vehicle_id: number
+        }
+        Update: {
+          car_number?: number
+          course_instance_id?: number
+          created_at?: string
+          id?: number
+          updated_at?: string
+          vehicle_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_vehicles_course_instance_id_fkey"
+            columns: ["course_instance_id"]
+            isOneToOne: false
+            referencedRelation: "course_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_vehicles_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercise_parameters: {
+        Row: {
+          created_at: string
+          exercise_id: number
+          id: number
+          parameter_name: string
+          parameter_value: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_id: number
+          id?: number
+          parameter_name: string
+          parameter_value: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          exercise_id?: number
+          id?: number
+          parameter_name?: string
+          parameter_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_parameters_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "program_exercises"
             referencedColumns: ["id"]
           },
         ]
@@ -341,6 +465,50 @@ export type Database = {
         }
         Relationships: []
       }
+      program_exercises: {
+        Row: {
+          created_at: string
+          id: number
+          is_core: boolean
+          is_measured: boolean
+          measurement_type: string
+          name: string
+          order: number
+          program_id: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          is_core?: boolean
+          is_measured?: boolean
+          measurement_type?: string
+          name: string
+          order?: number
+          program_id: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          is_core?: boolean
+          is_measured?: boolean
+          measurement_type?: string
+          name?: string
+          order?: number
+          program_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_exercises_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       programs: {
         Row: {
           created_at: string | null
@@ -349,6 +517,7 @@ export type Database = {
           id: number
           lvl: number
           max_students: number | null
+          measured: boolean
           min_students: number | null
           name: string
           price: number | null
@@ -362,6 +531,7 @@ export type Database = {
           id?: number
           lvl?: number
           max_students?: number | null
+          measured?: boolean
           min_students?: number | null
           name: string
           price?: number | null
@@ -375,6 +545,7 @@ export type Database = {
           id?: number
           lvl?: number
           max_students?: number | null
+          measured?: boolean
           min_students?: number | null
           name?: string
           price?: number | null
@@ -604,6 +775,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vehicles: {
+        Row: {
+          created_at: string
+          id: number
+          latacc: number | null
+          make: string
+          model: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          latacc?: number | null
+          make: string
+          model: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          latacc?: number | null
+          make?: string
+          model?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: []
       }
       venues: {
         Row: {
