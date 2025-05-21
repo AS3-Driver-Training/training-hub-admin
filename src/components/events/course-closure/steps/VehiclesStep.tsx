@@ -9,6 +9,7 @@ import { useVehicleManager } from "../vehicles/VehicleManager";
 import { VehicleTableRow } from "../vehicles/VehicleTableRow";
 import { useProfile } from "@/hooks/useProfile";
 import { VehicleFormDialog } from "../vehicles/VehicleFormDialog";
+import { toast } from "sonner";
 
 interface VehiclesStepProps {
   formData: Partial<CourseClosureData>;
@@ -20,9 +21,10 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
   const { userRole } = useProfile();
   const isSuperAdmin = userRole === "superadmin";
   
-  // State for editing vehicle
+  // State for vehicle dialog
   const [editingVehicleIndex, setEditingVehicleIndex] = useState<number | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isVehicleDialogOpen, setIsVehicleDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
   
   // Initialize vehicles array with existing data or empty array
   const vehicles = formData.vehicles && formData.vehicles.length > 0 ? formData.vehicles : [];
@@ -33,9 +35,9 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
     handleRemoveVehicle,
     handleUpdateVehicle,
     handleSelectVehicle,
-    handleTriggerCreateVehicle,
-    isVehicleNew,
-    isVehicleSelected
+    handleClearVehicle,
+    isVehicleSelected,
+    getVehicleDbId
   } = useVehicleManager({
     vehicles,
     onVehiclesChange: (updatedVehicles) => {
@@ -43,22 +45,24 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
     }
   });
 
-  // Handle vehicle edit button click
+  // Handle edit button click
   const handleEditVehicle = (index: number) => {
     setEditingVehicleIndex(index);
-    setIsEditDialogOpen(true);
+    setDialogMode('edit');
+    setIsVehicleDialogOpen(true);
   };
 
-  // Handle vehicle creation from dialog
-  const handleVehicleCreated = (vehicle: Vehicle) => {
+  // Handle vehicle update from dialog
+  const handleVehicleUpdated = (vehicle: Vehicle) => {
     if (editingVehicleIndex !== null) {
-      // If we're editing, update the existing vehicle
-      handleUpdateVehicle(editingVehicleIndex, 'make', `${vehicle.make} ${vehicle.model}`.trim());
-      handleUpdateVehicle(editingVehicleIndex, 'year', vehicle.year);
-      handleUpdateVehicle(editingVehicleIndex, 'latAcc', vehicle.latAcc);
+      // Update vehicle details in the list
+      handleSelectVehicle(editingVehicleIndex, vehicle);
+      toast.success(`Vehicle updated successfully`);
     }
+    
+    // Reset state
     setEditingVehicleIndex(null);
-    setIsEditDialogOpen(false);
+    setIsVehicleDialogOpen(false);
   };
 
   return (
@@ -67,7 +71,7 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-medium">Course Vehicles</h3>
           <InfoTooltip 
-            text="Add vehicles used during the course. Search for existing vehicles or create new ones."
+            text="Add vehicles used during the course. Search for existing vehicles or enter new ones directly."
             side="top"
           />
         </div>
@@ -79,7 +83,8 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
             <div className="flex">
               <div className="ml-3">
                 <p className="text-sm text-blue-700">
-                  <span className="font-medium">Note:</span> Only superadmins can edit vehicle details after selection.
+                  <span className="font-medium">Note:</span> You can search for vehicles and add new ones. 
+                  Only superadmins can edit vehicle details in the database.
                 </p>
               </div>
             </div>
@@ -109,12 +114,12 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
                   key={i}
                   vehicle={vehicle}
                   index={i}
-                  isNewVehicle={isVehicleNew(i)}
                   isSelected={isVehicleSelected(i)}
+                  dbId={getVehicleDbId(i)}
                   onUpdate={handleUpdateVehicle}
                   onRemove={handleRemoveVehicle}
                   onSelectVehicle={handleSelectVehicle}
-                  onTriggerCreateVehicle={handleTriggerCreateVehicle}
+                  onClearVehicle={handleClearVehicle}
                   onEditVehicle={handleEditVehicle}
                 />
               ))
@@ -134,16 +139,21 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
         </div>
       </div>
       
-      {/* Edit Vehicle Dialog */}
+      {/* Vehicle Edit Dialog */}
       {editingVehicleIndex !== null && (
         <VehicleFormDialog
-          open={isEditDialogOpen}
+          open={isVehicleDialogOpen}
           onClose={() => {
-            setIsEditDialogOpen(false);
+            setIsVehicleDialogOpen(false);
             setEditingVehicleIndex(null);
           }}
-          onVehicleCreated={handleVehicleCreated}
-          initialMakeModel={vehicles[editingVehicleIndex]?.make || ""}
+          onVehicleCreated={handleVehicleUpdated}
+          initialMake={vehicles[editingVehicleIndex]?.make || ""}
+          initialModel={vehicles[editingVehicleIndex]?.model || ""}
+          initialYear={vehicles[editingVehicleIndex]?.year}
+          initialLatAcc={vehicles[editingVehicleIndex]?.latAcc}
+          vehicleId={getVehicleDbId(editingVehicleIndex)}
+          mode={dialogMode}
         />
       )}
     </div>

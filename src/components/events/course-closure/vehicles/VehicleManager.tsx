@@ -9,13 +9,12 @@ interface VehicleManagerProps {
 }
 
 interface VehicleStatus {
-  isNew: boolean;
   isSelected: boolean;
   dbId?: number;
 }
 
 export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManagerProps) {
-  // Track status of each vehicle (new vs selected)
+  // Track status of each vehicle (selected from DB or not)
   const [vehicleStatuses, setVehicleStatuses] = useState<Record<number, VehicleStatus>>({});
 
   // Initialize with 3 empty vehicles if none exist
@@ -23,9 +22,9 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     if (vehicles.length === 0) {
       // Create 3 empty vehicle rows
       const initialVehicles: CourseVehicle[] = [
-        { car: 1, make: "", year: undefined, latAcc: undefined },
-        { car: 2, make: "", year: undefined, latAcc: undefined },
-        { car: 3, make: "", year: undefined, latAcc: undefined }
+        { car: 1, make: "", model: undefined, year: undefined, latAcc: undefined },
+        { car: 2, make: "", model: undefined, year: undefined, latAcc: undefined },
+        { car: 3, make: "", model: undefined, year: undefined, latAcc: undefined }
       ];
       
       onVehiclesChange(initialVehicles);
@@ -34,7 +33,6 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
       const initialStatuses: Record<number, VehicleStatus> = {};
       initialVehicles.forEach((_, index) => {
         initialStatuses[index] = {
-          isNew: true,
           isSelected: false
         };
       });
@@ -52,8 +50,7 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
         // If we don't have a status for this vehicle yet, initialize it
         if (!initialStatuses[index]) {
           initialStatuses[index] = {
-            isNew: true,
-            isSelected: false
+            isSelected: Boolean(vehicle.year && vehicle.latAcc)
           };
         }
       });
@@ -71,6 +68,7 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     const newVehicle: CourseVehicle = {
       car: newCarNumber,
       make: "",
+      model: undefined,
       year: undefined,
       latAcc: undefined
     };
@@ -79,11 +77,10 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     const updatedVehicles = [...vehicles, newVehicle];
     onVehiclesChange(updatedVehicles);
     
-    // Set status as new and not selected
+    // Set status as not selected
     setVehicleStatuses(prev => ({
       ...prev,
       [updatedVehicles.length - 1]: {
-        isNew: true,
         isSelected: false
       }
     }));
@@ -127,16 +124,20 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
   // Handle selecting a vehicle from search
   const handleSelectVehicle = (index: number, vehicle: Vehicle) => {
     // Update the vehicle data
-    handleUpdateVehicle(index, 'make', `${vehicle.make} ${vehicle.model || ''}`.trim());
-    handleUpdateVehicle(index, 'year', vehicle.year);
-    handleUpdateVehicle(index, 'latAcc', vehicle.latAcc);
+    const updatedVehicles = [...vehicles];
+    updatedVehicles[index] = {
+      car: updatedVehicles[index].car,
+      make: vehicle.make,
+      model: vehicle.model,
+      year: vehicle.year,
+      latAcc: vehicle.latAcc
+    };
+    onVehiclesChange(updatedVehicles);
     
     // Mark this vehicle as selected
     setVehicleStatuses(prev => ({
       ...prev,
       [index]: {
-        ...prev[index],
-        isNew: false,
         isSelected: true,
         dbId: vehicle.id
       }
@@ -145,22 +146,35 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     toast.success(`Selected ${vehicle.make} ${vehicle.model || ''}`);
   };
 
-  // Trigger to open vehicle creation dialog
-  const handleTriggerCreateVehicle = (index: number, makeModel: string) => {
-    // This now just prepares the UI for vehicle creation
-    // The actual creation happens in the VehicleFormDialog
-    console.log(`Triggering vehicle creation for index ${index} with makeModel: ${makeModel}`);
-    // The state update is now handled by the VehiclesStep component
+  // Clear vehicle selection
+  const handleClearVehicle = (index: number) => {
+    const updatedVehicles = [...vehicles];
+    updatedVehicles[index] = {
+      car: updatedVehicles[index].car,
+      make: "",
+      model: undefined,
+      year: undefined,
+      latAcc: undefined
+    };
+    onVehiclesChange(updatedVehicles);
+
+    setVehicleStatuses(prev => ({
+      ...prev,
+      [index]: {
+        isSelected: false,
+        dbId: undefined
+      }
+    }));
   };
 
-  // Check if a vehicle is new (created by user vs selected from DB)
-  const isVehicleNew = (index: number): boolean => {
-    return vehicleStatuses[index]?.isNew || false;
-  };
-
-  // Check if a vehicle has been selected (either from search or created)
+  // Check if a vehicle has been selected from DB
   const isVehicleSelected = (index: number): boolean => {
     return vehicleStatuses[index]?.isSelected || false;
+  };
+
+  // Get the database ID of a vehicle if selected from DB
+  const getVehicleDbId = (index: number): number | undefined => {
+    return vehicleStatuses[index]?.dbId;
   };
 
   return {
@@ -168,8 +182,8 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     handleRemoveVehicle,
     handleUpdateVehicle,
     handleSelectVehicle,
-    handleTriggerCreateVehicle,
-    isVehicleNew,
-    isVehicleSelected
+    handleClearVehicle,
+    isVehicleSelected,
+    getVehicleDbId
   };
 }

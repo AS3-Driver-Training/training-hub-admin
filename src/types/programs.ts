@@ -101,7 +101,7 @@ export interface CourseInfo {
 export interface CourseVehicle {
   car: number;
   make: string;
-  model?: string; // Add model as optional property
+  model?: string; 
   year?: number;
   latAcc?: number;
 }

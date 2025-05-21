@@ -1,52 +1,92 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { CourseVehicle, Vehicle } from "@/types/programs";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Trash, Edit } from "lucide-react";
+import { Trash, Edit, X } from "lucide-react";
 import { VehicleSearch } from "./VehicleSearch";
 import { useProfile } from "@/hooks/useProfile";
+import { Input } from "@/components/ui/input";
 
 interface VehicleTableRowProps {
   vehicle: CourseVehicle;
   index: number;
-  isNewVehicle: boolean;
   isSelected: boolean;
+  dbId?: number;
   onUpdate: (index: number, field: keyof CourseVehicle, value: any) => void;
   onRemove: (index: number) => void;
   onSelectVehicle: (index: number, vehicle: Vehicle) => void;
-  onTriggerCreateVehicle: (index: number, makeModel: string) => void;
+  onClearVehicle: (index: number) => void;
   onEditVehicle: (index: number) => void;
 }
 
 export function VehicleTableRow({
   vehicle,
   index,
-  isNewVehicle,
   isSelected,
+  dbId,
   onUpdate,
   onRemove,
   onSelectVehicle,
-  onTriggerCreateVehicle,
+  onClearVehicle,
   onEditVehicle
 }: VehicleTableRowProps) {
   const { userRole } = useProfile();
   const isSuperAdmin = userRole === "superadmin";
   
+  // Track if we're currently editing the car number
+  const [editingCarNumber, setEditingCarNumber] = useState(false);
+  
   return (
     <TableRow>
       <TableCell>
-        <div className="w-20 text-center py-2">{vehicle.car}</div>
+        {editingCarNumber ? (
+          <Input
+            type="number"
+            className="w-16 text-center py-1"
+            value={vehicle.car}
+            onChange={(e) => onUpdate(index, 'car', parseInt(e.target.value) || 1)}
+            onBlur={() => setEditingCarNumber(false)}
+            onKeyDown={(e) => e.key === 'Enter' && setEditingCarNumber(false)}
+            autoFocus
+            min={1}
+          />
+        ) : (
+          <div 
+            className="w-16 text-center py-2 cursor-pointer hover:bg-gray-100 rounded"
+            onClick={() => setEditingCarNumber(true)}
+          >
+            {vehicle.car}
+          </div>
+        )}
       </TableCell>
       
-      <TableCell>
-        <VehicleSearch
-          defaultValue={vehicle.make}
-          placeholder="Search for make/model..."
-          onSelectVehicle={(selected) => onSelectVehicle(index, selected)}
-          onTriggerCreate={(makeModel) => onTriggerCreateVehicle(index, makeModel)}
-          disabled={isSelected} // Disable search if a vehicle is already selected
-        />
+      <TableCell className="w-full">
+        <div className="flex space-x-2 items-center">
+          <VehicleSearch
+            defaultValue={`${vehicle.make} ${vehicle.model || ''}`.trim()}
+            placeholder="Search for make/model..."
+            onSelectVehicle={(selected) => onSelectVehicle(index, selected)}
+            onManualEntry={(make, model) => {
+              onUpdate(index, 'make', make);
+              onUpdate(index, 'model', model);
+              onClearVehicle(index);
+            }}
+            allowManualEntry={true}
+          />
+          
+          {isSelected && (
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => onClearVehicle(index)}
+              aria-label="Clear vehicle"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </TableCell>
       
       <TableCell>
@@ -57,7 +97,7 @@ export function VehicleTableRow({
       
       <TableCell>
         <div className="text-sm px-3 py-2">
-          {vehicle.latAcc || '—'}
+          {vehicle.latAcc ? vehicle.latAcc.toFixed(2) : '—'}
         </div>
       </TableCell>
       

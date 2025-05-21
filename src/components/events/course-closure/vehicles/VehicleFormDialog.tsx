@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,31 +13,47 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Vehicle } from "@/types/programs";
 
 interface VehicleFormDialogProps {
   open: boolean;
   onClose: () => void;
   onVehicleCreated: (vehicle: { id: number; make: string; model: string; year: number; latAcc: number }) => void;
-  initialMakeModel?: string;
+  initialMake?: string;
+  initialModel?: string;
+  initialYear?: number;
+  initialLatAcc?: number;
+  vehicleId?: number;
+  mode: 'create' | 'edit';
 }
 
 export function VehicleFormDialog({
   open,
   onClose,
   onVehicleCreated,
-  initialMakeModel = ""
+  initialMake = "",
+  initialModel = "",
+  initialYear,
+  initialLatAcc,
+  vehicleId,
+  mode = 'create'
 }: VehicleFormDialogProps) {
-  // Split the initialMakeModel into make and model if provided
-  const initialParts = initialMakeModel.split(" ");
-  const initialMake = initialParts.length > 0 ? initialParts[0] : "";
-  const initialModel = initialParts.length > 1 ? initialParts.slice(1).join(" ") : "";
-
   // Form state
   const [make, setMake] = useState(initialMake);
   const [model, setModel] = useState(initialModel);
-  const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [latAcc, setLatAcc] = useState<number>(0.8);
+  const [year, setYear] = useState<number | undefined>(initialYear || new Date().getFullYear());
+  const [latAcc, setLatAcc] = useState<number | undefined>(initialLatAcc || 0.8);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update state when props change (important for edit mode)
+  useEffect(() => {
+    if (open) {
+      setMake(initialMake);
+      setModel(initialModel);
+      setYear(initialYear || new Date().getFullYear());
+      setLatAcc(initialLatAcc || 0.8);
+    }
+  }, [open, initialMake, initialModel, initialYear, initialLatAcc]);
 
   // Form validation
   const isFormValid = make.trim().length > 0;
@@ -57,23 +73,51 @@ export function VehicleFormDialog({
     setIsSubmitting(true);
     
     try {
-      // Create vehicle in database
-      const { data, error } = await supabase
-        .from("vehicles")
-        .insert({
-          make: make.trim(),
-          model: model.trim(),
-          year,
-          latacc: latAcc
-        })
-        .select()
-        .single();
+      let data;
+      let error;
       
-      if (error) throw error;
+      if (mode === 'edit' && vehicleId) {
+        // Update existing vehicle
+        const response = await supabase
+          .from("vehicles")
+          .update({
+            make: make.trim(),
+            model: model.trim(),
+            year,
+            latacc: latAcc
+          })
+          .eq("id", vehicleId)
+          .select()
+          .single();
+          
+        data = response.data;
+        error = response.error;
+        
+        if (error) throw error;
+        
+        toast.success("Vehicle updated successfully");
+      } else {
+        // Create new vehicle
+        const response = await supabase
+          .from("vehicles")
+          .insert({
+            make: make.trim(),
+            model: model.trim(),
+            year,
+            latacc: latAcc
+          })
+          .select()
+          .single();
+          
+        data = response.data;
+        error = response.error;
+        
+        if (error) throw error;
+        
+        toast.success("Vehicle created successfully");
+      }
       
-      toast.success("Vehicle created successfully");
-      
-      // Pass the created vehicle back to the parent
+      // Pass the created/updated vehicle back to the parent
       onVehicleCreated({
         id: data.id,
         make: data.make,
@@ -84,7 +128,7 @@ export function VehicleFormDialog({
       
       handleClose();
     } catch (error: any) {
-      toast.error(`Error creating vehicle: ${error.message}`);
+      toast.error(`Error ${mode === 'edit' ? 'updating' : 'creating'} vehicle: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -95,9 +139,14 @@ export function VehicleFormDialog({
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Vehicle</DialogTitle>
+            <DialogTitle>
+              {mode === 'edit' ? 'Edit Vehicle' : 'Create New Vehicle'}
+            </DialogTitle>
             <DialogDescription>
-              Add a new vehicle to the system. Fields marked with * are required.
+              {mode === 'edit' 
+                ? 'Update vehicle information in the system.' 
+                : 'Add a new vehicle to the system.'} 
+              Fields marked with * are required.
             </DialogDescription>
           </DialogHeader>
           
@@ -130,10 +179,11 @@ export function VehicleFormDialog({
                 <Input
                   id="year"
                   type="number"
-                  value={year}
-                  onChange={(e) => setYear(parseInt(e.target.value) || new Date().getFullYear())}
+                  value={year || ''}
+                  onChange={(e) => setYear(e.target.value ? parseInt(e.target.value) : undefined)}
                   min={1900}
                   max={new Date().getFullYear() + 1}
+                  placeholder="e.g. 2023"
                 />
               </div>
               
@@ -145,8 +195,9 @@ export function VehicleFormDialog({
                   step="0.01"
                   min="0.1"
                   max="1.5"
-                  value={latAcc}
-                  onChange={(e) => setLatAcc(parseFloat(e.target.value) || 0.8)}
+                  value={latAcc || ''}
+                  onChange={(e) => setLatAcc(e.target.value ? parseFloat(e.target.value) : undefined)}
+                  placeholder="e.g. 0.8"
                 />
               </div>
             </div>
@@ -165,7 +216,9 @@ export function VehicleFormDialog({
               type="submit" 
               disabled={!isFormValid || isSubmitting}
             >
-              {isSubmitting ? "Creating..." : "Create Vehicle"}
+              {isSubmitting ? 
+                (mode === 'edit' ? "Updating..." : "Creating...") : 
+                (mode === 'edit' ? "Update Vehicle" : "Create Vehicle")}
             </Button>
           </DialogFooter>
         </form>
