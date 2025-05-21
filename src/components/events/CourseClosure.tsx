@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -24,6 +24,17 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { CourseClosureData, CourseVehicle, CourseInfo, CourseLayout, FinalExerciseParameters, SlalomParameters, LaneChangeParameters } from "@/types/programs";
+
+// Define a proper type for the course instance data that includes clientName
+type CourseInstanceWithClient = {
+  id: number;
+  start_date: string;
+  end_date: string | null;
+  programs: { id: number; name: string; };
+  venues: { id: number; name: string; };
+  host_client_id: string | null;
+  clientName?: string;
+};
 
 // Form validation schema
 const formSchema = z.object({
@@ -105,6 +116,9 @@ export function CourseClosure() {
 
       if (error) throw error;
       
+      // Create our response with the correct type
+      const responseWithClient: CourseInstanceWithClient = { ...data };
+      
       // Fetch client info if host_client_id exists
       if (data.host_client_id) {
         const { data: clientData, error: clientError } = await supabase
@@ -114,17 +128,17 @@ export function CourseClosure() {
           .single();
         
         if (!clientError && clientData) {
-          data.clientName = clientData.name;
+          responseWithClient.clientName = clientData.name;
         }
       }
       
-      return data;
+      return responseWithClient;
     },
     enabled: !!courseId,
   });
 
   // Fetch vehicles data
-  const { data: vehiclesData } = useQuery({
+  const vehiclesQuery = useQuery({
     queryKey: ["course-vehicles", courseId],
     queryFn: async () => {
       if (!courseId) return [];
@@ -146,13 +160,15 @@ export function CourseClosure() {
         latAcc: item.vehicles.latacc || 0.8
       }));
     },
-    enabled: !!courseId,
-    onSuccess: (data) => {
-      if (data && data.length > 0) {
-        setVehicles(data);
-      }
-    }
+    enabled: !!courseId
   });
+
+  // Handle vehicles data loading
+  useEffect(() => {
+    if (vehiclesQuery.data && vehiclesQuery.data.length > 0) {
+      setVehicles(vehiclesQuery.data);
+    }
+  }, [vehiclesQuery.data]);
 
   // Form setup
   const form = useForm<FormValues>({
