@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -273,7 +274,7 @@ export const useCourseData = (courseId?: number) => {
       }
     },
     onSuccess: () => {
-      success("Course closure process completed successfully");
+      toast.success("Course closure process completed successfully");
       setCurrentStep('completed');
     },
     onError: (err: any) => {
