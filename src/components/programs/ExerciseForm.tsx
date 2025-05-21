@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { ProgramExercise, ExerciseParameter } from "@/types/programs";
+import { ProgramExercise } from "@/types/programs";
 import { Switch } from "@/components/ui/switch";
 
 const exerciseSchema = z.object({
@@ -46,10 +46,6 @@ export function ExerciseForm({
   onSave, 
   onCancel 
 }: ExerciseFormProps) {
-  const [parameters, setParameters] = useState<ExerciseParameter[]>(
-    exercise?.parameters || []
-  );
-  
   // Create form with default values
   const form = useForm<ExerciseFormValues>({
     resolver: zodResolver(exerciseSchema),
@@ -64,30 +60,7 @@ export function ExerciseForm({
   const measurementType = form.watch("measurementType");
   const isMeasured = form.watch("isMeasured");
 
-  // Handle adding a new parameter
-  const handleAddParameter = () => {
-    setParameters([
-      ...parameters,
-      { id: `temp-${Date.now()}`, name: "", value: 0 },
-    ]);
-  };
-
-  // Handle updating a parameter
-  const handleParameterChange = (index: number, field: "name" | "value", value: string | number) => {
-    const updatedParams = [...parameters];
-    updatedParams[index] = {
-      ...updatedParams[index],
-      [field]: field === "value" ? Number(value) : value,
-    };
-    setParameters(updatedParams);
-  };
-
-  // Handle removing a parameter
-  const handleRemoveParameter = (index: number) => {
-    setParameters(parameters.filter((_, i) => i !== index));
-  };
-
-  // Handle form submission
+  // Handle form submission - we no longer manage parameters at program level
   const onSubmit = (data: ExerciseFormValues) => {
     const newExercise: ProgramExercise = {
       id: exercise?.id || `temp-${Date.now()}`,
@@ -96,7 +69,7 @@ export function ExerciseForm({
       isMeasured: data.isMeasured,
       measurementType: data.measurementType,
       order: exercise?.order || 0,
-      parameters: parameters,
+      parameters: [], // Parameters will be empty at program level, filled during course closure
     };
     onSave(newExercise);
   };
@@ -192,62 +165,31 @@ export function ExerciseForm({
             )}
 
             {isMeasured && (
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-sm font-medium">Parameters</h4>
-                  <Button
-                    type="button"
-                    onClick={handleAddParameter}
-                    size="sm"
-                    variant="outline"
-                  >
-                    Add Parameter
-                  </Button>
-                </div>
-
-                <div className="space-y-2">
-                  {parameters.map((param, index) => (
-                    <div
-                      key={param.id}
-                      className="flex items-center gap-2 border p-2 rounded-md"
-                    >
-                      <Input
-                        placeholder="Parameter name"
-                        value={param.name}
-                        onChange={(e) => handleParameterChange(index, "name", e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="Value"
-                        value={param.value}
-                        onChange={(e) => handleParameterChange(index, "value", e.target.value)}
-                        className="w-24"
-                      />
-                      <Button
-                        type="button"
-                        onClick={() => handleRemoveParameter(index)}
-                        size="sm"
-                        variant="destructive"
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-
-                  {/* Default parameter suggestions based on measurement type */}
-                  {parameters.length === 0 && measurementType === "latacc" && (
-                    <div className="text-sm text-gray-500">
-                      Suggested parameters: chord, mo
-                    </div>
-                  )}
-                  {parameters.length === 0 && measurementType === "time" && (
-                    <div className="text-sm text-gray-500">
-                      Suggested parameters: ideal_time_sec, cone_penalty_sec
-                    </div>
-                  )}
-                </div>
+              <div className="p-4 bg-gray-50 rounded-md border">
+                <h4 className="text-sm font-medium mb-2">Parameter Information</h4>
+                <p className="text-sm text-muted-foreground">
+                  Parameters for this exercise will be set during course closure by the instructor.
+                </p>
+                
+                {measurementType === "latacc" && (
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    <p>Typically includes parameters like:</p>
+                    <ul className="list-disc list-inside pl-2 mt-1">
+                      <li>chord</li>
+                      <li>mo</li>
+                    </ul>
+                  </div>
+                )}
+                
+                {measurementType === "time" && (
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    <p>Typically includes parameters like:</p>
+                    <ul className="list-disc list-inside pl-2 mt-1">
+                      <li>ideal_time_sec</li>
+                      <li>cone_penalty_sec</li>
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
 

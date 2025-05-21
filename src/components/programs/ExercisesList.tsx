@@ -38,10 +38,7 @@ export function ExercisesList({ exercises, onChange, measured }: ExercisesListPr
         isMeasured: true,
         measurementType: "latacc" as const,
         order: 1,
-        parameters: [
-          { id: "chord", name: "chord", value: 150 },
-          { id: "mo", name: "mo", value: 15 }
-        ]
+        parameters: [] // We no longer set default parameters at program level
       },
       {
         id: "lane-change",
@@ -50,10 +47,7 @@ export function ExercisesList({ exercises, onChange, measured }: ExercisesListPr
         isMeasured: true,
         measurementType: "latacc" as const,
         order: 2,
-        parameters: [
-          { id: "chord", name: "chord", value: 150 },
-          { id: "mo", name: "mo", value: 15 }
-        ]
+        parameters: [] // We no longer set default parameters at program level
       },
       {
         id: "final-exercise",
@@ -62,10 +56,7 @@ export function ExercisesList({ exercises, onChange, measured }: ExercisesListPr
         isMeasured: true,
         measurementType: "time" as const,
         order: 3,
-        parameters: [
-          { id: "ideal_time_sec", name: "ideal_time_sec", value: 60 },
-          { id: "cone_penalty_sec", name: "cone_penalty_sec", value: 2 }
-        ]
+        parameters: [] // We no longer set default parameters at program level
       }
     ];
 
@@ -98,7 +89,7 @@ export function ExercisesList({ exercises, onChange, measured }: ExercisesListPr
         const newExercise = {
           ...coreExercise,
           id: `${coreExercise.id}-${Date.now()}`, // Ensure unique ID
-          order: exercises.length + updatedExercises.length + 1
+          order: exercises.length + 1
         };
         updatedExercises.push(newExercise);
       });
@@ -107,9 +98,10 @@ export function ExercisesList({ exercises, onChange, measured }: ExercisesListPr
     }
   }, [measured, missingCoreExercises.length]);
 
-  // Handle adding a core exercise
-  const handleAddCoreExercise = (coreExercise: ProgramExercise) => {
-    setEditingExercise(coreExercise);
+  // Handle editing an exercise - Fix: Use stopPropagation to prevent the click from bubbling up
+  const handleEditExercise = (e: React.MouseEvent, exercise: ProgramExercise) => {
+    e.stopPropagation(); // This prevents the event from bubbling up to parent elements
+    setEditingExercise(exercise);
   };
 
   // Handle saving an exercise
@@ -176,14 +168,17 @@ export function ExercisesList({ exercises, onChange, measured }: ExercisesListPr
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => setEditingExercise(exercise)}
+                      onClick={(e) => handleEditExercise(e, exercise)} // Fixed: Pass event object to handle stopPropagation
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => setExerciseToDelete(exercise)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Fixed: Prevent event bubbling
+                        setExerciseToDelete(exercise);
+                      }}
                       disabled={exercise.isCore && measured}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -191,19 +186,15 @@ export function ExercisesList({ exercises, onChange, measured }: ExercisesListPr
                   </div>
                 </div>
 
-                {exercise.parameters && exercise.parameters.length > 0 && (
-                  <div className="mt-2">
-                    <h4 className="text-sm text-muted-foreground">Parameters:</h4>
-                    <div className="grid grid-cols-2 gap-2 mt-1">
-                      {exercise.parameters.map(param => (
-                        <div key={param.id} className="flex justify-between text-sm">
-                          <span>{param.name}:</span>
-                          <span className="font-mono">{param.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* We no longer display parameters at program level */}
+                <div className="mt-2">
+                  <h4 className="text-sm text-muted-foreground">
+                    {exercise.measurementType === 'latacc' ? 'Lateral Acceleration' : 'Time'} Exercise
+                  </h4>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Parameters will be set during course closure
+                  </p>
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -214,7 +205,10 @@ export function ExercisesList({ exercises, onChange, measured }: ExercisesListPr
       {!isAddingExercise && !editingExercise && (
         <Button 
           variant="outline"
-          onClick={() => setIsAddingExercise(true)}
+          onClick={(e) => {
+            e.stopPropagation(); // Fixed: Prevent event bubbling
+            setIsAddingExercise(true);
+          }}
           className="w-full"
         >
           <PlusCircle className="h-4 w-4 mr-2" />
