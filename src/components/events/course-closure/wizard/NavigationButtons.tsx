@@ -10,10 +10,19 @@ interface NavigationButtonsProps {
 }
 
 export const NavigationButtons: React.FC<NavigationButtonsProps> = ({ onSubmit }) => {
-  const { currentStep, setCurrentStep, wizardSteps, formData, isSubmitting } = useWizardContext();
+  const { currentStep, setCurrentStep, wizardSteps, formData, isSubmitting, file } = useWizardContext();
   
   // Move to next step
   const handleNext = () => {
+    if (currentStep === 'basic' && !file) {
+      toast({
+        title: "Missing course data",
+        description: "Please upload the course data ZIP file before continuing",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const currentIndex = wizardSteps.findIndex(step => step.key === currentStep);
     if (currentIndex < wizardSteps.length - 1) {
       setCurrentStep(wizardSteps[currentIndex + 1].key);
@@ -30,6 +39,15 @@ export const NavigationButtons: React.FC<NavigationButtonsProps> = ({ onSubmit }
 
   // Handle submission
   const handleSubmit = () => {
+    if (!file) {
+      toast({
+        title: "Missing course data",
+        description: "Please upload the course data ZIP file before submitting",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (!formData.vehicles?.length) {
       toast({
         title: "No vehicles added",
@@ -53,8 +71,9 @@ export const NavigationButtons: React.FC<NavigationButtonsProps> = ({ onSubmit }
           type="button"
           variant="outline"
           onClick={handlePrevious}
+          className="gap-1"
         >
-          <ChevronLeft className="mr-2 h-4 w-4" />
+          <ChevronLeft className="h-4 w-4" />
           Previous
         </Button>
       ) : (
@@ -66,6 +85,7 @@ export const NavigationButtons: React.FC<NavigationButtonsProps> = ({ onSubmit }
           type="button"
           onClick={handleSubmit}
           disabled={isSubmitting}
+          className="bg-primary hover:bg-primary/90"
         >
           {isSubmitting ? "Submitting..." : "Submit Closure"}
         </Button>
@@ -73,9 +93,10 @@ export const NavigationButtons: React.FC<NavigationButtonsProps> = ({ onSubmit }
         <Button
           type="button"
           onClick={handleNext}
+          className="gap-1 bg-primary hover:bg-primary/90"
         >
           Next
-          <ChevronRight className="ml-2 h-4 w-4" />
+          <ChevronRight className="h-4 w-4" />
         </Button>
       )}
     </div>

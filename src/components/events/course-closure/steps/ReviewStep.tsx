@@ -17,12 +17,28 @@ interface ReviewStepProps {
 }
 
 export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: ReviewStepProps) {
+  if (!file) {
+    return (
+      <div className="p-6 flex flex-col items-center justify-center">
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Course data file is required. Please go back to the Basic Information step to upload it.
+          </AlertDescription>
+        </Alert>
+        <Button onClick={() => onJumpToStep('basic')}>
+          Go to Basic Information
+        </Button>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Review all information before finalizing the course closure. You can edit any section if needed.
+          Review all information before finalizing the course closure. You can go back to any section to make changes.
         </AlertDescription>
       </Alert>
       
@@ -61,8 +77,8 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
             <div className="font-medium">Units</div>
             <div>{formData.course_info.units}</div>
             
-            <div className="font-medium">Documentation</div>
-            <div>{file ? file.name : "No files attached"}</div>
+            <div className="font-medium">Course Data</div>
+            <div>{file.name} ({(file.size / 1024).toFixed(1)} KB)</div>
           </div>
         </CardContent>
       </Card>
@@ -94,7 +110,7 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
                 {formData.vehicles.map((vehicle, i) => (
                   <TableRow key={i}>
                     <TableCell>{vehicle.car}</TableCell>
-                    <TableCell>{vehicle.make}</TableCell>
+                    <TableCell>{vehicle.make} {vehicle.model}</TableCell>
                     <TableCell>{vehicle.year || "N/A"}</TableCell>
                     <TableCell>{vehicle.latAcc.toFixed(2)}</TableCell>
                   </TableRow>
@@ -181,16 +197,16 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
         </CardContent>
       </Card>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>JSON Preview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-muted p-4 rounded-md text-xs overflow-x-auto">
-            <pre>{JSON.stringify(formData, null, 2)}</pre>
-          </div>
-        </CardContent>
-      </Card>
+      {formData.notes && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Notes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="whitespace-pre-line">{formData.notes}</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
