@@ -131,6 +131,7 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
         </CardContent>
       </Card>
       
+      {/* Redesigned Exercise Parameters Section */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between py-3">
           <CardTitle className="text-base">Exercise Parameters</CardTitle>
@@ -145,62 +146,67 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div>
-              <h4 className="font-medium mb-2">Slalom</h4>
-              <div className="grid grid-cols-2 gap-y-2 text-sm">
-                <div>Chord</div>
-                <div>{formData.course_layout.slalom.chord}</div>
-                <div>MO (Maximum Offset)</div>
-                <div>{formData.course_layout.slalom.mo}</div>
-              </div>
-            </div>
-            
-            <div className="pt-2 border-t">
-              <h4 className="font-medium mb-2">Lane Change</h4>
-              <div className="grid grid-cols-2 gap-y-2 text-sm">
-                <div>Chord</div>
-                <div>{formData.course_layout.lane_change.chord}</div>
-                <div>MO (Maximum Offset)</div>
-                <div>{formData.course_layout.lane_change.mo}</div>
-              </div>
-            </div>
-            
-            <div className="pt-2 border-t">
-              <h4 className="font-medium mb-2">Final Exercise</h4>
-              <div className="grid grid-cols-2 gap-y-2 text-sm">
-                <div>Ideal Time</div>
-                <div>{formData.course_layout.final_exercise.ideal_time_sec} seconds</div>
-                <div>Cone Penalty</div>
-                <div>{formData.course_layout.final_exercise.cone_penalty_sec} seconds</div>
-                <div>Door Penalty</div>
-                <div>{formData.course_layout.final_exercise.door_penalty_sec} seconds</div>
-                
-                <div className="col-span-2 mt-2 font-medium">Slalom Component</div>
-                <div className="pl-4">Chord</div>
-                <div>{formData.course_layout.final_exercise.slalom.chord}</div>
-                <div className="pl-4">MO</div>
-                <div>{formData.course_layout.final_exercise.slalom.mo}</div>
-                
-                <div className="col-span-2 mt-2 font-medium">Lane Change Component</div>
-                <div className="pl-4">Chord</div>
-                <div>{formData.course_layout.final_exercise.lane_change.chord}</div>
-                <div className="pl-4">MO</div>
-                <div>{formData.course_layout.final_exercise.lane_change.mo}</div>
-                
-                {formData.course_layout.final_exercise.reverse_time && (
-                  <>
-                    <div className="col-span-2 mt-2 font-medium">Additional Parameters</div>
-                    <div className="pl-4">Reverse Time</div>
-                    <div>{formData.course_layout.final_exercise.reverse_time} seconds</div>
-                  </>
-                )}
-              </div>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-medium bg-slate-50">Exercise</TableHead>
+                  <TableHead className="text-center">Chord (ft)</TableHead>
+                  <TableHead className="text-center">MO (ft)</TableHead>
+                  <TableHead className="text-center">Other Parameters</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium">Slalom</TableCell>
+                  <TableCell className="text-center">{formData.course_layout.slalom.chord}</TableCell>
+                  <TableCell className="text-center">{formData.course_layout.slalom.mo}</TableCell>
+                  <TableCell>-</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Lane Change</TableCell>
+                  <TableCell className="text-center">{formData.course_layout.lane_change.chord}</TableCell>
+                  <TableCell className="text-center">{formData.course_layout.lane_change.mo}</TableCell>
+                  <TableCell>-</TableCell>
+                </TableRow>
+                <TableRow className="bg-slate-50/50">
+                  <TableCell colSpan={4} className="font-medium py-2">Final Exercise</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="pl-6">Slalom Component</TableCell>
+                  <TableCell className="text-center">{formData.course_layout.final_exercise.slalom.chord}</TableCell>
+                  <TableCell className="text-center">{formData.course_layout.final_exercise.slalom.mo}</TableCell>
+                  <TableCell rowSpan={2} className="align-top">
+                    <div className="flex flex-col gap-1">
+                      <div className="text-xs text-muted-foreground">Timing Parameters</div>
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+                        <div>Ideal Time:</div>
+                        <div>{formData.course_layout.final_exercise.ideal_time_sec} sec</div>
+                        <div>Cone Penalty:</div>
+                        <div>{formData.course_layout.final_exercise.cone_penalty_sec} sec</div>
+                        <div>Door Penalty:</div>
+                        <div>{formData.course_layout.final_exercise.door_penalty_sec} sec</div>
+                        {formData.course_layout.final_exercise.reverse_time && (
+                          <>
+                            <div>Reverse Time:</div>
+                            <div>{formData.course_layout.final_exercise.reverse_time} sec</div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="pl-6">Lane Change Component</TableCell>
+                  <TableCell className="text-center">{formData.course_layout.final_exercise.lane_change.chord}</TableCell>
+                  <TableCell className="text-center">{formData.course_layout.final_exercise.lane_change.mo}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>
       
-      {/* New Students Card */}
+      {/* Students Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between py-3">
           <CardTitle className="text-base">
