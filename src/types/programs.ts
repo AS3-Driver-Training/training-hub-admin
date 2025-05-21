@@ -1,3 +1,4 @@
+
 export interface Program {
   id: string;
   name: string;
@@ -53,6 +54,15 @@ export interface ExerciseResult {
   notes?: string;
 }
 
+// Enhanced vehicle interface that includes year and more detailed properties
+export interface Vehicle {
+  id: number;
+  make: string;
+  model: string;
+  year: number;
+  latAcc: number;
+}
+
 // New interfaces for the complex final exercise parameters
 
 export interface SlalomParameters {
@@ -92,6 +102,7 @@ export interface CourseVehicle {
   car: number;
   make: string;
   model?: string;
+  year?: number;
   latAcc: number;
 }
 
