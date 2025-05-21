@@ -52,7 +52,7 @@ export const WizardContent: React.FC<WizardContentProps> = ({ courseInstance, on
       case 'vehicles':
         return "Add all vehicles used during the course. You can search for existing vehicles or add new ones.";
       case 'exercises':
-        return "Configure parameters for all exercises used in the course, including core exercises and any additional ones.";
+        return "Configure parameters for all exercises used in the course, including measurements for slalom, lane change, and final exercises.";
       case 'review':
         return "Review all information before finalizing the course closure. You can go back to any section to make changes.";
       case 'completed':

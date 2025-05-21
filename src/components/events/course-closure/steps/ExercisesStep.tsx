@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash, ChevronDown, ChevronUp } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Plus, Trash, ChevronDown, ChevronUp, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
 
 interface ExercisesStepProps {
   formData: Partial<CourseClosureData>;
@@ -60,10 +61,10 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
   });
   
   const [finalExerciseOpen, setFinalExerciseOpen] = useState(false);
+  const [isAddingExercise, setIsAddingExercise] = useState(false);
 
   // Update parent form data when core exercise parameters change
   useEffect(() => {
-    // Sync the standalone exercises with final exercise sub-components
     setFinalExercise(prev => ({
       ...prev,
       slalom: { ...slalomParams },
@@ -105,6 +106,7 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
       measurementType: 'latacc',
       parameters: {}
     });
+    setIsAddingExercise(false);
   };
 
   const handleRemoveExercise = (id: string) => {
@@ -153,151 +155,171 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
       }
     });
   };
+
+  // Reusable tooltip component
+  const ParameterLabel = ({ label, tooltip }: { label: string; tooltip: string }) => (
+    <div className="flex items-center gap-1">
+      <Label>{label}</Label>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs">
+            <p>{tooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
+  );
   
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column - Core Exercises */}
-        <div className="space-y-6">
-          <h3 className="text-lg font-medium">Core Exercises</h3>
-          
-          {/* Slalom Exercise Card */}
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <CardTitle className="text-base font-medium flex items-center gap-2">
-                    Slalom Exercise
-                    <Badge variant="outline">Core</Badge>
-                  </CardTitle>
-                  <InfoTooltip 
-                    text="Configure the parameters for the slalom exercise."
-                    side="top"
-                  />
+      <Card className="border-none shadow-none">
+        <CardContent className="p-0 space-y-6">
+          {/* Core Exercises Section */}
+          <div>
+            <h3 className="text-lg font-medium mb-4">Course Exercise Parameters</h3>
+            
+            {/* Slalom Exercise */}
+            <div className="border rounded-lg p-4 mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-medium">Slalom Exercise</h4>
+                  <Badge variant="outline">Core</Badge>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="slalom-chord">Chord (ft)</Label>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <ParameterLabel 
+                    label="Chord (ft)" 
+                    tooltip="The straight-line distance between the first and last cone in the slalom."
+                  />
                   <Input 
-                    id="slalom-chord"
                     type="number"
-                    className="text-right"
+                    className="text-right w-full"
                     value={slalomParams.chord}
                     onChange={e => updateSlalomParams('chord', parseFloat(e.target.value) || 100)}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="slalom-mo">Middle Ordinate (ft)</Label>
+                
+                <div className="space-y-2">
+                  <ParameterLabel 
+                    label="Middle Ordinate (ft)" 
+                    tooltip="The perpendicular distance from the chord to the middle cone."
+                  />
                   <Input 
-                    id="slalom-mo"
                     type="number"
-                    className="text-right"
+                    className="text-right w-full"
                     step="0.1"
                     value={slalomParams.mo}
                     onChange={e => updateSlalomParams('mo', parseFloat(e.target.value) || 15)}
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-          
-          {/* Lane Change Exercise Card */}
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <CardTitle className="text-base font-medium flex items-center gap-2">
-                    Lane Change Exercise
-                    <Badge variant="outline">Core</Badge>
-                  </CardTitle>
-                  <InfoTooltip 
-                    text="Configure the parameters for the lane change exercise."
-                    side="top"
-                  />
+            </div>
+            
+            {/* Lane Change Exercise */}
+            <div className="border rounded-lg p-4 mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-medium">Lane Change Exercise</h4>
+                  <Badge variant="outline">Core</Badge>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="lanechange-chord">Chord (ft)</Label>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <ParameterLabel 
+                    label="Chord (ft)" 
+                    tooltip="The straight-line distance of the lane change maneuver."
+                  />
                   <Input 
-                    id="lanechange-chord"
                     type="number"
-                    className="text-right"
+                    className="text-right w-full"
                     value={laneChangeParams.chord}
                     onChange={e => updateLaneChangeParams('chord', parseFloat(e.target.value) || 120)}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="lanechange-mo">Middle Ordinate (ft)</Label>
+                
+                <div className="space-y-2">
+                  <ParameterLabel 
+                    label="Middle Ordinate (ft)" 
+                    tooltip="The perpendicular distance between lanes."
+                  />
                   <Input 
-                    id="lanechange-mo"
                     type="number"
-                    className="text-right"
+                    className="text-right w-full"
                     step="0.1"
                     value={laneChangeParams.mo}
                     onChange={e => updateLaneChangeParams('mo', parseFloat(e.target.value) || 20)}
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-          
-          {/* Final Exercise Card - Collapsible */}
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <CardTitle className="text-base font-medium flex items-center gap-2">
-                    Final Exercise
-                    <Badge variant="outline">Core</Badge>
-                  </CardTitle>
-                  <InfoTooltip 
-                    text="Configure the parameters for the final exercise."
-                    side="top"
-                  />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
+            </div>
+            
+            {/* Final Exercise */}
+            <div className="border rounded-lg p-4">
               <Collapsible
                 open={finalExerciseOpen}
                 onOpenChange={setFinalExerciseOpen}
                 className="space-y-4"
               >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium">Final Exercise</h4>
+                    <Badge variant="outline">Core</Badge>
+                  </div>
+                  
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      {finalExerciseOpen ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+                
                 <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="final-ideal-time">Ideal Time (sec)</Label>
+                  <div className="space-y-2">
+                    <ParameterLabel 
+                      label="Ideal Time (sec)" 
+                      tooltip="Target completion time for the exercise."
+                    />
                     <Input 
-                      id="final-ideal-time"
                       type="number"
-                      className="text-right"
+                      className="text-right w-full"
                       step="0.1"
                       value={finalExercise.ideal_time_sec}
                       onChange={e => updateFinalExercise('ideal_time_sec', parseFloat(e.target.value) || 70)}
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="final-cone-penalty">Cone Penalty (sec)</Label>
+                  
+                  <div className="space-y-2">
+                    <ParameterLabel 
+                      label="Cone Penalty (sec)" 
+                      tooltip="Time penalty for hitting a cone."
+                    />
                     <Input 
-                      id="final-cone-penalty"
                       type="number"
-                      className="text-right"
+                      className="text-right w-full"
                       step="0.1"
                       value={finalExercise.cone_penalty_sec}
                       onChange={e => updateFinalExercise('cone_penalty_sec', parseFloat(e.target.value) || 3)}
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="final-door-penalty">Door Penalty (sec)</Label>
+                  
+                  <div className="space-y-2">
+                    <ParameterLabel 
+                      label="Door Penalty (sec)" 
+                      tooltip="Time penalty for missing a gate/door."
+                    />
                     <Input 
-                      id="final-door-penalty"
                       type="number"
-                      className="text-right"
+                      className="text-right w-full"
                       step="0.1"
                       value={finalExercise.door_penalty_sec}
                       onChange={e => updateFinalExercise('door_penalty_sec', parseFloat(e.target.value) || 5)}
@@ -305,176 +327,172 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
                   </div>
                 </div>
                 
-                <div className="flex justify-center pt-2">
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                      {finalExerciseOpen ? (
-                        <>
-                          <ChevronUp className="h-4 w-4" />
-                          <span>Show Less</span>
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown className="h-4 w-4" />
-                          <span>Show More</span>
-                        </>
-                      )}
-                    </Button>
-                  </CollapsibleTrigger>
-                </div>
-                
                 <CollapsibleContent>
-                  <div className="space-y-4 pt-2">
-                    <div>
-                      <h4 className="font-medium mb-2">Slalom Component</h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="final-slalom-chord">Chord (ft)</Label>
-                          <Input 
-                            id="final-slalom-chord"
-                            type="number"
-                            className="text-right"
-                            value={finalExercise.slalom.chord}
-                            onChange={e => updateFinalExercise('slalom.chord', parseFloat(e.target.value) || 100)}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="final-slalom-mo">Middle Ordinate (ft)</Label>
-                          <Input 
-                            id="final-slalom-mo"
-                            type="number"
-                            className="text-right"
-                            step="0.1"
-                            value={finalExercise.slalom.mo}
-                            onChange={e => updateFinalExercise('slalom.mo', parseFloat(e.target.value) || 15)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium mb-2">Lane Change Component</h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="final-lanechange-chord">Chord (ft)</Label>
-                          <Input 
-                            id="final-lanechange-chord"
-                            type="number"
-                            className="text-right"
-                            value={finalExercise.lane_change.chord}
-                            onChange={e => updateFinalExercise('lane_change.chord', parseFloat(e.target.value) || 120)}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="final-lanechange-mo">Middle Ordinate (ft)</Label>
-                          <Input 
-                            id="final-lanechange-mo"
-                            type="number"
-                            className="text-right"
-                            step="0.1"
-                            value={finalExercise.lane_change.mo}
-                            onChange={e => updateFinalExercise('lane_change.mo', parseFloat(e.target.value) || 20)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium mb-2">Additional Parameters</h4>
-                      <div>
-                        <Label htmlFor="final-reverse-time">Reverse Maneuver Time (sec)</Label>
+                  <div className="space-y-4 pt-4 border-t mt-4">
+                    <h5 className="font-medium text-sm text-muted-foreground">Slalom Component</h5>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label>Chord (ft)</Label>
                         <Input 
-                          id="final-reverse-time"
                           type="number"
-                          className="text-right"
-                          step="0.1"
-                          value={finalExercise.reverse_time || ''}
-                          onChange={e => {
-                            const value = e.target.value ? parseFloat(e.target.value) : undefined;
-                            updateFinalExercise('reverse_time', value);
-                          }}
-                          placeholder="Optional"
+                          className="text-right w-full"
+                          value={finalExercise.slalom.chord}
+                          onChange={e => updateFinalExercise('slalom.chord', parseFloat(e.target.value) || 100)}
                         />
                       </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Middle Ordinate (ft)</Label>
+                        <Input 
+                          type="number"
+                          className="text-right w-full"
+                          step="0.1"
+                          value={finalExercise.slalom.mo}
+                          onChange={e => updateFinalExercise('slalom.mo', parseFloat(e.target.value) || 15)}
+                        />
+                      </div>
+                    </div>
+                    
+                    <h5 className="font-medium text-sm text-muted-foreground mt-4">Lane Change Component</h5>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label>Chord (ft)</Label>
+                        <Input 
+                          type="number"
+                          className="text-right w-full"
+                          value={finalExercise.lane_change.chord}
+                          onChange={e => updateFinalExercise('lane_change.chord', parseFloat(e.target.value) || 120)}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Middle Ordinate (ft)</Label>
+                        <Input 
+                          type="number"
+                          className="text-right w-full"
+                          step="0.1"
+                          value={finalExercise.lane_change.mo}
+                          onChange={e => updateFinalExercise('lane_change.mo', parseFloat(e.target.value) || 20)}
+                        />
+                      </div>
+                    </div>
+                    
+                    <h5 className="font-medium text-sm text-muted-foreground mt-4">Additional Parameters</h5>
+                    <div className="space-y-2">
+                      <Label>Reverse Maneuver Time (sec)</Label>
+                      <Input 
+                        type="number"
+                        className="text-right w-full"
+                        step="0.1"
+                        value={finalExercise.reverse_time || ''}
+                        onChange={e => {
+                          const value = e.target.value ? parseFloat(e.target.value) : undefined;
+                          updateFinalExercise('reverse_time', value);
+                        }}
+                        placeholder="Optional"
+                      />
                     </div>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
-            </CardContent>
-          </Card>
-        </div>
-        
-        {/* Right Column - Additional Exercises */}
-        <div>
-          <h3 className="text-lg font-medium mb-4">Additional Exercises</h3>
-          <Card>
-            <CardContent className="pt-6">
-              {additionalExercises.length > 0 ? (
-                <div className="space-y-4 mb-6">
-                  {additionalExercises.map((exercise) => (
-                    <Card key={exercise.id} className="border border-muted">
-                      <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
-                        <div className="flex gap-2 items-center">
-                          <h4 className="font-medium text-sm">{exercise.name}</h4>
-                          <Badge variant={exercise.isMeasured ? "default" : "outline"}>
-                            {exercise.isMeasured ? 
-                              (exercise.measurementType === 'latacc' ? 'LatAcc' : 'Time') : 
-                              'Not Measured'}
-                          </Badge>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleRemoveExercise(exercise.id)}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </CardHeader>
-                      <CardContent className="py-3">
-                        {exercise.isMeasured && (
-                          exercise.measurementType === 'latacc' ? (
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <Label>Chord (ft)</Label>
-                                <div className="font-medium text-right">{exercise.parameters.chord || '-'}</div>
-                              </div>
-                              <div>
-                                <Label>Middle Ordinate (ft)</Label>
-                                <div className="font-medium text-right">{exercise.parameters.mo || '-'}</div>
+            </div>
+          </div>
+          
+          <Separator />
+          
+          {/* Additional Exercises Section */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium">Additional Exercises</h3>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsAddingExercise(!isAddingExercise)}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Add Exercise
+              </Button>
+            </div>
+            
+            {additionalExercises.length > 0 ? (
+              <div className="space-y-3">
+                {additionalExercises.map((exercise) => (
+                  <div key={exercise.id} className="border rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex gap-2 items-center">
+                        <h4 className="font-medium">{exercise.name}</h4>
+                        <Badge variant={exercise.isMeasured ? "default" : "outline"}>
+                          {exercise.isMeasured ? 
+                            (exercise.measurementType === 'latacc' ? 'LatAcc' : 'Time') : 
+                            'Not Measured'}
+                        </Badge>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleRemoveExercise(exercise.id)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    {exercise.isMeasured && (
+                      <div className="mt-3 text-sm">
+                        {exercise.measurementType === 'latacc' ? (
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-muted-foreground">Chord (ft)</Label>
+                              <div className="font-medium">{exercise.parameters.chord || '-'}</div>
+                            </div>
+                            <div>
+                              <Label className="text-muted-foreground">Middle Ordinate (ft)</Label>
+                              <div className="font-medium">{exercise.parameters.mo || '-'}</div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-muted-foreground">Ideal Time</Label>
+                              <div className="font-medium">{exercise.parameters.idealTime || '-'}s</div>
+                            </div>
+                            <div>
+                              <Label className="text-muted-foreground">Penalty</Label>
+                              <div className="font-medium">
+                                {exercise.parameters.penaltyType === 'time' ? 
+                                  `${exercise.parameters.penaltyValue || '-'}s` : 
+                                  'Annulled Run'}
                               </div>
                             </div>
-                          ) : (
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <Label>Ideal Time</Label>
-                                <div className="font-medium text-right">{exercise.parameters.idealTime || '-'}s</div>
-                              </div>
-                              <div>
-                                <Label>Penalty</Label>
-                                <div className="font-medium text-right">
-                                  {exercise.parameters.penaltyType === 'time' ? 
-                                    `${exercise.parameters.penaltyValue || '-'}s` : 
-                                    'Annulled Run'}
-                                </div>
-                              </div>
-                            </div>
-                          )
+                          </div>
                         )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6 text-muted-foreground mb-6">
-                  No additional exercises added yet
-                </div>
-              )}
-              
-              <div className="border-t pt-4">
-                <h4 className="font-medium mb-4">Add New Exercise</h4>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : !isAddingExercise ? (
+              <div className="text-center py-8 border rounded-lg bg-muted/10">
+                <p className="text-muted-foreground">No additional exercises added</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2"
+                  onClick={() => setIsAddingExercise(true)}
+                >
+                  <Plus className="mr-1 h-4 w-4" />
+                  Add First Exercise
+                </Button>
+              </div>
+            ) : null}
+            
+            {/* Add Exercise Form */}
+            {isAddingExercise && (
+              <div className="border rounded-lg p-4 mt-4">
+                <h4 className="font-medium mb-4">New Exercise Details</h4>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
+                    <div className="space-y-2">
                       <Label htmlFor="exercise-name">Exercise Name</Label>
                       <Input 
                         id="exercise-name"
@@ -519,7 +537,7 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
                       
                       {newExercise.measurementType === 'latacc' && (
                         <div className="grid grid-cols-2 gap-4">
-                          <div>
+                          <div className="space-y-2">
                             <Label htmlFor="chord">Chord (ft)</Label>
                             <Input
                               id="chord"
@@ -535,7 +553,7 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
                               })}
                             />
                           </div>
-                          <div>
+                          <div className="space-y-2">
                             <Label htmlFor="mo">Middle Ordinate (ft)</Label>
                             <Input
                               id="mo"
@@ -556,7 +574,7 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
                       
                       {newExercise.measurementType === 'time' && (
                         <div className="space-y-4">
-                          <div>
+                          <div className="space-y-2">
                             <Label htmlFor="ideal-time">Ideal Time (sec)</Label>
                             <Input
                               id="ideal-time"
@@ -598,7 +616,7 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
                           </div>
                           
                           {newExercise.parameters.penaltyType === 'time' && (
-                            <div>
+                            <div className="space-y-2">
                               <Label htmlFor="penalty-value">Penalty Time (sec)</Label>
                               <Input
                                 id="penalty-value"
@@ -621,21 +639,26 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
                     </div>
                   )}
                   
-                  <Button 
-                    type="button" 
-                    onClick={handleAddExercise} 
-                    disabled={!newExercise.name}
-                    className="w-full mt-4"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Exercise
-                  </Button>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsAddingExercise(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleAddExercise} 
+                      disabled={!newExercise.name}
+                    >
+                      Add Exercise
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
