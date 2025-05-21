@@ -76,7 +76,9 @@ export function VehicleTableRow({
             disabled={!canEditSensitiveFields}
           />
           {!canEditSensitiveFields && (
-            <Lock className="absolute right-2 top-2.5 h-3 w-3 text-muted-foreground" title="Only superadmins can edit this field" />
+            <div className="absolute right-2 top-2.5" aria-label="Only superadmins can edit this field">
+              <Lock className="h-3 w-3 text-muted-foreground" />
+            </div>
           )}
         </div>
       </TableCell>
@@ -94,7 +96,9 @@ export function VehicleTableRow({
             disabled={!canEditSensitiveFields}
           />
           {!canEditSensitiveFields && (
-            <Lock className="absolute right-2 top-2.5 h-3 w-3 text-muted-foreground" title="Only superadmins can edit this field" />
+            <div className="absolute right-2 top-2.5" aria-label="Only superadmins can edit this field">
+              <Lock className="h-3 w-3 text-muted-foreground" />
+            </div>
           )}
         </div>
       </TableCell>
@@ -105,7 +109,7 @@ export function VehicleTableRow({
             variant="ghost"
             size="icon"
             onClick={() => onRemove(index)}
-            title="Remove vehicle"
+            aria-label="Remove vehicle"
           >
             <Trash className="h-4 w-4" />
           </Button>
@@ -116,7 +120,7 @@ export function VehicleTableRow({
               size="sm"
               onClick={() => onSaveToDatabase(index)}
               className="text-xs"
-              title="Save to database"
+              aria-label="Save to database"
             >
               <Save className="h-3 w-3 mr-1" />
               Save
