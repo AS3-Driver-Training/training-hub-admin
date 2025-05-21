@@ -118,34 +118,63 @@ export const useCourseData = (courseId?: number) => {
           program: formData.course_info?.program || "",
           date: formData.course_info?.date || "",
           client: formData.course_info?.client || ""
-        }
+        },
+        vehicles: []
       };
 
-      // Try to load any additional JSON data that might be stored as a stringified object
-      try {
-        for (const key of Object.keys(existingClosure)) {
-          if (typeof existingClosure[key] === 'string' && 
-              existingClosure[key].startsWith('{') && 
-              existingClosure[key].endsWith('}')) {
-            try {
-              const parsedData = JSON.parse(existingClosure[key]);
-              if (parsedData && typeof parsedData === 'object') {
-                // Apply to formData
-                updateFormData({...baseFormData, ...apiTransformer.fromApi(parsedData)});
-                return;
-              }
-            } catch (e) {
-              // Not valid JSON, continue checking other properties
-              console.error("Failed to parse potential JSON data:", e);
-            }
-          }
+      // Try to load closure data from the closure_data JSON field
+      if (existingClosure.closure_data) {
+        try {
+          // Apply to formData including any vehicle data
+          const parsedData = apiTransformer.fromApi(existingClosure.closure_data);
+          updateFormData({...baseFormData, ...parsedData});
+          console.log("Loaded closure data from JSON:", parsedData);
+          return;
+        } catch (e) {
+          console.error("Failed to parse closure_data JSON:", e);
         }
-      } catch (e) {
-        console.error("Error processing closure data:", e);
       }
       
-      // If no JSON data found, just use the base form data
-      updateFormData(baseFormData);
+      // If closure_data wasn't available, try to load vehicles from course_vehicles table
+      const loadVehicles = async () => {
+        const { data: vehiclesData, error: vehiclesError } = await supabase
+          .from('course_vehicles')
+          .select(`
+            *,
+            vehicle:vehicle_id(
+              id,
+              make,
+              model,
+              year,
+              latacc
+            )
+          `)
+          .eq('course_instance_id', courseId);
+          
+        if (!vehiclesError && vehiclesData && vehiclesData.length > 0) {
+          // Transform vehicle data to the format expected by the form
+          const formattedVehicles = vehiclesData.map(v => ({
+            car: v.car_number,
+            make: v.vehicle?.make || "",
+            model: v.vehicle?.model,
+            year: v.vehicle?.year,
+            latAcc: v.vehicle?.latacc
+          }));
+          
+          // Add vehicles to form data
+          updateFormData({
+            ...baseFormData,
+            vehicles: formattedVehicles
+          });
+          
+          console.log("Loaded vehicles from course_vehicles table:", formattedVehicles);
+        } else {
+          // Just use the base form data
+          updateFormData(baseFormData);
+        }
+      };
+      
+      loadVehicles();
     }
   }, [existingClosure]);
 
@@ -194,26 +223,9 @@ export const useCourseData = (courseId?: number) => {
           units: formData.course_info?.units,
           country: formData.course_info?.country,
           zipfile_url: zipfileUrl,
+          closure_data: closureDataJson, // Store full closure data in the new column
           closed_by: "00000000-0000-0000-0000-000000000000" // Placeholder UUID, should be replaced with actual user ID
         };
-
-        // Add closure_data JSON if available - this will only work if there's a column for it
-        if (closureDataJson) {
-          try {
-            // Check if closure_data column exists (this will only run once)
-            const { data: columnsData } = await supabase
-              .from('course_closures')
-              .select('*')
-              .limit(1);
-              
-            if (columnsData && columnsData[0] && 'closure_data' in columnsData[0]) {
-              // If the column exists, include it in the payload
-              Object.assign(payload, { closure_data: closureDataJson });
-            }
-          } catch (e) {
-            console.error("Error checking for closure_data column:", e);
-          }
-        }
         
         // Create course closure record
         const { data, error } = await supabase
@@ -222,7 +234,34 @@ export const useCourseData = (courseId?: number) => {
           .select();
           
         if (error) throw error;
-        setCompletedClosureId(data[0].id);
+        
+        const closureId = data[0].id;
+        setCompletedClosureId(closureId);
+
+        // Insert vehicle data into course_vehicles table
+        if (formData.vehicles && formData.vehicles.length > 0) {
+          const vehiclesToInsert = formData.vehicles
+            .filter(v => v.make && (v.make.trim() !== "")) // Only insert vehicles with actual make values
+            .map(vehicle => ({
+              course_instance_id: courseId,
+              vehicle_id: vehicle.car, // Using car as vehicle_id for now
+              car_number: vehicle.car
+            }));
+
+          if (vehiclesToInsert.length > 0) {
+            const { error: vehicleError } = await supabase
+              .from("course_vehicles")
+              .insert(vehiclesToInsert);
+            
+            if (vehicleError) {
+              console.error("Error inserting vehicles:", vehicleError);
+              toast.warning("Warning: Failed to save vehicle information");
+            } else {
+              console.log("Successfully saved vehicle data:", vehiclesToInsert);
+            }
+          }
+        }
+        
         return data;
       } catch (err) {
         throw err;

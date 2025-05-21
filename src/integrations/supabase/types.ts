@@ -154,6 +154,7 @@ export type Database = {
         Row: {
           closed_at: string
           closed_by: string
+          closure_data: Json | null
           country: string
           course_instance_id: number
           created_at: string
@@ -166,6 +167,7 @@ export type Database = {
         Insert: {
           closed_at?: string
           closed_by: string
+          closure_data?: Json | null
           country?: string
           course_instance_id: number
           created_at?: string
@@ -178,6 +180,7 @@ export type Database = {
         Update: {
           closed_at?: string
           closed_by?: string
+          closure_data?: Json | null
           country?: string
           course_instance_id?: number
           created_at?: string

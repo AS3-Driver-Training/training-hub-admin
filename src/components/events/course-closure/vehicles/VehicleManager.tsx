@@ -50,7 +50,9 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
         // If we don't have a status for this vehicle yet, initialize it
         if (!initialStatuses[index]) {
           initialStatuses[index] = {
-            isSelected: Boolean(vehicle.year && vehicle.latAcc)
+            isSelected: Boolean(vehicle.year && vehicle.latAcc),
+            // If vehicle already has data, preserve DB ID if there is one
+            dbId: vehicle.car && typeof vehicle.car === 'number' ? vehicle.car : undefined
           };
         }
       });
@@ -130,7 +132,7 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
       make: vehicle.make,
       model: vehicle.model,
       year: vehicle.year,
-      latAcc: vehicle.latAcc
+      latAcc: vehicle.latacc
     };
     onVehiclesChange(updatedVehicles);
     
