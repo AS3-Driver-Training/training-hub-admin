@@ -173,11 +173,11 @@ export function CourseDetails() {
               </div>
             )}
             <div className="flex items-center gap-2 mt-2">
-              <Badge variant={course.is_open_enrollment ? "default" : "outline"}>
+              <Badge variant={course.is_open_enrollment ? "default" : "secondary"}>
                 {course.is_open_enrollment ? "Open Enrollment" : "Private"}
               </Badge>
               {closureStatus && (
-                <Badge variant={closureStatus === "completed" ? "default" : "outline"}>
+                <Badge variant={closureStatus === "completed" ? "success" : "warning"}>
                   {closureStatus === "completed" ? "Closed" : "Closure In Progress"}
                 </Badge>
               )}
@@ -215,107 +215,128 @@ export function CourseDetails() {
         </Card>
       </div>
 
-      <div className="space-y-6">
-        {/* Allocations Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Seat Allocations</CardTitle>
-            <CardDescription>
-              Seats allocated to clients for this course
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {allocations.length === 0 ? (
-              <p className="text-muted-foreground">No allocations yet</p>
-            ) : (
-              <div className="space-y-4">
-                {allocations.map((allocation) => (
-                  <div key={allocation.id} className="flex justify-between items-center p-3 border rounded-md">
-                    <div>
-                      <div className="font-medium">{allocation.client.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {allocation.seats_allocated} seats allocated
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-          <CardFooter>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => navigate(`/events/${id}/allocations`)}
-            >
-              Manage Allocations
-            </Button>
-          </CardFooter>
-        </Card>
-
-        {/* Attendees Section */}
-        <Card>
-          <CardHeader>
+      {/* Students Section - Consolidated */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
             <CardTitle>Attendees</CardTitle>
             <CardDescription>
-              Students attending this course
+              {totalAttendees} students attending this course
             </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {attendees.length === 0 ? (
-              <p className="text-muted-foreground">No attendees yet</p>
-            ) : (
-              <div className="space-y-4">
-                {attendees.map((attendee) => (
-                  <div key={attendee.id} className="flex justify-between items-center p-3 border rounded-md">
-                    <div>
-                      <div className="font-medium">
-                        {attendee.student.first_name} {attendee.student.last_name}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate(`/events/${id}/allocations`)}
+          >
+            <UsersIcon className="h-4 w-4 mr-2" />
+            Manage Students
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {attendees.length === 0 ? (
+            <div className="text-center py-8 border rounded-md bg-slate-50">
+              <p className="text-muted-foreground">No attendees enrolled yet</p>
+              <Button 
+                variant="outline" 
+                className="mt-4"
+                onClick={() => navigate(`/events/${id}/allocations`)}
+              >
+                Add Students
+              </Button>
+            </div>
+          ) : (
+            <div className="border rounded-md overflow-hidden">
+              <div className="bg-slate-50 px-4 py-3 border-b">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Student List</span>
+                  <span className="text-sm text-muted-foreground">
+                    {totalAttendees} of {totalAllocatedSeats} seats filled
+                  </span>
+                </div>
+              </div>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {attendees.map((attendee) => (
+                    <tr key={attendee.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-medium text-gray-900">
+                          {attendee.student.first_name} {attendee.student.last_name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {attendee.student.email}
-                      </div>
-                    </div>
-                    <Badge variant={attendee.status === "confirmed" ? "default" : "outline"}>
-                      {attendee.status}
-                    </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge variant={attendee.status === "confirmed" ? "success" : "secondary"}>
+                          {attendee.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          
+          {/* Only show allocations info if there are allocations */}
+          {allocations.length > 0 && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-md border">
+              <h4 className="font-medium mb-2">Seat Allocations</h4>
+              <div className="flex flex-col gap-2">
+                {allocations.map((allocation) => (
+                  <div key={allocation.id} className="flex justify-between items-center p-2 bg-white rounded border">
+                    <span>{allocation.client.name}</span>
+                    <Badge variant="outline">{allocation.seats_allocated} seats</Badge>
                   </div>
                 ))}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Vehicles Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Vehicles</CardTitle>
-            <CardDescription>
-              Vehicles assigned to this course
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {vehicles.length === 0 ? (
-              <p className="text-muted-foreground">No vehicles assigned yet</p>
-            ) : (
-              <div className="space-y-4">
-                {vehicles.map((courseVehicle) => (
-                  <div key={courseVehicle.id} className="flex justify-between items-center p-3 border rounded-md">
-                    <div>
-                      <div className="font-medium">
-                        Car #{courseVehicle.car_number}: {courseVehicle.vehicle.make} {courseVehicle.vehicle.model}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        LatAcc: {courseVehicle.vehicle.latacc}
-                      </div>
+      {/* Vehicles Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Vehicles</CardTitle>
+          <CardDescription>
+            Vehicles assigned to this course
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {vehicles.length === 0 ? (
+            <p className="text-muted-foreground">No vehicles assigned yet</p>
+          ) : (
+            <div className="space-y-4">
+              {vehicles.map((courseVehicle) => (
+                <div key={courseVehicle.id} className="flex justify-between items-center p-3 border rounded-md">
+                  <div>
+                    <div className="font-medium">
+                      Car #{courseVehicle.car_number}: {courseVehicle.vehicle.make} {courseVehicle.vehicle.model}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      LatAcc: {courseVehicle.vehicle.latacc}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
