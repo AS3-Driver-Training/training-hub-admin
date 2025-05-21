@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { CourseVehicle, Vehicle } from "@/types/programs";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +11,7 @@ interface VehicleManagerProps {
 interface VehicleStatus {
   isNew: boolean;
   isSavedToDb: boolean;
-  isSelected: boolean; // Added to track if a vehicle has been selected from search
+  isSelected: boolean;
   dbId?: number;
 }
 
@@ -55,9 +54,9 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
         // If we don't have a status for this vehicle yet, initialize it
         if (!initialStatuses[index]) {
           initialStatuses[index] = {
-            isNew: true, // Default to new until selected or saved
+            isNew: true,
             isSavedToDb: false,
-            isSelected: false // Not selected until user searches and picks one
+            isSelected: false
           };
         }
       });
@@ -143,41 +142,45 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
         ...prev[index],
         isNew: false,
         isSavedToDb: true,
-        isSelected: true, // Mark as selected
+        isSelected: true,
         dbId: vehicle.id
       }
     }));
+    
+    // Show success feedback
+    toast.success(`Selected ${vehicle.make} ${vehicle.model || ''}`);
   };
 
-  // Save a newly created vehicle to the database
-  const handleSaveToDatabase = async (index: number) => {
-    const vehicle = vehicles[index];
-    
-    if (!vehicle.make) {
+  // Create new vehicle from text input and auto-save to database
+  const handleCreateNewVehicle = async (index: number, makeModel: string) => {
+    if (!makeModel) {
       toast.error("Vehicle make/model is required");
       return;
     }
+
+    // Update the vehicle make in the UI immediately
+    handleUpdateVehicle(index, 'make', makeModel);
+    
+    // Try to extract make and model from the combined field
+    let make = makeModel;
+    let model = "";
+    
+    // Simple heuristic: first word is make, rest is model
+    const parts = makeModel.split(" ");
+    if (parts.length > 1) {
+      make = parts[0];
+      model = parts.slice(1).join(" ");
+    }
     
     try {
-      // Try to extract make and model from the combined field
-      let make = vehicle.make;
-      let model = "";
-      
-      // Simple heuristic: first word is make, rest is model
-      const parts = vehicle.make.split(" ");
-      if (parts.length > 1) {
-        make = parts[0];
-        model = parts.slice(1).join(" ");
-      }
-      
-      // Insert vehicle into the database
+      // Insert vehicle into the database automatically
       const { data, error } = await supabase
         .from("vehicles")
         .insert({
           make,
           model,
-          year: vehicle.year,
-          latacc: vehicle.latAcc
+          year: vehicles[index].year,
+          latacc: vehicles[index].latAcc
         })
         .select()
         .single();
@@ -191,16 +194,36 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
           [index]: {
             isNew: false,
             isSavedToDb: true,
-            isSelected: true, // Mark as selected since we now have a complete vehicle
+            isSelected: true,
             dbId: data.id
           }
         }));
         
-        toast.success("Vehicle created and saved to database");
+        toast.success(`Vehicle "${makeModel}" created`);
       }
     } catch (error: any) {
       console.error("Error creating vehicle:", error);
       toast.error(`Failed to create vehicle: ${error.message}`);
+      
+      // Mark as new but not saved to DB
+      setVehicleStatuses(prev => ({
+        ...prev,
+        [index]: {
+          isNew: true,
+          isSavedToDb: false,
+          isSelected: false
+        }
+      }));
+    }
+  };
+
+  // These functions are just kept for compatibility, but now handleCreateNewVehicle does the saving automatically
+  const handleSaveToDatabase = async (index: number) => {
+    // This function is now essentially a no-op as all vehicles are auto-saved
+    // We keep it for API compatibility
+    if (!vehicles[index].make) {
+      toast.error("Vehicle make/model is required");
+      return;
     }
   };
 
@@ -219,29 +242,13 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     return vehicleStatuses[index]?.isSelected || false;
   };
 
-  // Create new vehicle from text input
-  const handleCreateNewVehicle = (index: number, makeModel: string) => {
-    handleUpdateVehicle(index, 'make', makeModel);
-    
-    // Mark this as a new vehicle that hasn't been saved yet
-    setVehicleStatuses(prev => ({
-      ...prev,
-      [index]: {
-        ...prev[index],
-        isNew: true,
-        isSavedToDb: false,
-        isSelected: false // Not fully selected until saved
-      }
-    }));
-  };
-
   return {
     handleAddVehicle,
     handleRemoveVehicle,
     handleUpdateVehicle,
     handleSelectVehicle,
     handleCreateNewVehicle,
-    handleSaveToDatabase,
+    handleSaveToDatabase, // Kept for compatibility
     isVehicleNew,
     isVehicleSavedToDb,
     isVehicleSelected

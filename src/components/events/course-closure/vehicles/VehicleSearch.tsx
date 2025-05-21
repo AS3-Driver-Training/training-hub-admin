@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Vehicle } from "@/types/programs";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,7 @@ export function VehicleSearch({
   onSelectVehicle,
   onCreateNew,
   defaultValue = "",
-  placeholder = "Search make/model or type to create new",
+  placeholder = "Search or type to create new",
   disabled = false
 }: VehicleSearchProps) {
   const [searchTerm, setSearchTerm] = useState(defaultValue);
@@ -40,7 +41,7 @@ export function VehicleSearch({
   const [searchResults, setSearchResults] = useState<Vehicle[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Search for vehicles
+  // Search for vehicles when the search term changes
   useEffect(() => {
     const fetchVehicles = async () => {
       if (!debouncedSearchTerm || debouncedSearchTerm.length < 2) {
@@ -90,7 +91,7 @@ export function VehicleSearch({
     }
   };
 
-  // If the searchTerm is empty and user clicks outside, keep the popover closed
+  // Always focus the search field when opening the popover
   const handleOpenChange = (open: boolean) => {
     if (open && !disabled) {
       setIsOpen(true);
@@ -113,7 +114,7 @@ export function VehicleSearch({
             placeholder={placeholder}
             className="pr-8"
           />
-          <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
         </div>
       </PopoverTrigger>
       <PopoverContent className="p-0 w-[300px]" align="start" side="bottom" sideOffset={5}>
@@ -122,6 +123,7 @@ export function VehicleSearch({
             placeholder="Search vehicles..." 
             value={searchTerm}
             onValueChange={setSearchTerm}
+            autoFocus
           />
           <CommandList>
             {isSearching && (
@@ -133,14 +135,16 @@ export function VehicleSearch({
             <CommandEmpty>
               <div className="py-2 px-4">
                 <p className="text-sm text-muted-foreground">No vehicles found.</p>
-                <Button 
-                  onClick={handleCreateNew}
-                  variant="ghost"
-                  className="mt-2 w-full justify-start text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                >
-                  <span className="mr-2">+</span> 
-                  Create "{searchTerm}" as new vehicle
-                </Button>
+                {searchTerm.trim().length > 0 && (
+                  <Button 
+                    onClick={handleCreateNew}
+                    variant="ghost"
+                    className="mt-2 w-full justify-start text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                  >
+                    <span className="mr-2">+</span> 
+                    Create "{searchTerm}" as new vehicle
+                  </Button>
+                )}
               </div>
             </CommandEmpty>
             

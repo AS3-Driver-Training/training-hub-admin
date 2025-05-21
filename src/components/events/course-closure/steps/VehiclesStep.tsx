@@ -57,15 +57,15 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
           <div className="flex">
             <div className="flex-shrink-0">
               <InfoTooltip 
-                text="Search for existing vehicles by typing in the Make/Model field, or create new ones. After creating a new vehicle, save it to the database. Note that only superadmins can edit Year and LatAcc values of saved vehicles."
+                text="Search for existing vehicles by typing in the Make/Model field, or create new ones. Year and LatAcc values are automatically locked for non-superadmins after selecting or creating a vehicle."
               />
             </div>
             <div className="ml-3">
               <p className="text-sm text-blue-700">
-                <span className="font-medium">Adding Vehicles:</span> Search for existing vehicles or create new ones by typing in the Make/Model field. 
+                <span className="font-medium">Adding Vehicles:</span> Search for existing vehicles or create new ones by typing in the Make/Model field.
                 {!isSuperAdmin && (
                   <span className="block mt-1 text-amber-600">
-                    Note: Only super admins can modify Year and LatAcc values for existing vehicles.
+                    Note: Year and LatAcc values will be locked after selecting or creating a vehicle.
                   </span>
                 )}
               </p>
@@ -80,7 +80,7 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
               <TableHead>Make/Model</TableHead>
               <TableHead className="w-[100px]">Year</TableHead>
               <TableHead className="w-[100px]">LatAcc</TableHead>
-              <TableHead className="w-[140px] text-right">Actions</TableHead>
+              <TableHead className="w-[80px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
