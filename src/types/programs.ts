@@ -1,3 +1,4 @@
+
 export interface Program {
   id: string;
   name: string;
@@ -109,5 +110,5 @@ export interface CourseClosureData {
   course_info: CourseInfo;
   vehicles: CourseVehicle[];
   course_layout: CourseLayout;
-  notes?: string; // Adding notes field here
+  notes?: string; // This field is now properly defined
 }

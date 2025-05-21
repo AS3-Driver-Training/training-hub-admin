@@ -10,6 +10,7 @@ import { VehiclesStep } from "../steps/VehiclesStep";
 import { ExercisesStep } from "../steps/ExercisesStep";
 import { ReviewStep } from "../steps/ReviewStep";
 import { CompletedView } from "../steps/CompletedView";
+import { CourseClosureData } from "@/types/programs";
 
 interface WizardContentProps {
   courseInstance: CourseInstanceWithClient;
@@ -19,6 +20,30 @@ interface WizardContentProps {
 export const WizardContent: React.FC<WizardContentProps> = ({ courseInstance, onSubmit }) => {
   const { currentStep, wizardSteps, formData, updateFormData, file, setFile, completedClosureId, jumpToStep, courseId } = useWizardContext();
 
+  // Ensure formData is treated as CourseClosureData with guaranteed required fields
+  const safeFormData: CourseClosureData = {
+    course_info: formData.course_info || {
+      units: "MPH",
+      country: "USA",
+      program: "",
+      date: "",
+      client: ""
+    },
+    vehicles: formData.vehicles || [],
+    course_layout: formData.course_layout || {
+      slalom: { chord: 100, mo: 15 },
+      lane_change: { chord: 120, mo: 20 },
+      final_exercise: {
+        ideal_time_sec: 70,
+        cone_penalty_sec: 3,
+        door_penalty_sec: 5,
+        slalom: { chord: 100, mo: 15 },
+        lane_change: { chord: 120, mo: 20 }
+      }
+    },
+    notes: formData.notes
+  };
+
   // Render current step content
   const renderStepContent = () => {
     switch (currentStep) {
@@ -26,7 +51,7 @@ export const WizardContent: React.FC<WizardContentProps> = ({ courseInstance, on
         return (
           <BasicInfoStep 
             courseInstance={courseInstance} 
-            formData={formData} 
+            formData={safeFormData} 
             onUpdate={updateFormData}
             onFileChange={setFile}
             file={file}
@@ -35,21 +60,21 @@ export const WizardContent: React.FC<WizardContentProps> = ({ courseInstance, on
       case 'vehicles':
         return (
           <VehiclesStep 
-            formData={formData} 
+            formData={safeFormData} 
             onUpdate={updateFormData}
           />
         );
       case 'exercises':
         return (
           <ExercisesStep 
-            formData={formData} 
+            formData={safeFormData} 
             onUpdate={updateFormData}
           />
         );
       case 'review':
         return (
           <ReviewStep 
-            formData={formData}
+            formData={safeFormData}
             courseInstance={courseInstance}
             file={file}
             onJumpToStep={jumpToStep}
@@ -58,7 +83,7 @@ export const WizardContent: React.FC<WizardContentProps> = ({ courseInstance, on
       case 'completed':
         return (
           <CompletedView 
-            formData={formData}
+            formData={safeFormData}
             courseId={courseId!}
             closureId={completedClosureId}
             onEdit={() => jumpToStep('review')}
