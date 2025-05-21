@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -112,26 +111,8 @@ export function CreateProgramDialog({ open, onClose, program, getLevelNumber }: 
     setIsSubmitting(true);
     
     try {
-      // Make sure core exercises are included if measured is true
-      if (data.measured) {
-        const requiredNames = ["Slalom", "Lane Change", "Final Exercise"];
-        const existingNames = exercises.map(ex => ex.name);
-        
-        const missingCoreExercises = requiredNames.filter(
-          name => !existingNames.some(exName => exName.toLowerCase() === name.toLowerCase())
-        );
-        
-        if (missingCoreExercises.length > 0) {
-          toast({
-            title: "Missing core exercises",
-            description: `Measured programs require these exercises: ${missingCoreExercises.join(", ")}`,
-            variant: "destructive",
-          });
-          setActiveTab("exercises");
-          setIsSubmitting(false);
-          return;
-        }
-      }
+      // No need to check for required exercises since ExercisesList automatically adds them
+      // The code below is more of a safeguard
       
       const programData = {
         name: data.name,

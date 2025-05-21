@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ProgramExercise } from "@/types/programs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -88,6 +88,25 @@ export function ExercisesList({ exercises, onChange, measured }: ExercisesListPr
     );
   }, [measured, coreExercises, existingCoreIds]);
 
+  // Auto-add missing core exercises when program becomes measured
+  useEffect(() => {
+    if (measured && missingCoreExercises.length > 0) {
+      // Add all missing core exercises automatically
+      const updatedExercises = [...exercises];
+      
+      missingCoreExercises.forEach(coreExercise => {
+        const newExercise = {
+          ...coreExercise,
+          id: `${coreExercise.id}-${Date.now()}`, // Ensure unique ID
+          order: exercises.length + updatedExercises.length + 1
+        };
+        updatedExercises.push(newExercise);
+      });
+      
+      onChange(updatedExercises);
+    }
+  }, [measured, missingCoreExercises.length]);
+
   // Handle adding a core exercise
   const handleAddCoreExercise = (coreExercise: ProgramExercise) => {
     setEditingExercise(coreExercise);
@@ -118,27 +137,18 @@ export function ExercisesList({ exercises, onChange, measured }: ExercisesListPr
 
   return (
     <div className="space-y-4">
+      {/* We'll still show the warning for transparency, but exercises should be auto-added now */}
       {hasMissingCoreExercises && (
         <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-yellow-500 mt-0.5" />
           <div>
-            <h4 className="font-medium text-yellow-800">Missing Core Exercises</h4>
+            <h4 className="font-medium text-yellow-800">Adding Core Exercises</h4>
             <p className="text-sm text-yellow-700 mt-1">
-              Measured programs require the following core exercises:
+              The required core exercises are being added automatically:
             </p>
             <ul className="list-disc list-inside text-sm text-yellow-700 mt-1">
               {missingCoreExercises.map(ex => (
-                <li key={ex.id}>
-                  {ex.name}{" "}
-                  <Button 
-                    variant="link" 
-                    size="sm" 
-                    className="p-0 h-auto text-blue-600"
-                    onClick={() => handleAddCoreExercise(ex)}
-                  >
-                    Add
-                  </Button>
-                </li>
+                <li key={ex.id}>{ex.name}</li>
               ))}
             </ul>
           </div>
