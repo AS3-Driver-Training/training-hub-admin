@@ -10,11 +10,10 @@ import { Input } from "@/components/ui/input";
 
 interface VehicleSearchProps {
   onSelectVehicle: (vehicle: Vehicle) => void;
-  onManualEntry?: (make: string, model: string) => void;
+  onCreateVehicle?: (make: string, model: string) => void;
   defaultValue?: string;
   placeholder?: string;
   disabled?: boolean;
-  allowManualEntry?: boolean;
 }
 
 // Helper function to split make/model text into parts
@@ -42,11 +41,10 @@ const mapDbVehicleToModel = (dbVehicle: any): Vehicle => {
 
 export function VehicleSearch({
   onSelectVehicle,
-  onManualEntry,
+  onCreateVehicle,
   defaultValue = "",
   placeholder = "Search vehicles...",
   disabled = false,
-  allowManualEntry = false
 }: VehicleSearchProps) {
   const [searchTerm, setSearchTerm] = useState(defaultValue);
   const [isOpen, setIsOpen] = useState(false);
@@ -96,10 +94,10 @@ export function VehicleSearch({
     setSearchTerm(`${vehicle.make} ${vehicle.model}`.trim());
   };
 
-  const handleManualEntry = () => {
-    if (allowManualEntry && onManualEntry && searchTerm.trim()) {
+  const handleCreateVehicleClick = () => {
+    if (onCreateVehicle && searchTerm.trim()) {
       const { make, model } = splitMakeModel(searchTerm);
-      onManualEntry(make, model);
+      onCreateVehicle(make, model);
       setIsOpen(false);
     }
   };
@@ -142,13 +140,13 @@ export function VehicleSearch({
                 <div className="px-1 text-sm text-muted-foreground mb-2">
                   No vehicles found.
                 </div>
-                {allowManualEntry && searchTerm.trim().length > 0 && (
+                {searchTerm.trim().length > 0 && onCreateVehicle && (
                   <div 
-                    onClick={handleManualEntry}
+                    onClick={handleCreateVehicleClick}
                     className="flex items-center px-1 py-2 text-blue-500 hover:text-blue-700 cursor-pointer"
                   >
                     <Plus className="h-4 w-4 mr-1" />
-                    Use "{searchTerm}" without selecting
+                    Create new vehicle: {searchTerm}
                   </div>
                 )}
               </CommandEmpty>

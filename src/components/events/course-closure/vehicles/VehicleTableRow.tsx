@@ -18,6 +18,7 @@ interface VehicleTableRowProps {
   onSelectVehicle: (index: number, vehicle: Vehicle) => void;
   onClearVehicle: (index: number) => void;
   onEditVehicle: (index: number) => void;
+  onCreateVehicle: (index: number, make: string, model: string) => void;
 }
 
 export function VehicleTableRow({
@@ -29,7 +30,8 @@ export function VehicleTableRow({
   onRemove,
   onSelectVehicle,
   onClearVehicle,
-  onEditVehicle
+  onEditVehicle,
+  onCreateVehicle
 }: VehicleTableRowProps) {
   const { userRole } = useProfile();
   const isSuperAdmin = userRole === "superadmin";
@@ -67,12 +69,7 @@ export function VehicleTableRow({
             defaultValue={`${vehicle.make} ${vehicle.model || ''}`.trim()}
             placeholder="Search for make/model..."
             onSelectVehicle={(selected) => onSelectVehicle(index, selected)}
-            onManualEntry={(make, model) => {
-              onUpdate(index, 'make', make);
-              onUpdate(index, 'model', model);
-              onClearVehicle(index);
-            }}
-            allowManualEntry={true}
+            onCreateVehicle={(make, model) => onCreateVehicle(index, make, model)}
           />
           
           {isSelected && (

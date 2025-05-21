@@ -25,6 +25,8 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
   const [editingVehicleIndex, setEditingVehicleIndex] = useState<number | null>(null);
   const [isVehicleDialogOpen, setIsVehicleDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+  const [initialMake, setInitialMake] = useState('');
+  const [initialModel, setInitialModel] = useState('');
   
   // Initialize vehicles array with existing data or empty array
   const vehicles = formData.vehicles && formData.vehicles.length > 0 ? formData.vehicles : [];
@@ -52,17 +54,28 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
     setIsVehicleDialogOpen(true);
   };
 
+  // Handle create vehicle from search
+  const handleCreateVehicle = (index: number, make: string, model: string) => {
+    setEditingVehicleIndex(index);
+    setDialogMode('create');
+    setInitialMake(make);
+    setInitialModel(model);
+    setIsVehicleDialogOpen(true);
+  };
+
   // Handle vehicle update from dialog
   const handleVehicleUpdated = (vehicle: Vehicle) => {
     if (editingVehicleIndex !== null) {
       // Update vehicle details in the list
       handleSelectVehicle(editingVehicleIndex, vehicle);
-      toast.success(`Vehicle updated successfully`);
+      toast.success(`Vehicle ${dialogMode === 'create' ? 'created' : 'updated'} successfully`);
     }
     
     // Reset state
     setEditingVehicleIndex(null);
     setIsVehicleDialogOpen(false);
+    setInitialMake('');
+    setInitialModel('');
   };
 
   return (
@@ -71,7 +84,7 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-medium">Course Vehicles</h3>
           <InfoTooltip 
-            text="Add vehicles used during the course. Search for existing vehicles or enter new ones directly."
+            text="Add vehicles used during the course. Search for existing vehicles or create new ones."
             side="top"
           />
         </div>
@@ -105,7 +118,7 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
             {vehicles.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  Loading vehicles...
+                  No vehicles added yet
                 </TableCell>
               </TableRow>
             ) : (
@@ -121,6 +134,7 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
                   onSelectVehicle={handleSelectVehicle}
                   onClearVehicle={handleClearVehicle}
                   onEditVehicle={handleEditVehicle}
+                  onCreateVehicle={handleCreateVehicle}
                 />
               ))
             )}
@@ -139,20 +153,26 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
         </div>
       </div>
       
-      {/* Vehicle Edit Dialog */}
+      {/* Vehicle Dialog - handles both create and edit */}
       {editingVehicleIndex !== null && (
         <VehicleFormDialog
           open={isVehicleDialogOpen}
           onClose={() => {
             setIsVehicleDialogOpen(false);
             setEditingVehicleIndex(null);
+            setInitialMake('');
+            setInitialModel('');
           }}
           onVehicleCreated={handleVehicleUpdated}
-          initialMake={vehicles[editingVehicleIndex]?.make || ""}
-          initialModel={vehicles[editingVehicleIndex]?.model || ""}
-          initialYear={vehicles[editingVehicleIndex]?.year}
-          initialLatAcc={vehicles[editingVehicleIndex]?.latAcc}
-          vehicleId={getVehicleDbId(editingVehicleIndex)}
+          initialMake={dialogMode === 'edit' ? 
+            vehicles[editingVehicleIndex]?.make || "" : 
+            initialMake}
+          initialModel={dialogMode === 'edit' ? 
+            vehicles[editingVehicleIndex]?.model || "" : 
+            initialModel}
+          initialYear={dialogMode === 'edit' ? vehicles[editingVehicleIndex]?.year : undefined}
+          initialLatAcc={dialogMode === 'edit' ? vehicles[editingVehicleIndex]?.latAcc : undefined}
+          vehicleId={dialogMode === 'edit' ? getVehicleDbId(editingVehicleIndex) : undefined}
           mode={dialogMode}
         />
       )}
