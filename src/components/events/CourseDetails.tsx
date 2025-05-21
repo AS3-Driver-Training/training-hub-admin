@@ -1,14 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { CalendarIcon, MapPinIcon, UsersIcon, Building2Icon, PencilIcon, Share2Icon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/utils/toast";
 
 export function CourseDetails() {
@@ -36,7 +34,7 @@ export function CourseDetails() {
             venues(*),
             host_client:clients(*)
           `)
-          .eq('id', id)
+          .eq('id', parseInt(id))
           .single();
 
         if (courseError) throw courseError;
@@ -49,7 +47,7 @@ export function CourseDetails() {
             *,
             client:clients(*)
           `)
-          .eq('course_instance_id', id);
+          .eq('course_instance_id', parseInt(id));
 
         if (allocationsError) throw allocationsError;
         setAllocations(allocationsData || []);
@@ -61,7 +59,7 @@ export function CourseDetails() {
             *,
             student:students(*)
           `)
-          .eq('course_instance_id', id);
+          .eq('course_instance_id', parseInt(id));
 
         if (attendeesError) throw attendeesError;
         setAttendees(attendeesData || []);
@@ -73,7 +71,7 @@ export function CourseDetails() {
             *,
             vehicle:vehicles(*)
           `)
-          .eq('course_instance_id', id);
+          .eq('course_instance_id', parseInt(id));
 
         if (vehiclesError) throw vehiclesError;
         setVehicles(vehiclesData || []);
@@ -82,7 +80,7 @@ export function CourseDetails() {
         const { data: closureData, error: closureError } = await supabase
           .from('course_closures')
           .select('status')
-          .eq('course_instance_id', id)
+          .eq('course_instance_id', parseInt(id))
           .maybeSingle();
 
         if (closureError) throw closureError;
@@ -93,7 +91,7 @@ export function CourseDetails() {
         toast({
           title: "Error",
           description: "Failed to load course details",
-          type: "error"
+          variant: "destructive"
         });
       } finally {
         setLoading(false);
@@ -217,116 +215,107 @@ export function CourseDetails() {
         </Card>
       </div>
 
-      <Tabs defaultValue="allocations">
-        <TabsList>
-          <TabsTrigger value="allocations">Allocations</TabsTrigger>
-          <TabsTrigger value="attendees">Attendees</TabsTrigger>
-          <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="allocations" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Seat Allocations</CardTitle>
-              <CardDescription>
-                Seats allocated to clients for this course
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {allocations.length === 0 ? (
-                <p className="text-muted-foreground">No allocations yet</p>
-              ) : (
-                <div className="space-y-4">
-                  {allocations.map((allocation) => (
-                    <div key={allocation.id} className="flex justify-between items-center p-3 border rounded-md">
-                      <div>
-                        <div className="font-medium">{allocation.client.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {allocation.seats_allocated} seats allocated
-                        </div>
+      <div className="space-y-6">
+        {/* Allocations Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Seat Allocations</CardTitle>
+            <CardDescription>
+              Seats allocated to clients for this course
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {allocations.length === 0 ? (
+              <p className="text-muted-foreground">No allocations yet</p>
+            ) : (
+              <div className="space-y-4">
+                {allocations.map((allocation) => (
+                  <div key={allocation.id} className="flex justify-between items-center p-3 border rounded-md">
+                    <div>
+                      <div className="font-medium">{allocation.client.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {allocation.seats_allocated} seats allocated
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-            <CardFooter>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => navigate(`/events/${id}/allocations`)}
-              >
-                Manage Allocations
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="attendees" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Attendees</CardTitle>
-              <CardDescription>
-                Students attending this course
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {attendees.length === 0 ? (
-                <p className="text-muted-foreground">No attendees yet</p>
-              ) : (
-                <div className="space-y-4">
-                  {attendees.map((attendee) => (
-                    <div key={attendee.id} className="flex justify-between items-center p-3 border rounded-md">
-                      <div>
-                        <div className="font-medium">
-                          {attendee.student.first_name} {attendee.student.last_name}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {attendee.student.email}
-                        </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+          <CardFooter>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => navigate(`/events/${id}/allocations`)}
+            >
+              Manage Allocations
+            </Button>
+          </CardFooter>
+        </Card>
+
+        {/* Attendees Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Attendees</CardTitle>
+            <CardDescription>
+              Students attending this course
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {attendees.length === 0 ? (
+              <p className="text-muted-foreground">No attendees yet</p>
+            ) : (
+              <div className="space-y-4">
+                {attendees.map((attendee) => (
+                  <div key={attendee.id} className="flex justify-between items-center p-3 border rounded-md">
+                    <div>
+                      <div className="font-medium">
+                        {attendee.student.first_name} {attendee.student.last_name}
                       </div>
-                      <Badge variant={attendee.status === "confirmed" ? "default" : "outline"}>
-                        {attendee.status}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="vehicles" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Vehicles</CardTitle>
-              <CardDescription>
-                Vehicles assigned to this course
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {vehicles.length === 0 ? (
-                <p className="text-muted-foreground">No vehicles assigned yet</p>
-              ) : (
-                <div className="space-y-4">
-                  {vehicles.map((courseVehicle) => (
-                    <div key={courseVehicle.id} className="flex justify-between items-center p-3 border rounded-md">
-                      <div>
-                        <div className="font-medium">
-                          Car #{courseVehicle.car_number}: {courseVehicle.vehicle.make} {courseVehicle.vehicle.model}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          LatAcc: {courseVehicle.vehicle.latacc}
-                        </div>
+                      <div className="text-sm text-muted-foreground">
+                        {attendee.student.email}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                    <Badge variant={attendee.status === "confirmed" ? "default" : "outline"}>
+                      {attendee.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Vehicles Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Vehicles</CardTitle>
+            <CardDescription>
+              Vehicles assigned to this course
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {vehicles.length === 0 ? (
+              <p className="text-muted-foreground">No vehicles assigned yet</p>
+            ) : (
+              <div className="space-y-4">
+                {vehicles.map((courseVehicle) => (
+                  <div key={courseVehicle.id} className="flex justify-between items-center p-3 border rounded-md">
+                    <div>
+                      <div className="font-medium">
+                        Car #{courseVehicle.car_number}: {courseVehicle.vehicle.make} {courseVehicle.vehicle.model}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        LatAcc: {courseVehicle.vehicle.latacc}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
