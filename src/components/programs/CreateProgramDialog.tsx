@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -22,7 +23,6 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Program, ProgramExercise } from "@/types/programs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,7 +51,6 @@ interface CreateProgramDialogProps {
 
 export function CreateProgramDialog({ open, onClose, program, getLevelNumber }: CreateProgramDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState("details");
   const [exercises, setExercises] = useState<ProgramExercise[]>([]);
   const { toast } = useToast();
   const isEditing = !!program;
@@ -111,8 +110,7 @@ export function CreateProgramDialog({ open, onClose, program, getLevelNumber }: 
     setIsSubmitting(true);
     
     try {
-      // No need to check for required exercises since ExercisesList automatically adds them
-      // The code below is more of a safeguard
+      // Core exercises are automatically handled by ExercisesList
       
       const programData = {
         name: data.name,
@@ -177,21 +175,6 @@ export function CreateProgramDialog({ open, onClose, program, getLevelNumber }: 
             .select();
           
           if (exerciseError) throw exerciseError;
-          
-          // Insert parameters for this exercise
-          if (exercise.parameters && exercise.parameters.length > 0) {
-            const parametersData = exercise.parameters.map(param => ({
-              exercise_id: newExercise[0].id,
-              parameter_name: param.name,
-              parameter_value: param.value,
-            }));
-            
-            const { error: paramError } = await supabase
-              .from('exercise_parameters')
-              .insert(parametersData);
-            
-            if (paramError) throw paramError;
-          }
         }
       }
       
@@ -224,184 +207,167 @@ export function CreateProgramDialog({ open, onClose, program, getLevelNumber }: 
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="details">Program Details</TabsTrigger>
-                <TabsTrigger value="exercises">Exercises</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="details" className="space-y-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Program name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="sku"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>SKU</FormLabel>
-                        <FormControl>
-                          <Input placeholder="SKU" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="description"
+                  name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Name</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Program description" className="min-h-[100px]" {...field} />
+                        <Input placeholder="Program name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="lvl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Level</FormLabel>
-                        <FormControl>
-                          <Select 
-                            value={field.value} 
-                            onValueChange={field.onChange}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a level" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Basic">Basic</SelectItem>
-                              <SelectItem value="Intermediate">Intermediate</SelectItem>
-                              <SelectItem value="Advanced">Advanced</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="durationDays"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Duration (Days)</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="minStudents"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Minimum Students</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="maxStudents"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Maximum Students</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Price ($)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.01" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
                 <FormField
                   control={form.control}
-                  name="measured"
+                  name="sku"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel>Measured Program</FormLabel>
-                        <p className="text-sm text-muted-foreground">
-                          Measured programs require specific exercises and can generate performance reports.
-                        </p>
-                      </div>
+                    <FormItem>
+                      <FormLabel>SKU</FormLabel>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={(checked) => {
-                            field.onChange(checked);
-                            if (checked) {
-                              setActiveTab("exercises");
-                            }
-                          }}
-                        />
+                        <Input placeholder="SKU" {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
-              </TabsContent>
+              </div>
               
-              <TabsContent value="exercises" className="pt-4">
-                {measured ? (
-                  <ExercisesList
-                    exercises={exercises}
-                    onChange={setExercises}
-                    measured={measured}
-                  />
-                ) : (
-                  <div className="text-center py-6 text-muted-foreground">
-                    Turn on "Measured Program" in the Program Details tab to manage exercises.
-                  </div>
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Program description" className="min-h-[100px]" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </TabsContent>
-            </Tabs>
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="lvl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Level</FormLabel>
+                      <FormControl>
+                        <Select 
+                          value={field.value} 
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Basic">Basic</SelectItem>
+                            <SelectItem value="Intermediate">Intermediate</SelectItem>
+                            <SelectItem value="Advanced">Advanced</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="durationDays"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration (Days)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="minStudents"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Minimum Students</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="maxStudents"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Maximum Students</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price ($)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="measured"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>Measured Program</FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Measured programs automatically include standardized exercises for performance reports.
+                      </p>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            {/* Hidden ExercisesList component for automated management of exercises */}
+            <div className="hidden">
+              <ExercisesList
+                exercises={exercises}
+                onChange={setExercises}
+                measured={measured}
+              />
+            </div>
             
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onClose()}>

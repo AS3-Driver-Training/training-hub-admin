@@ -10,7 +10,7 @@ export interface Program {
   price: number;
   lvl: string; // Using string type for level values (Basic, Intermediate, Advanced)
   measured?: boolean;
-  exercises?: ProgramExercise[];
+  exercises?: ProgramExercise[]; // Will be maintained in the background only
 }
 
 export interface ProgramExercise {
@@ -52,4 +52,52 @@ export interface ExerciseResult {
   value: number; // The measured value
   penaltyPoints?: number;
   notes?: string;
+}
+
+// New interfaces for the complex final exercise parameters
+
+export interface SlalomParameters {
+  chord: number;
+  mo: number; // Maximum offset
+}
+
+export interface LaneChangeParameters {
+  chord: number;
+  mo: number; // Maximum offset
+}
+
+export interface FinalExerciseParameters {
+  ideal_time_sec: number;
+  cone_penalty_sec: number;
+  door_penalty_sec: number;
+  slalom: SlalomParameters;
+  lane_change: LaneChangeParameters;
+  reverse_time?: number;
+}
+
+export interface CourseLayout {
+  final_exercise: FinalExerciseParameters;
+  slalom: SlalomParameters;
+  lane_change: LaneChangeParameters;
+}
+
+export interface CourseInfo {
+  units: string; // "MPH" or "KPH"
+  country: string;
+  program: string;
+  date: string;
+  client: string;
+}
+
+export interface CourseVehicle {
+  car: number;
+  make: string;
+  model?: string;
+  latAcc: number;
+}
+
+export interface CourseClosureData {
+  course_info: CourseInfo;
+  vehicles: CourseVehicle[];
+  course_layout: CourseLayout;
 }
