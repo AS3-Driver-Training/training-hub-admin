@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -817,28 +816,21 @@ export function CourseClosure() {
                             {newExercise.isMeasured && (
                               <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
-                                  <Label className="flex items-center space-x-2">
-                                    <RadioGroupItem 
-                                      value="latacc" 
-                                      id="latacc"
-                                      checked={newExercise.measurementType === 'latacc'}
-                                      onClick={() => 
-                                        setNewExercise({...newExercise, measurementType: 'latacc', parameters: {}})
-                                      }
-                                    />
-                                    <span>Lateral Acceleration</span>
-                                  </Label>
-                                  <Label className="flex items-center space-x-2">
-                                    <RadioGroupItem 
-                                      value="time" 
-                                      id="time"
-                                      checked={newExercise.measurementType === 'time'}
-                                      onClick={() => 
-                                        setNewExercise({...newExercise, measurementType: 'time', parameters: {}})
-                                      }
-                                    />
-                                    <span>Time</span>
-                                  </Label>
+                                  <RadioGroup 
+                                    value={newExercise.measurementType} 
+                                    onValueChange={(value: 'latacc' | 'time') => 
+                                      setNewExercise({...newExercise, measurementType: value, parameters: {}})
+                                    }
+                                  >
+                                    <div className="flex items-center space-x-2">
+                                      <RadioGroupItem value="latacc" id="latacc" />
+                                      <Label htmlFor="latacc">Lateral Acceleration</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <RadioGroupItem value="time" id="time" />
+                                      <Label htmlFor="time">Time</Label>
+                                    </div>
+                                  </RadioGroup>
                                 </div>
                                 
                                 {newExercise.measurementType === 'latacc' && (
