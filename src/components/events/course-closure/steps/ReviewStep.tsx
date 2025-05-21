@@ -131,7 +131,7 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
         </CardContent>
       </Card>
       
-      {/* Redesigned Exercise Parameters Section with improved layout */}
+      {/* Exercise Parameters Section */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between py-3">
           <CardTitle className="text-base">Exercise Parameters</CardTitle>
@@ -213,6 +213,50 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
                 <TableCell className="text-center">{formData.course_layout.final_exercise.lane_change.mo}</TableCell>
                 <TableCell>-</TableCell>
               </TableRow>
+              
+              {/* Additional exercises section */}
+              {formData.additional_exercises && formData.additional_exercises.length > 0 && (
+                <>
+                  <TableRow className="bg-slate-50/50">
+                    <TableCell colSpan={4} className="font-medium py-2">Additional Exercises</TableCell>
+                  </TableRow>
+                  
+                  {formData.additional_exercises.map((exercise, index) => (
+                    <TableRow key={exercise.id}>
+                      <TableCell className="pl-6">
+                        {exercise.name}
+                        {exercise.isMeasured && (
+                          <span className="ml-2 text-xs py-0.5 px-1.5 bg-slate-100 rounded-full">
+                            {exercise.measurementType === 'latacc' ? 'LatAcc' : 'Time'}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {exercise.parameters.chord || '-'}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {exercise.parameters.mo || '-'}
+                      </TableCell>
+                      <TableCell>
+                        {exercise.measurementType === 'time' && (
+                          <div className="flex flex-col text-sm">
+                            {exercise.parameters.idealTime && (
+                              <span>Ideal Time: {exercise.parameters.idealTime} sec</span>
+                            )}
+                            {exercise.parameters.penaltyType && (
+                              <span>
+                                Penalty: {exercise.parameters.penaltyType === 'time' 
+                                  ? `${exercise.parameters.penaltyValue || '-'} sec` 
+                                  : 'Annulled'}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </>
+              )}
             </TableBody>
           </Table>
         </CardContent>

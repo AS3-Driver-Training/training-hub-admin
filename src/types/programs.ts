@@ -106,9 +106,26 @@ export interface CourseVehicle {
   latAcc?: number;
 }
 
+// Add a new interface for additional exercises
+export interface AdditionalExercise {
+  id: string;
+  name: string;
+  isMeasured: boolean;
+  measurementType: 'latacc' | 'time';
+  parameters: {
+    chord?: number;
+    mo?: number;
+    idealTime?: number;
+    penaltyType?: 'time' | 'annulled';
+    penaltyValue?: number;
+  };
+}
+
 export interface CourseClosureData {
   course_info: CourseInfo;
   vehicles: CourseVehicle[];
   course_layout: CourseLayout;
   notes?: string;
+  // Add additional exercises to the CourseClosureData
+  additional_exercises?: AdditionalExercise[];
 }

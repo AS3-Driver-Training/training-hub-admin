@@ -66,7 +66,8 @@ export const WizardProvider: React.FC<WizardProviderProps> = ({ children, course
         slalom: { chord: 100, mo: 15 },
         lane_change: { chord: 120, mo: 20 }
       }
-    }
+    },
+    additional_exercises: []
   });
 
   // Define wizard steps

@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { CourseClosureData, SlalomParameters, LaneChangeParameters } from "@/types/programs";
+import { CourseClosureData, SlalomParameters, LaneChangeParameters, AdditionalExercise } from "@/types/programs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -50,9 +49,11 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
     reverse_time: formData.course_layout?.final_exercise?.reverse_time
   });
   
-  const [additionalExercises, setAdditionalExercises] = useState<ExerciseItem[]>([]);
+  const [additionalExercises, setAdditionalExercises] = useState<AdditionalExercise[]>(
+    formData.additional_exercises || []
+  );
   
-  const [newExercise, setNewExercise] = useState<ExerciseItem>({
+  const [newExercise, setNewExercise] = useState<AdditionalExercise>({
     id: crypto.randomUUID(),
     name: "",
     isMeasured: false,
@@ -94,6 +95,13 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
       }
     });
   }, [finalExercise]);
+
+  // Update parent form data when additional exercises change
+  useEffect(() => {
+    onUpdate({
+      additional_exercises: additionalExercises
+    });
+  }, [additionalExercises]);
 
   const handleAddExercise = () => {
     if (!newExercise.name) return;
