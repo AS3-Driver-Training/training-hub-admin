@@ -22,6 +22,17 @@ const DEFAULT_VEHICLES: CourseVehicle[] = [
   { car: 3, make: "", year: 0, latAcc: 0.8 },
 ];
 
+// Helper function to map database vehicle to frontend vehicle model
+const mapDbVehicleToModel = (dbVehicle: any): Vehicle => {
+  return {
+    id: dbVehicle.id,
+    make: dbVehicle.make,
+    model: dbVehicle.model,
+    year: dbVehicle.year,
+    latAcc: dbVehicle.latacc || 0.8 // Map latacc to latAcc with a default value
+  };
+};
+
 export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
   // Initialize with 3 empty vehicles or existing data
   const [vehicles, setVehicles] = useState<CourseVehicle[]>(
@@ -48,7 +59,7 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
     onUpdate({
       vehicles
     });
-  }, [vehicles]);
+  }, [vehicles, onUpdate]);
 
   // Search for vehicles
   useEffect(() => {
@@ -67,7 +78,10 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
           .limit(10);
           
         if (error) throw error;
-        setSearchResults(data || []);
+        
+        // Map database vehicles to frontend model
+        const mappedVehicles = data?.map(mapDbVehicleToModel) || [];
+        setSearchResults(mappedVehicles);
       } catch (error) {
         console.error("Error searching vehicles:", error);
       } finally {
@@ -126,7 +140,7 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
         ...updatedVehicles[index], 
         make: `${vehicle.make} ${vehicle.model || ''}`.trim(), 
         year: vehicle.year,
-        latAcc: vehicle.latacc || 0.8
+        latAcc: vehicle.latAcc || 0.8
       };
       setVehicles(updatedVehicles);
       setActiveVehicleIndex(null);
@@ -136,7 +150,7 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
         ...newVehicle,
         make: `${vehicle.make} ${vehicle.model || ''}`.trim(),
         year: vehicle.year,
-        latAcc: vehicle.latacc || 0.8
+        latAcc: vehicle.latAcc || 0.8
       });
     }
   };

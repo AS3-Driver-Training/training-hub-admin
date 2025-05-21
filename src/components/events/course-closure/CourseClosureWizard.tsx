@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -235,7 +234,9 @@ export function CourseClosureWizard() {
             country: formData.course_info?.country,
             zipfile_url: zipfileUrl,
             closed_by: "00000000-0000-0000-0000-000000000000", // Placeholder UUID, should be replaced with actual user ID
-            closure_data: closureDataJson // Store the JSON data
+            // Store the JSON data in a custom column if your database schema supports it
+            // If 'closure_data' is not in your schema, you can omit this line
+            ...(closureDataJson ? { closure_data: closureDataJson } : {})
           })
           .select();
           

@@ -110,4 +110,5 @@ export interface CourseClosureData {
   course_info: CourseInfo;
   vehicles: CourseVehicle[];
   course_layout: CourseLayout;
+  notes?: string; // Adding notes field here
 }
