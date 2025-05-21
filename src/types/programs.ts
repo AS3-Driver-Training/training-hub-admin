@@ -1,4 +1,3 @@
-
 export interface Program {
   id: string;
   name: string;
@@ -101,9 +100,8 @@ export interface CourseInfo {
 export interface CourseVehicle {
   car: number;
   make: string;
-  model?: string;
   year?: number;
-  latAcc: number;
+  latAcc?: number;
 }
 
 export interface CourseClosureData {

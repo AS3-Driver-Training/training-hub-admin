@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from "react";
 import { CourseVehicle, Vehicle } from "@/types/programs";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface VehicleManagerProps {
@@ -24,9 +23,9 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     if (vehicles.length === 0) {
       // Create 3 empty vehicle rows
       const initialVehicles: CourseVehicle[] = [
-        { car: 1, make: "", year: new Date().getFullYear(), latAcc: 0.8 },
-        { car: 2, make: "", year: new Date().getFullYear(), latAcc: 0.8 },
-        { car: 3, make: "", year: new Date().getFullYear(), latAcc: 0.8 }
+        { car: 1, make: "", year: undefined, latAcc: undefined },
+        { car: 2, make: "", year: undefined, latAcc: undefined },
+        { car: 3, make: "", year: undefined, latAcc: undefined }
       ];
       
       onVehiclesChange(initialVehicles);
@@ -72,8 +71,8 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     const newVehicle: CourseVehicle = {
       car: newCarNumber,
       make: "",
-      year: new Date().getFullYear(),
-      latAcc: 0.8
+      year: undefined,
+      latAcc: undefined
     };
     
     // Add to vehicles array
@@ -130,7 +129,7 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     // Update the vehicle data
     handleUpdateVehicle(index, 'make', `${vehicle.make} ${vehicle.model || ''}`.trim());
     handleUpdateVehicle(index, 'year', vehicle.year);
-    handleUpdateVehicle(index, 'latAcc', vehicle.latAcc || 0.8);
+    handleUpdateVehicle(index, 'latAcc', vehicle.latAcc);
     
     // Mark this vehicle as selected
     setVehicleStatuses(prev => ({
@@ -146,59 +145,12 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     toast.success(`Selected ${vehicle.make} ${vehicle.model || ''}`);
   };
 
-  // Create new vehicle from text input and auto-save to database
-  const handleCreateNewVehicle = async (index: number, makeModel: string) => {
-    if (!makeModel) {
-      toast.error("Vehicle make/model is required");
-      return;
-    }
-
-    // Update the vehicle make in the UI immediately
-    handleUpdateVehicle(index, 'make', makeModel);
-    
-    // Try to extract make and model from the combined field
-    let make = makeModel;
-    let model = "";
-    
-    // Simple heuristic: first word is make, rest is model
-    const parts = makeModel.split(" ");
-    if (parts.length > 1) {
-      make = parts[0];
-      model = parts.slice(1).join(" ");
-    }
-    
-    try {
-      // Insert vehicle into the database automatically
-      const { data, error } = await supabase
-        .from("vehicles")
-        .insert({
-          make,
-          model,
-          year: vehicles[index].year,
-          latacc: vehicles[index].latAcc
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      if (data) {
-        // Update status to indicate this is now selected
-        setVehicleStatuses(prev => ({
-          ...prev,
-          [index]: {
-            isNew: false,
-            isSelected: true,
-            dbId: data.id
-          }
-        }));
-        
-        toast.success(`Vehicle "${makeModel}" created`);
-      }
-    } catch (error: any) {
-      console.error("Error creating vehicle:", error);
-      toast.error(`Failed to create vehicle: ${error.message}`);
-    }
+  // Trigger to open vehicle creation dialog
+  const handleTriggerCreateVehicle = (index: number, makeModel: string) => {
+    // This now just prepares the UI for vehicle creation
+    // The actual creation happens in the VehicleFormDialog
+    console.log(`Triggering vehicle creation for index ${index} with makeModel: ${makeModel}`);
+    // The state update is now handled by the VehiclesStep component
   };
 
   // Check if a vehicle is new (created by user vs selected from DB)
@@ -216,7 +168,7 @@ export function useVehicleManager({ vehicles, onVehiclesChange }: VehicleManager
     handleRemoveVehicle,
     handleUpdateVehicle,
     handleSelectVehicle,
-    handleCreateNewVehicle,
+    handleTriggerCreateVehicle,
     isVehicleNew,
     isVehicleSelected
   };
