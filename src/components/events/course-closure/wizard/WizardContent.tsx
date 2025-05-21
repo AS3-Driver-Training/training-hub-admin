@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWizardContext } from "./WizardContext";
 import { NavigationButtons } from "./NavigationButtons";
 import { CourseInstanceWithClient } from "../CourseClosureWizard";
@@ -11,7 +10,7 @@ import { ExercisesStep } from "../steps/ExercisesStep";
 import { ReviewStep } from "../steps/ReviewStep";
 import { CompletedView } from "../steps/CompletedView";
 import { CourseClosureData } from "@/types/programs";
-import { Info } from "lucide-react";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface WizardContentProps {
   courseInstance: CourseInstanceWithClient;
@@ -43,6 +42,24 @@ export const WizardContent: React.FC<WizardContentProps> = ({ courseInstance, on
       }
     },
     notes: formData.notes
+  };
+
+  // Get help text for the current step
+  const getStepHelpText = () => {
+    switch (currentStep) {
+      case 'basic':
+        return "Enter the basic information about the course closure. Some fields are auto-populated from course details.";
+      case 'vehicles':
+        return "Add all vehicles used during the course. You can search for existing vehicles or add new ones.";
+      case 'exercises':
+        return "Configure parameters for all exercises used in the course, including core exercises and any additional ones.";
+      case 'review':
+        return "Review all information before finalizing the course closure. You can go back to any section to make changes.";
+      case 'completed':
+        return "The course has been closed successfully. You can still make edits if needed.";
+      default:
+        return "";
+    }
   };
 
   // Render current step content
@@ -95,50 +112,28 @@ export const WizardContent: React.FC<WizardContentProps> = ({ courseInstance, on
     }
   };
 
-  // Render help text for the current step
-  const renderHelpText = () => {
-    switch (currentStep) {
-      case 'basic':
-        return "Enter the basic information about the course closure. Some fields are auto-populated from course details.";
-      case 'vehicles':
-        return "Add all vehicles used during the course. You can search for existing vehicles or add new ones.";
-      case 'exercises':
-        return "Configure parameters for all exercises used in the course, including core exercises and any additional ones.";
-      case 'review':
-        return "Review all information before finalizing the course closure. You can go back to any section to make changes.";
-      case 'completed':
-        return "The course has been closed successfully. You can still make edits if needed.";
-      default:
-        return "";
-    }
-  };
-
   const currentStepInfo = wizardSteps.find(step => step.key === currentStep);
 
   return (
     <div className="w-full">
       <Card className="w-full">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>
             {currentStepInfo?.title || "Course Closure"}
           </CardTitle>
+          {currentStep !== 'completed' && (
+            <InfoTooltip 
+              text={getStepHelpText()}
+              side="left"
+              align="center"
+            />
+          )}
         </CardHeader>
         <CardContent>
-          {currentStep !== 'vehicles' && (
-            <div className="mb-4">
-              <Alert className="bg-transparent border-0 p-0 flex items-center">
-                <Info className="h-4 w-4 text-primary mr-2" />
-                <AlertDescription className="text-sm text-muted-foreground">
-                  {renderHelpText()}
-                </AlertDescription>
-              </Alert>
-            </div>
-          )}
-          
           {renderStepContent()}
           <NavigationButtons onSubmit={onSubmit} />
         </CardContent>
       </Card>
     </div>
   );
-};
+}

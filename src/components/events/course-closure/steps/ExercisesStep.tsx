@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { CourseClosureData, SlalomParameters, LaneChangeParameters } from "@/types/programs";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface ExercisesStepProps {
   formData: Partial<CourseClosureData>;
@@ -166,10 +166,16 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
         <TabsContent value="slalom">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <span>Slalom Exercise</span>
-                <Badge variant="outline" className="ml-2">Core Exercise</Badge>
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <span>Slalom Exercise</span>
+                  <Badge variant="outline">Core Exercise</Badge>
+                </CardTitle>
+                <InfoTooltip 
+                  text="Configure the parameters for the slalom exercise, including chord and maximum offset."
+                  side="left"
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -206,10 +212,16 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
         <TabsContent value="lanechange">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <span>Lane Change Exercise</span>
-                <Badge variant="outline" className="ml-2">Core Exercise</Badge>
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <span>Lane Change Exercise</span>
+                  <Badge variant="outline">Core Exercise</Badge>
+                </CardTitle>
+                <InfoTooltip 
+                  text="Configure the parameters for the lane change exercise, including chord and maximum offset."
+                  side="left"
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -246,10 +258,16 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
         <TabsContent value="final">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <span>Final Exercise</span>
-                <Badge variant="outline" className="ml-2">Core Exercise</Badge>
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <span>Final Exercise</span>
+                  <Badge variant="outline">Core Exercise</Badge>
+                </CardTitle>
+                <InfoTooltip 
+                  text="Configure the parameters for the final exercise, including ideal time, penalties, and component exercises."
+                  side="left"
+                />
+              </div>
             </CardHeader>
             <CardContent className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -362,7 +380,13 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
           <div className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Additional Exercises</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Additional Exercises</CardTitle>
+                  <InfoTooltip 
+                    text="Add any additional exercises that were part of the course but not included in the core exercises."
+                    side="left"
+                  />
+                </div>
               </CardHeader>
               <CardContent>
                 {additionalExercises.length > 0 ? (

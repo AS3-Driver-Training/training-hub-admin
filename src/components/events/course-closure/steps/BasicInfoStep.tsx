@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { CourseClosureData } from "@/types/programs";
@@ -11,8 +10,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "@/utils/toast";
 import { cn } from "@/lib/utils";
-import { Upload, Loader2, AlertCircle } from "lucide-react";
+import { Upload, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface BasicInfoStepProps {
   courseInstance: CourseInstanceWithClient;
@@ -138,7 +138,13 @@ export function BasicInfoStep({ courseInstance, formData, onUpdate, onFileChange
   return (
     <div className="space-y-6">
       <div className="space-y-4 mb-6">
-        <h3 className="text-lg font-medium">Course Information</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-medium">Course Information</h3>
+          <InfoTooltip 
+            text="Basic information about the course, automatically populated from the course details."
+            side="top"
+          />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <p className="text-sm font-medium mb-1">Course Name</p>
@@ -174,7 +180,13 @@ export function BasicInfoStep({ courseInstance, formData, onUpdate, onFileChange
       <Form {...form}>
         <form className="space-y-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-medium">Closure Details</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-medium">Closure Details</h3>
+              <InfoTooltip 
+                text="Specify the measurement units and add any additional notes about the course closure."
+                side="top"
+              />
+            </div>
             
             <FormField
               control={form.control}
@@ -202,9 +214,15 @@ export function BasicInfoStep({ courseInstance, formData, onUpdate, onFileChange
             />
             
             <div className="space-y-2">
-              <FormLabel className="flex items-center">
-                Course Data <span className="text-destructive ml-1">*</span>
-              </FormLabel>
+              <div className="flex items-center gap-2">
+                <FormLabel className="flex items-center">
+                  Course Data <span className="text-destructive ml-1">*</span>
+                </FormLabel>
+                <InfoTooltip 
+                  text="Upload a ZIP file containing all course data collected during the training."
+                  side="top"
+                />
+              </div>
               <div 
                 className={cn(
                   "border-2 border-dashed rounded-lg transition-colors",
@@ -274,7 +292,13 @@ export function BasicInfoStep({ courseInstance, formData, onUpdate, onFileChange
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes (Optional)</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <FormLabel>Notes (Optional)</FormLabel>
+                    <InfoTooltip 
+                      text="Add any additional notes or observations about the course closure."
+                      side="top"
+                    />
+                  </div>
                   <FormControl>
                     <Textarea 
                       placeholder="Add any notes or comments about the course closure..."
