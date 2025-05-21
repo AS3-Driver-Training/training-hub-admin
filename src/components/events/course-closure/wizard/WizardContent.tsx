@@ -124,7 +124,7 @@ export const WizardContent: React.FC<WizardContentProps> = ({ courseInstance, on
           {currentStep !== 'completed' && (
             <InfoTooltip 
               text={getStepHelpText()}
-              side="left"
+              side="top"
               align="center"
             />
           )}
