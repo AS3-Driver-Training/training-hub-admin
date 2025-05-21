@@ -2,7 +2,7 @@
 import React from "react";
 import { CourseClosureData, CourseVehicle } from "@/types/programs";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus } from "lucide-react";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { useVehicleManager } from "../vehicles/VehicleManager";
