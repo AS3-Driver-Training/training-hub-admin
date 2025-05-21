@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useToast } from "@/utils/toast";
+import { toast } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingDisplay } from "./allocation/LoadingDisplay";
 import { ErrorDisplay } from "./allocation/ErrorDisplay";
@@ -37,7 +37,6 @@ export function CourseClosure() {
   const { id } = useParams();
   const navigate = useNavigate();
   const courseId = id ? parseInt(id) : undefined;
-  const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -116,19 +115,17 @@ export function CourseClosure() {
         setIsUploading(false);
       }
       
-      // Create course closure record
+      // Create course closure record - fixing the type issue here
       const { data, error } = await supabase
         .from("course_closures")
-        .insert([
-          {
-            course_instance_id: courseId,
-            status: "draft",
-            units: values.units,
-            country: values.country,
-            notes: values.notes || null,
-            zipfile_url: zipfileUrl,
-          },
-        ])
+        .insert({
+          course_instance_id: courseId,
+          status: "draft",
+          units: values.units,
+          country: values.country,
+          zipfile_url: zipfileUrl,
+          closed_by: "00000000-0000-0000-0000-000000000000", // Placeholder UUID, should be replaced with actual user ID
+        })
         .select();
         
       if (error) throw error;
