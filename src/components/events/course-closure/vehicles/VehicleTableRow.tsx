@@ -1,10 +1,10 @@
 
 import React from "react";
-import { CourseVehicle } from "@/types/programs";
+import { CourseVehicle, Vehicle } from "@/types/programs";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Lock, Trash, Save, Check, Edit } from "lucide-react";
+import { Lock, Trash, Save, Edit } from "lucide-react";
 import { VehicleSearch } from "./VehicleSearch";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
@@ -14,9 +14,12 @@ interface VehicleTableRowProps {
   index: number;
   isNewVehicle: boolean;
   isSavedToDb: boolean;
+  isSelected: boolean;
   onUpdate: (index: number, field: keyof CourseVehicle, value: any) => void;
   onRemove: (index: number) => void;
   onSaveToDatabase: (index: number) => void;
+  onSelectVehicle: (index: number, vehicle: Vehicle) => void;
+  onCreateNewVehicle: (index: number, makeModel: string) => void;
 }
 
 export function VehicleTableRow({
@@ -24,58 +27,34 @@ export function VehicleTableRow({
   index,
   isNewVehicle,
   isSavedToDb,
+  isSelected,
   onUpdate,
   onRemove,
-  onSaveToDatabase
+  onSaveToDatabase,
+  onSelectVehicle,
+  onCreateNewVehicle
 }: VehicleTableRowProps) {
   const { userRole } = useProfile();
   const isSuperAdmin = userRole === "superadmin";
 
   // Determine which fields can be edited by the current user
-  // Only allow editing sensitive fields (year and latAcc) if:
-  // 1. User is a superadmin OR
-  // 2. The vehicle is new and not yet saved to DB
-  const canEditSensitiveFields = isSuperAdmin || (isNewVehicle && !isSavedToDb);
-  
-  // For the make field, we only allow search/edit if it's a new vehicle and not saved yet
-  const canEditMakeModel = isNewVehicle && !isSavedToDb;
+  // Year and latAcc fields are locked for non-superadmins if the vehicle is selected or saved
+  const canEditSensitiveFields = isSuperAdmin || (!isSelected && !isSavedToDb);
   
   return (
-    <TableRow className={isNewVehicle ? "bg-blue-50" : ""}>
+    <TableRow className={isNewVehicle && isSelected ? "bg-blue-50" : ""}>
       <TableCell>
         <div className="w-20 text-center py-2">{vehicle.car}</div>
       </TableCell>
       
       <TableCell>
         <div className="flex gap-2">
-          {canEditMakeModel ? (
-            <VehicleSearch
-              defaultValue={vehicle.make}
-              onSelectVehicle={(selected) => {
-                onUpdate(index, 'make', `${selected.make} ${selected.model || ''}`.trim());
-                onUpdate(index, 'year', selected.year);
-                onUpdate(index, 'latAcc', selected.latAcc || 0.8);
-              }}
-              onCreateNew={(makeModel) => {
-                onUpdate(index, 'make', makeModel);
-              }}
-            />
-          ) : (
-            <div className="flex-1 relative">
-              <Input
-                value={vehicle.make}
-                onChange={e => onUpdate(index, 'make', e.target.value)}
-                placeholder="e.g. Ford Explorer"
-                disabled={true}
-                className="bg-gray-50"
-              />
-              {!isSuperAdmin && (
-                <div className="absolute right-2 top-2.5" aria-label="Vehicle information locked">
-                  <Lock className="h-3 w-3 text-muted-foreground" />
-                </div>
-              )}
-            </div>
-          )}
+          {/* Always enable search functionality for Make/Model */}
+          <VehicleSearch
+            defaultValue={vehicle.make}
+            onSelectVehicle={(selected) => onSelectVehicle(index, selected)}
+            onCreateNew={(makeModel) => onCreateNewVehicle(index, makeModel)}
+          />
         </div>
       </TableCell>
       
@@ -90,7 +69,7 @@ export function VehicleTableRow({
             className={`w-24 ${!canEditSensitiveFields ? 'opacity-70 bg-gray-100' : ''}`}
             disabled={!canEditSensitiveFields}
           />
-          {!canEditSensitiveFields && (
+          {!canEditSensitiveFields && !isSuperAdmin && (
             <div className="absolute right-2 top-2.5" aria-label="Only superadmins can edit this field">
               <Lock className="h-3 w-3 text-muted-foreground" />
             </div>
@@ -110,7 +89,7 @@ export function VehicleTableRow({
             className={`w-24 ${!canEditSensitiveFields ? 'opacity-70 bg-gray-100' : ''}`}
             disabled={!canEditSensitiveFields}
           />
-          {!canEditSensitiveFields && (
+          {!canEditSensitiveFields && !isSuperAdmin && (
             <div className="absolute right-2 top-2.5" aria-label="Only superadmins can edit this field">
               <Lock className="h-3 w-3 text-muted-foreground" />
             </div>
@@ -130,8 +109,8 @@ export function VehicleTableRow({
             <Trash className="h-4 w-4" />
           </Button>
           
-          {/* Save to DB button - only for new vehicles that haven't been saved yet */}
-          {isNewVehicle && !isSavedToDb && (
+          {/* Save to DB button - only for vehicles that have been created new but not saved yet */}
+          {isNewVehicle && !isSavedToDb && vehicle.make && (
             <Button
               variant="outline"
               size="sm"
@@ -156,14 +135,6 @@ export function VehicleTableRow({
             >
               <Edit className="h-3 w-3" />
             </Button>
-          )}
-          
-          {/* Show saved indicator */}
-          {isSavedToDb && (
-            <span className="text-green-600 flex items-center text-xs">
-              <Check className="h-3 w-3 mr-1" />
-              Saved
-            </span>
           )}
         </div>
       </TableCell>

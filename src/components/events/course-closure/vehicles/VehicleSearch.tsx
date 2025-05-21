@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { Vehicle } from "@/types/programs";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Plus } from "lucide-react";
+import { Search } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
@@ -32,7 +31,7 @@ export function VehicleSearch({
   onSelectVehicle,
   onCreateNew,
   defaultValue = "",
-  placeholder = "e.g. Ford Explorer",
+  placeholder = "Search make/model or type to create new",
   disabled = false
 }: VehicleSearchProps) {
   const [searchTerm, setSearchTerm] = useState(defaultValue);
@@ -91,8 +90,17 @@ export function VehicleSearch({
     }
   };
 
+  // If the searchTerm is empty and user clicks outside, keep the popover closed
+  const handleOpenChange = (open: boolean) => {
+    if (open && !disabled) {
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  };
+
   return (
-    <Popover open={isOpen && !disabled} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <div className="flex-1 relative">
           <Input 
@@ -104,7 +112,6 @@ export function VehicleSearch({
             onClick={() => !disabled && setIsOpen(true)}
             placeholder={placeholder}
             className="pr-8"
-            disabled={disabled}
           />
           <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
         </div>
@@ -131,7 +138,7 @@ export function VehicleSearch({
                   variant="ghost"
                   className="mt-2 w-full justify-start text-blue-500 hover:text-blue-700 hover:bg-blue-50"
                 >
-                  <Plus className="mr-2 h-4 w-4" /> 
+                  <span className="mr-2">+</span> 
                   Create "{searchTerm}" as new vehicle
                 </Button>
               </div>

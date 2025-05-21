@@ -27,9 +27,12 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
     handleAddVehicle,
     handleRemoveVehicle,
     handleUpdateVehicle,
+    handleSelectVehicle,
+    handleCreateNewVehicle,
     handleSaveToDatabase,
     isVehicleNew,
-    isVehicleSavedToDb
+    isVehicleSavedToDb,
+    isVehicleSelected
   } = useVehicleManager({
     vehicles,
     onVehiclesChange: (updatedVehicles) => {
@@ -54,12 +57,12 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
           <div className="flex">
             <div className="flex-shrink-0">
               <InfoTooltip 
-                text="Add vehicles by searching for existing ones in the database or creating new ones. After creating a new vehicle, save it to the database. Note that only superadmins can edit Year and LatAcc values of saved vehicles."
+                text="Search for existing vehicles by typing in the Make/Model field, or create new ones. After creating a new vehicle, save it to the database. Note that only superadmins can edit Year and LatAcc values of saved vehicles."
               />
             </div>
             <div className="ml-3">
               <p className="text-sm text-blue-700">
-                <span className="font-medium">Adding Vehicles:</span> Search for existing vehicles or create new ones. 
+                <span className="font-medium">Adding Vehicles:</span> Search for existing vehicles or create new ones by typing in the Make/Model field. 
                 {!isSuperAdmin && (
                   <span className="block mt-1 text-amber-600">
                     Note: Only super admins can modify Year and LatAcc values for existing vehicles.
@@ -84,7 +87,7 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
             {vehicles.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  No vehicles added yet. Click "Add Vehicle" to start.
+                  Initializing vehicles...
                 </TableCell>
               </TableRow>
             ) : (
@@ -95,9 +98,12 @@ export function VehiclesStep({ formData, onUpdate }: VehiclesStepProps) {
                   index={i}
                   isNewVehicle={isVehicleNew(i)}
                   isSavedToDb={isVehicleSavedToDb(i)}
+                  isSelected={isVehicleSelected(i)}
                   onUpdate={handleUpdateVehicle}
                   onRemove={handleRemoveVehicle}
                   onSaveToDatabase={handleSaveToDatabase}
+                  onSelectVehicle={handleSelectVehicle}
+                  onCreateNewVehicle={handleCreateNewVehicle}
                 />
               ))
             )}
