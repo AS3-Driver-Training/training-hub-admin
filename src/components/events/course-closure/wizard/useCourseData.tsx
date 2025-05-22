@@ -184,13 +184,26 @@ export const useCourseData = (courseId?: number) => {
       if (!courseId) throw new Error("No course ID provided");
       setIsSubmitting(true);
       
-      let zipfileUrl = null;
-      let closureDataJson = null;
-      
       try {
+        // First check if user is authenticated
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          throw new Error(`Authentication error: ${sessionError.message}`);
+        }
+        
+        if (!sessionData.session || !sessionData.session.user) {
+          throw new Error("You must be logged in to complete this action");
+        }
+        
+        const currentUserId = sessionData.session.user.id;
+        console.log("Current user ID for course closure:", currentUserId);
+        
         // Convert formData to proper CourseClosureData
         const closureData: CourseClosureData = formData as CourseClosureData;
-        closureDataJson = JSON.stringify(apiTransformer.toApi(closureData));
+        const closureDataJson = JSON.stringify(apiTransformer.toApi(closureData));
+        
+        let zipfileUrl = null;
         
         // Skip file upload for now as the bucket doesn't exist
         // Only attempt file upload if file exists and user still wants to proceed
@@ -202,16 +215,18 @@ export const useCourseData = (courseId?: number) => {
           });
         }
         
-        // Create the record payload
+        // Create the record payload with the authenticated user's ID
         const payload = {
           course_instance_id: courseId,
           status: "draft",
           units: formData.course_info?.units,
           country: formData.course_info?.country,
           zipfile_url: zipfileUrl,
-          closure_data: closureDataJson, // Store full closure data in the new column
-          closed_by: "00000000-0000-0000-0000-000000000000" // Placeholder UUID, should be replaced with actual user ID
+          closure_data: closureDataJson,
+          closed_by: currentUserId  // Use the real authenticated user ID
         };
+        
+        console.log("Submitting course closure with payload:", payload);
         
         // Create course closure record
         const { data, error } = await supabase
@@ -219,7 +234,10 @@ export const useCourseData = (courseId?: number) => {
           .insert(payload)
           .select();
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error creating course closure:", error);
+          throw new Error(`Failed to create course closure: ${error.message}`);
+        }
         
         const closureId = data[0].id;
         setCompletedClosureId(closureId);
@@ -252,7 +270,8 @@ export const useCourseData = (courseId?: number) => {
         }
         
         return data;
-      } catch (err) {
+      } catch (err: any) {
+        console.error("Course closure submission failed:", err);
         throw err;
       } finally {
         setIsSubmitting(false);
