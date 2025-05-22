@@ -1,4 +1,3 @@
-
 import { TrainingEvent } from "@/types/events";
 import { format } from "date-fns";
 import { MapPin, Clock, Users, ArrowRight, MoreVertical, Edit, Trash2, Globe, Building2, Eye, FileText } from "lucide-react";
@@ -53,14 +52,14 @@ export function EventCard({ event, onDelete }: EventCardProps) {
     ? monthDay 
     : `${format(startDate, "MMM d")} - ${format(endDate, "d")}`;
   
-  // Check if the course has been formally closed
+  // Check if the course has been formally closed - fix the type conversion
   const { data: closureStatus } = useQuery({
-    queryKey: ["event-card-closure", event.id],
+    queryKey: ["event-card-closure", parseInt(event.id)],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("course_closures")
         .select("id")
-        .eq("course_instance_id", event.id)
+        .eq("course_instance_id", parseInt(event.id))
         .limit(1);
         
       if (error) throw error;
@@ -96,7 +95,7 @@ export function EventCard({ event, onDelete }: EventCardProps) {
     try {
       setIsDeleting(true);
       
-      // Delete the event from the database
+      // Delete the event from the database - fix the type conversion
       const { error } = await supabase
         .from('course_instances')
         .delete()

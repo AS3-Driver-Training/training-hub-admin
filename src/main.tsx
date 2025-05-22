@@ -9,7 +9,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes cache freshness
-      cacheTime: 1000 * 60 * 30, // 30 minutes in cache
+      gcTime: 1000 * 60 * 30, // 30 minutes in cache (formerly cacheTime)
       refetchOnWindowFocus: false, // Don't refetch on window focus
       retry: 1,
       keepPreviousData: true, // Keep showing previous data while fetching
@@ -22,3 +22,4 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </QueryClientProvider>
 );
+
