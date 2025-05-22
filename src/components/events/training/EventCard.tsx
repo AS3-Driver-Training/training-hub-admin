@@ -26,9 +26,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
-// Define keepPreviousData as true
-const keepPreviousData = true;
-
 interface EventCardProps {
   event: TrainingEvent;
   onDelete?: () => void;
@@ -68,8 +65,7 @@ export function EventCard({ event, onDelete }: EventCardProps) {
       if (error) throw error;
       return data && data.length > 0;
     },
-    // Using placeholderData instead of keepPreviousData
-    placeholderData: keepPreviousData,
+    keepPreviousData: true,
     // Enabled when the event might be completed by date
     enabled: event.status === "completed",
   });
