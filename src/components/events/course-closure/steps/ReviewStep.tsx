@@ -1,3 +1,4 @@
+
 import React from "react";
 import { format } from "date-fns";
 import { CourseClosureData } from "@/types/programs";
@@ -258,9 +259,9 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
                     <TableRow key={exercise.id || index}>
                       <TableCell className="pl-6">
                         {exercise.name}
-                        {(exercise.isMeasured || exercise.is_measured) && (
+                        {exercise.isMeasured && (
                           <span className="ml-2 text-xs py-0.5 px-1.5 bg-slate-100 rounded-full">
-                            {(exercise.measurementType || exercise.measurement_type) === 'latacc' ? 'LatAcc' : 'Time'}
+                            {exercise.measurementType === 'latacc' ? 'LatAcc' : 'Time'}
                           </span>
                         )}
                       </TableCell>
@@ -271,7 +272,7 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
                         {exercise.parameters && exercise.parameters.mo || '-'}
                       </TableCell>
                       <TableCell>
-                        {(exercise.measurementType || exercise.measurement_type) === 'time' && (
+                        {exercise.measurementType === 'time' && (
                           <div className="flex flex-col text-sm">
                             {exercise.parameters && exercise.parameters.idealTime && (
                               <span>Ideal Time: {exercise.parameters.idealTime} sec</span>
