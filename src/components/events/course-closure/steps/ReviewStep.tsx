@@ -84,7 +84,10 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
             <div>{formData.course_info.units}</div>
             
             <div className="font-medium">Course Data</div>
-            <div>{file.name} ({(file.size / 1024).toFixed(1)} KB)</div>
+            <div>
+              {/* Fix the null reference by adding a conditional check for file */}
+              {file ? `${file.name} (${(file.size / 1024).toFixed(1)} KB)` : "No file uploaded in edit mode"}
+            </div>
           </div>
         </CardContent>
       </Card>
