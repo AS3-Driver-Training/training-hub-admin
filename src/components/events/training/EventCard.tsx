@@ -24,7 +24,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, keepPrevious } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+
+// Define keepPreviousData as true
+const keepPreviousData = true;
 
 interface EventCardProps {
   event: TrainingEvent;
@@ -66,7 +69,7 @@ export function EventCard({ event, onDelete }: EventCardProps) {
       return data && data.length > 0;
     },
     // Using placeholderData instead of keepPreviousData
-    placeholderData: keepPrevious(),
+    placeholderData: keepPreviousData,
     // Enabled when the event might be completed by date
     enabled: event.status === "completed",
   });

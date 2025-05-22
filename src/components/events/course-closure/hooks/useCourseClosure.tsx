@@ -1,5 +1,8 @@
-import { useQuery, keepPrevious } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+// Define keepPreviousData as true
+const keepPreviousData = true;
 
 /**
  * Hook to check if a course has been formally closed
@@ -23,7 +26,7 @@ export const useCourseClosure = (courseId?: number) => {
     },
     enabled: !!courseId,
     // Use the new keepPrevious placeholder data function
-    placeholderData: keepPrevious()
+    placeholderData: keepPreviousData
   });
 
   // Determine if the course has been formally closed
