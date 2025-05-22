@@ -8,8 +8,9 @@ import { ErrorDisplay } from "../allocation/ErrorDisplay";
 import { WizardProvider } from "./wizard/WizardContext";
 import { WizardNavigation, WizardProgress } from "./wizard/WizardNavigation";
 import { WizardContent } from "./wizard/WizardContent";
-import { useCourseData } from "./wizard/useCourseData";
+import { useCourseData } from "./wizard/hooks/useCourseData";
 import { useWizardContext } from "./wizard/WizardContext";
+import { useExistingClosure } from "./wizard/hooks/useExistingClosure";
 
 // Define a proper type for the course instance data that includes clientName
 export interface CourseInstanceWithClient {
@@ -41,6 +42,7 @@ interface CourseClosureContentProps {
 
 function CourseClosureContent({ courseId, navigate }: CourseClosureContentProps) {
   const { courseInstance, isLoading, error, submitMutation, updateMutation } = useCourseData(courseId);
+  const { existingClosure } = useExistingClosure(courseId);
   const { isEditing } = useWizardContext();
   
   if (isLoading) {
@@ -59,8 +61,8 @@ function CourseClosureContent({ courseId, navigate }: CourseClosureContentProps)
 
   const handleSubmit = () => {
     // If we're editing an existing closure, use update mutation
-    if (isEditing) {
-      updateMutation.mutate();
+    if (isEditing && existingClosure) {
+      updateMutation.mutate(existingClosure.id);
     } else {
       submitMutation.mutate();
     }
