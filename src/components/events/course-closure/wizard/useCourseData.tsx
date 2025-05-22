@@ -129,19 +129,61 @@ export const useCourseData = (courseId?: number) => {
           date: formData.course_info?.date || "",
           client: formData.course_info?.client || ""
         },
-        vehicles: []
+        vehicles: [],
+        additional_exercises: [],
+        course_layout: formData.course_layout // Initialize with default layout
       };
 
       // Try to load closure data from the closure_data JSON field
       if (existingClosure.closure_data) {
         try {
-          // Apply to formData including any vehicle data
+          console.log("Raw closure data from DB:", existingClosure.closure_data);
+          
+          // Apply to formData including any vehicle data and additional_exercises
           const parsedData = apiTransformer.fromApi(existingClosure.closure_data);
+          
+          // Ensure vehicles array exists
+          if (!parsedData.vehicles) {
+            parsedData.vehicles = [];
+          }
+          
+          // Ensure additional_exercises array exists
+          if (!parsedData.additional_exercises) {
+            parsedData.additional_exercises = [];
+          }
+          
+          // Ensure course_layout exists
+          if (!parsedData.course_layout) {
+            parsedData.course_layout = formData.course_layout;
+          }
+          
+          // Special handling for nested properties to ensure proper case conversion
+          if (Array.isArray(parsedData.vehicles)) {
+            parsedData.vehicles = parsedData.vehicles.map(vehicle => ({
+              ...vehicle,
+              // Ensure latAcc property is correctly mapped from snake_case
+              latAcc: vehicle.latAcc !== undefined ? vehicle.latAcc : 
+                      (vehicle.lat_acc !== undefined ? vehicle.lat_acc : undefined)
+            }));
+          }
+          
+          if (Array.isArray(parsedData.additional_exercises)) {
+            parsedData.additional_exercises = parsedData.additional_exercises.map(exercise => ({
+              ...exercise,
+              // Ensure isMeasured property is correctly mapped
+              isMeasured: exercise.isMeasured !== undefined ? exercise.isMeasured : 
+                         (exercise.is_measured !== undefined ? exercise.is_measured : false),
+              // Ensure measurementType property is correctly mapped
+              measurementType: exercise.measurementType || exercise.measurement_type || 'time'
+            }));
+          }
+          
           updateFormData({...baseFormData, ...parsedData});
           console.log("Loaded closure data from JSON:", parsedData);
           return;
         } catch (e) {
           console.error("Failed to parse closure_data JSON:", e);
+          toast.error("Failed to load course closure data");
         }
       }
       
@@ -168,7 +210,7 @@ export const useCourseData = (courseId?: number) => {
             make: v.vehicle?.make || "",
             model: v.vehicle?.model,
             year: v.vehicle?.year,
-            latAcc: v.vehicle?.latacc
+            latAcc: v.vehicle?.latacc // Map latacc to latAcc
           }));
           
           // Add vehicles to form data
@@ -211,6 +253,18 @@ export const useCourseData = (courseId?: number) => {
         
         // Convert formData to proper CourseClosureData
         const closureData: CourseClosureData = formData as CourseClosureData;
+        
+        // Ensure vehicles array exists
+        if (!closureData.vehicles) {
+          closureData.vehicles = [];
+        }
+        
+        // Ensure additional_exercises array exists
+        if (!closureData.additional_exercises) {
+          closureData.additional_exercises = [];
+        }
+        
+        // Transform data to snake_case for database storage
         const closureDataJson = JSON.stringify(apiTransformer.toApi(closureData));
         
         let zipfileUrl = null;
@@ -322,6 +376,18 @@ export const useCourseData = (courseId?: number) => {
         
         // Convert formData to proper CourseClosureData
         const closureData: CourseClosureData = formData as CourseClosureData;
+        
+        // Ensure vehicles array exists
+        if (!closureData.vehicles) {
+          closureData.vehicles = [];
+        }
+        
+        // Ensure additional_exercises array exists
+        if (!closureData.additional_exercises) {
+          closureData.additional_exercises = [];
+        }
+        
+        // Transform data to snake_case for database storage
         const closureDataJson = JSON.stringify(apiTransformer.toApi(closureData));
         
         // Create the update payload - using a string for updated_at

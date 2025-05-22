@@ -22,6 +22,10 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
   const { students, isLoading: studentsLoading } = useEnrolledStudents(courseInstance?.id);
   const { isEditing } = useWizardContext(); // Get whether we're editing an existing closure
   
+  // Ensure we have required arrays to prevent errors
+  const vehicles = formData.vehicles || [];
+  const additionalExercises = formData.additional_exercises || [];
+  
   // Skip file validation when editing
   if (!file && !isEditing) {
     return (
@@ -38,6 +42,9 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
       </div>
     );
   }
+  
+  // Log data for debugging
+  console.log("ReviewStep rendering with formData:", formData);
   
   return (
     <div className="space-y-6">
@@ -94,7 +101,7 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
       
       <Card>
         <CardHeader className="flex flex-row items-center justify-between py-3">
-          <CardTitle className="text-base">Vehicles ({formData.vehicles.length})</CardTitle>
+          <CardTitle className="text-base">Vehicles ({vehicles.length})</CardTitle>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -105,7 +112,7 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
           </Button>
         </CardHeader>
         <CardContent>
-          {formData.vehicles.length > 0 ? (
+          {vehicles.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -116,7 +123,7 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {formData.vehicles.map((vehicle, i) => (
+                {vehicles.map((vehicle, i) => (
                   <TableRow key={i}>
                     <TableCell>{vehicle.car}</TableCell>
                     <TableCell>{vehicle.make} {vehicle.model || ''}</TableCell>
@@ -221,13 +228,13 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
               </TableRow>
               
               {/* Additional exercises section */}
-              {formData.additional_exercises && formData.additional_exercises.length > 0 && (
+              {additionalExercises && additionalExercises.length > 0 && (
                 <>
                   <TableRow className="bg-slate-50/50">
                     <TableCell colSpan={4} className="font-medium py-2">Additional Exercises</TableCell>
                   </TableRow>
                   
-                  {formData.additional_exercises.map((exercise, index) => (
+                  {additionalExercises.map((exercise, index) => (
                     <TableRow key={exercise.id}>
                       <TableCell className="pl-6">
                         {exercise.name}
