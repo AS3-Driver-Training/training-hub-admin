@@ -60,8 +60,7 @@ export function useAllocationData() {
       console.log("Course instance data:", data);
       return data;
     },
-    enabled: !!id,
-    keepPreviousData: true
+    enabled: !!id
   });
 
   // Fetch existing allocations
@@ -94,8 +93,7 @@ export function useAllocationData() {
       console.log("Allocations data:", data);
       return data;
     },
-    enabled: !!id,
-    keepPreviousData: true
+    enabled: !!id
   });
 
   // Fetch clients for allocation (only needed for open enrollment courses)
@@ -119,8 +117,7 @@ export function useAllocationData() {
       return data;
     },
     // Only fetch clients for open enrollment courses
-    enabled: !!courseInstance && courseInstance.is_open_enrollment,
-    keepPreviousData: true
+    enabled: !!courseInstance && courseInstance.is_open_enrollment
   });
 
   // Save allocations mutation

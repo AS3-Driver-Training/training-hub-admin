@@ -22,8 +22,7 @@ export const useCourseClosure = (courseId?: number) => {
       if (error) throw error;
       return data && data.length > 0 ? data[0] : null;
     },
-    enabled: !!courseId,
-    keepPreviousData: true
+    enabled: !!courseId
   });
 
   // Determine if the course has been formally closed

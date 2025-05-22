@@ -65,7 +65,6 @@ export function EventCard({ event, onDelete }: EventCardProps) {
       if (error) throw error;
       return data && data.length > 0;
     },
-    keepPreviousData: true,
     // Enabled when the event might be completed by date
     enabled: event.status === "completed",
   });

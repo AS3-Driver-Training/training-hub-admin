@@ -70,6 +70,15 @@ export function CourseDetails() {
   // Determine if the course is completed (end date is in the past)
   const isCompleted = endDate ? endDate < new Date() : startDate < new Date();
 
+  // Determine if the course can be closed
+  // Course can be closed only if:
+  // 1. It is already completed (end date is in the past)
+  // 2. It's not already formally closed
+  const canBeClosed = isCompleted && !isClosed;
+  
+  // Determine if the course is in the future (start date is in the future)
+  const isFutureCourse = startDate > new Date();
+
   // Determine course status for display and actions:
   // 1. If formally closed, show as "Closed" with "Edit Closure" option
   // 2. If date-completed but not formally closed, show as "Completed" with "Finalize Course" option
@@ -237,6 +246,7 @@ export function CourseDetails() {
                   className="w-full justify-start" 
                   variant={courseStatus === "completed" ? "default" : "outline"}
                   onClick={() => navigate(`/events/${courseInstance.id}/close`)}
+                  disabled={!canBeClosed || isFutureCourse}
                 >
                   <FileText className="mr-2 h-4 w-4" />
                   {courseStatus === "completed" ? "Finalize Course" : "Close Course"}
@@ -254,6 +264,21 @@ export function CourseDetails() {
                 <Alert className="bg-amber-50 border-amber-200 text-amber-800">
                   <AlertCircle className="h-4 w-4 text-amber-600 mr-2" />
                   <p className="text-sm">This course has been completed but needs to be finalized.</p>
+                </Alert>
+              )}
+              
+              {/* Add an explanation alert when the button is disabled */}
+              {!canBeClosed && courseStatus === "scheduled" && !isFutureCourse && (
+                <Alert className="bg-gray-50 border-gray-200 text-gray-800">
+                  <Clock className="h-4 w-4 text-gray-600 mr-2" />
+                  <p className="text-sm">This course cannot be closed until it is completed.</p>
+                </Alert>
+              )}
+              
+              {isFutureCourse && (
+                <Alert className="bg-gray-50 border-gray-200 text-gray-800">
+                  <Calendar className="h-4 w-4 text-gray-600 mr-2" />
+                  <p className="text-sm">This course is scheduled in the future and cannot be closed yet.</p>
                 </Alert>
               )}
             </CardContent>
