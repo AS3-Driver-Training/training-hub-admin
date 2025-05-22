@@ -117,6 +117,7 @@ export const useCourseData = (courseId?: number) => {
   // Set to completed step if there's already a closure
   useEffect(() => {
     if (existingClosure) {
+      console.log("Found existing closure:", existingClosure);
       setCurrentStep('completed');
       setCompletedClosureId(existingClosure.id);
       
@@ -130,7 +131,7 @@ export const useCourseData = (courseId?: number) => {
           client: formData.course_info?.client || ""
         },
         vehicles: [],
-        additional_exercises: [],
+        additionalExercises: [],
         course_layout: formData.course_layout // Initialize with default layout
       };
 
@@ -138,28 +139,61 @@ export const useCourseData = (courseId?: number) => {
       if (existingClosure.closure_data) {
         try {
           console.log("Raw closure data from DB:", existingClosure.closure_data);
+          console.log("Type of closure_data:", typeof existingClosure.closure_data);
           
-          // Apply to formData including any vehicle data and additional_exercises
-          const parsedData = apiTransformer.fromApi(existingClosure.closure_data);
-          
-          // Ensure vehicles array exists
-          if (!parsedData.vehicles) {
-            parsedData.vehicles = [];
+          // Parse JSON string if needed - crucial fix!
+          let parsedData: any;
+          if (typeof existingClosure.closure_data === 'string') {
+            try {
+              parsedData = JSON.parse(existingClosure.closure_data);
+              console.log("Successfully parsed closure_data JSON string");
+            } catch (parseErr) {
+              console.error("Failed to parse closure_data as JSON string:", parseErr);
+              // If we can't parse it, use as-is and let the transformer handle it
+              parsedData = existingClosure.closure_data;
+            }
+          } else {
+            // Already an object
+            parsedData = existingClosure.closure_data;
           }
           
-          // Ensure additional_exercises array exists
-          if (!parsedData.additional_exercises) {
-            parsedData.additional_exercises = [];
+          // Apply to formData including any vehicle data and additional_exercises
+          const transformedData = apiTransformer.fromApi(parsedData);
+          
+          console.log("Transformed data after fromApi:", transformedData);
+          
+          // Ensure vehicles array exists
+          if (!transformedData.vehicles) {
+            transformedData.vehicles = [];
+          }
+          
+          // Ensure additionalExercises array exists - crucial fix!
+          if (!transformedData.additionalExercises) {
+            transformedData.additionalExercises = [];
+            
+            // Look for additional_exercises in the original data (snake_case)
+            if (parsedData.additional_exercises && Array.isArray(parsedData.additional_exercises)) {
+              console.log("Found additional_exercises in parsedData:", parsedData.additional_exercises);
+              transformedData.additionalExercises = parsedData.additional_exercises.map((exercise: any) => {
+                return {
+                  id: exercise.id,
+                  name: exercise.name,
+                  isMeasured: exercise.is_measured !== undefined ? exercise.is_measured : false,
+                  measurementType: exercise.measurement_type || 'time',
+                  parameters: exercise.parameters || {}
+                };
+              });
+            }
           }
           
           // Ensure course_layout exists
-          if (!parsedData.course_layout) {
-            parsedData.course_layout = formData.course_layout;
+          if (!transformedData.course_layout) {
+            transformedData.course_layout = formData.course_layout;
           }
           
           // Special handling for nested properties to ensure proper case conversion
-          if (Array.isArray(parsedData.vehicles)) {
-            parsedData.vehicles = parsedData.vehicles.map(vehicle => ({
+          if (Array.isArray(transformedData.vehicles)) {
+            transformedData.vehicles = transformedData.vehicles.map(vehicle => ({
               ...vehicle,
               // Ensure latAcc property is correctly mapped from snake_case
               latAcc: vehicle.latAcc !== undefined ? vehicle.latAcc : 
@@ -167,8 +201,8 @@ export const useCourseData = (courseId?: number) => {
             }));
           }
           
-          if (Array.isArray(parsedData.additional_exercises)) {
-            parsedData.additional_exercises = parsedData.additional_exercises.map(exercise => ({
+          if (Array.isArray(transformedData.additionalExercises)) {
+            transformedData.additionalExercises = transformedData.additionalExercises.map(exercise => ({
               ...exercise,
               // Ensure isMeasured property is correctly mapped
               isMeasured: exercise.isMeasured !== undefined ? exercise.isMeasured : 
@@ -178,11 +212,12 @@ export const useCourseData = (courseId?: number) => {
             }));
           }
           
-          updateFormData({...baseFormData, ...parsedData});
-          console.log("Loaded closure data from JSON:", parsedData);
+          const finalFormData = {...baseFormData, ...transformedData};
+          console.log("Final form data with exercises:", finalFormData);
+          updateFormData(finalFormData);
           return;
         } catch (e) {
-          console.error("Failed to parse closure_data JSON:", e);
+          console.error("Failed to process closure_data:", e);
           toast.error("Failed to load course closure data");
         }
       }
@@ -259,9 +294,9 @@ export const useCourseData = (courseId?: number) => {
           closureData.vehicles = [];
         }
         
-        // Ensure additional_exercises array exists
-        if (!closureData.additional_exercises) {
-          closureData.additional_exercises = [];
+        // Ensure additionalExercises array exists
+        if (!closureData.additionalExercises) {
+          closureData.additionalExercises = [];
         }
         
         // Transform data to snake_case for database storage
@@ -382,9 +417,9 @@ export const useCourseData = (courseId?: number) => {
           closureData.vehicles = [];
         }
         
-        // Ensure additional_exercises array exists
-        if (!closureData.additional_exercises) {
-          closureData.additional_exercises = [];
+        // Ensure additionalExercises array exists
+        if (!closureData.additionalExercises) {
+          closureData.additionalExercises = [];
         }
         
         // Transform data to snake_case for database storage

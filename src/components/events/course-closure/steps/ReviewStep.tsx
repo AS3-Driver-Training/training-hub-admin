@@ -22,9 +22,20 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
   const { students, isLoading: studentsLoading } = useEnrolledStudents(courseInstance?.id);
   const { isEditing } = useWizardContext(); // Get whether we're editing an existing closure
   
-  // Ensure we have required arrays to prevent errors
+  console.log("ReviewStep rendering with formData:", formData);
+  
+  // Ensure we have required arrays to prevent errors - handle both camelCase and snake_case keys
   const vehicles = formData.vehicles || [];
-  const additionalExercises = formData.additional_exercises || [];
+  
+  // Handle both camelCase and snake_case versions of additional_exercises
+  // This ensures we can render regardless of which property name is used
+  const additionalExercises = Array.isArray(formData.additionalExercises) 
+    ? formData.additionalExercises 
+    : (Array.isArray(formData.additional_exercises) 
+        ? formData.additional_exercises 
+        : []);
+  
+  console.log("Additional exercises in ReviewStep:", additionalExercises);
   
   // Skip file validation when editing
   if (!file && !isEditing) {
@@ -42,10 +53,6 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
       </div>
     );
   }
-  
-  // Log data for debugging
-  console.log("ReviewStep rendering with formData:", formData);
-  console.log("Additional exercises:", additionalExercises);
   
   // Safety check - if courseInstance is null or undefined
   if (!courseInstance) {
@@ -100,10 +107,10 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
             <div>{courseInstance.clientName || "N/A"}</div>
             
             <div className="font-medium">Country</div>
-            <div>{formData.course_info.country}</div>
+            <div>{formData.course_info?.country || "USA"}</div>
             
             <div className="font-medium">Units</div>
-            <div>{formData.course_info.units}</div>
+            <div>{formData.course_info?.units || "MPH"}</div>
             
             <div className="font-medium">Course Data</div>
             <div>
@@ -184,14 +191,14 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
             <TableBody>
               <TableRow>
                 <TableCell className="font-medium">Slalom</TableCell>
-                <TableCell className="text-center">{formData.course_layout.slalom.chord}</TableCell>
-                <TableCell className="text-center">{formData.course_layout.slalom.mo}</TableCell>
+                <TableCell className="text-center">{formData.course_layout?.slalom?.chord}</TableCell>
+                <TableCell className="text-center">{formData.course_layout?.slalom?.mo}</TableCell>
                 <TableCell>-</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">Lane Change</TableCell>
-                <TableCell className="text-center">{formData.course_layout.lane_change.chord}</TableCell>
-                <TableCell className="text-center">{formData.course_layout.lane_change.mo}</TableCell>
+                <TableCell className="text-center">{formData.course_layout?.lane_change?.chord}</TableCell>
+                <TableCell className="text-center">{formData.course_layout?.lane_change?.mo}</TableCell>
                 <TableCell>-</TableCell>
               </TableRow>
               
@@ -207,20 +214,20 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
                   <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
                     <div className="flex items-center">
                       <span className="text-muted-foreground mr-2">Ideal Time:</span>
-                      <span className="font-medium">{formData.course_layout.final_exercise.ideal_time_sec} sec</span>
+                      <span className="font-medium">{formData.course_layout?.final_exercise?.ideal_time_sec} sec</span>
                     </div>
                     <div className="flex items-center">
                       <span className="text-muted-foreground mr-2">Cone Penalty:</span>
-                      <span className="font-medium">{formData.course_layout.final_exercise.cone_penalty_sec} sec</span>
+                      <span className="font-medium">{formData.course_layout?.final_exercise?.cone_penalty_sec} sec</span>
                     </div>
                     <div className="flex items-center">
                       <span className="text-muted-foreground mr-2">Door Penalty:</span>
-                      <span className="font-medium">{formData.course_layout.final_exercise.door_penalty_sec} sec</span>
+                      <span className="font-medium">{formData.course_layout?.final_exercise?.door_penalty_sec} sec</span>
                     </div>
-                    {formData.course_layout.final_exercise.reverse_time && (
+                    {formData.course_layout?.final_exercise?.reverse_time && (
                       <div className="flex items-center">
                         <span className="text-muted-foreground mr-2">Reverse Time:</span>
-                        <span className="font-medium">{formData.course_layout.final_exercise.reverse_time} sec</span>
+                        <span className="font-medium">{formData.course_layout?.final_exercise?.reverse_time} sec</span>
                       </div>
                     )}
                   </div>
@@ -229,15 +236,15 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
               
               <TableRow>
                 <TableCell className="pl-6">Slalom Component</TableCell>
-                <TableCell className="text-center">{formData.course_layout.final_exercise.slalom.chord}</TableCell>
-                <TableCell className="text-center">{formData.course_layout.final_exercise.slalom.mo}</TableCell>
+                <TableCell className="text-center">{formData.course_layout?.final_exercise?.slalom?.chord}</TableCell>
+                <TableCell className="text-center">{formData.course_layout?.final_exercise?.slalom?.mo}</TableCell>
                 <TableCell>-</TableCell>
               </TableRow>
               
               <TableRow>
                 <TableCell className="pl-6">Lane Change Component</TableCell>
-                <TableCell className="text-center">{formData.course_layout.final_exercise.lane_change.chord}</TableCell>
-                <TableCell className="text-center">{formData.course_layout.final_exercise.lane_change.mo}</TableCell>
+                <TableCell className="text-center">{formData.course_layout?.final_exercise?.lane_change?.chord}</TableCell>
+                <TableCell className="text-center">{formData.course_layout?.final_exercise?.lane_change?.mo}</TableCell>
                 <TableCell>-</TableCell>
               </TableRow>
               
@@ -249,12 +256,12 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
                   </TableRow>
                   
                   {additionalExercises.map((exercise, index) => (
-                    <TableRow key={exercise.id}>
+                    <TableRow key={exercise.id || index}>
                       <TableCell className="pl-6">
                         {exercise.name}
-                        {exercise.isMeasured && (
+                        {(exercise.isMeasured || exercise.is_measured) && (
                           <span className="ml-2 text-xs py-0.5 px-1.5 bg-slate-100 rounded-full">
-                            {exercise.measurementType === 'latacc' ? 'LatAcc' : 'Time'}
+                            {(exercise.measurementType || exercise.measurement_type) === 'latacc' ? 'LatAcc' : 'Time'}
                           </span>
                         )}
                       </TableCell>
@@ -265,7 +272,7 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
                         {exercise.parameters && exercise.parameters.mo || '-'}
                       </TableCell>
                       <TableCell>
-                        {exercise.measurementType === 'time' && (
+                        {(exercise.measurementType || exercise.measurement_type) === 'time' && (
                           <div className="flex flex-col text-sm">
                             {exercise.parameters && exercise.parameters.idealTime && (
                               <span>Ideal Time: {exercise.parameters.idealTime} sec</span>
