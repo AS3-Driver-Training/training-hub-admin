@@ -7,22 +7,23 @@ import { toast } from "sonner";
 
 interface NavigationButtonsProps {
   onSubmit: () => void;
+  onUpdate?: () => void;
 }
 
 export const NavigationButtons: React.FC<NavigationButtonsProps> = ({ onSubmit }) => {
-  const { currentStep, setCurrentStep, wizardSteps, formData, isSubmitting, file } = useWizardContext();
+  const { 
+    currentStep, 
+    setCurrentStep, 
+    wizardSteps, 
+    formData, 
+    isSubmitting, 
+    file,
+    isEditing
+  } = useWizardContext();
   
   // Move to next step
   const handleNext = () => {
-    // Remove file validation requirement since we're not using file upload for now
-    // if (currentStep === 'basic' && !file) {
-    //   toast({
-    //     title: "Missing course data",
-    //     description: "Please upload the course data ZIP file before continuing",
-    //     variant: "destructive"
-    //   });
-    //   return;
-    // }
+    // We're no longer requiring file validation since it's optional
     
     const currentIndex = wizardSteps.findIndex(step => step.key === currentStep);
     if (currentIndex < wizardSteps.length - 1) {
@@ -40,15 +41,7 @@ export const NavigationButtons: React.FC<NavigationButtonsProps> = ({ onSubmit }
 
   // Handle submission
   const handleSubmit = () => {
-    // Remove file validation requirement since we're not using file upload for now
-    // if (!file) {
-    //   toast({
-    //     title: "Missing course data",
-    //     description: "Please upload the course data ZIP file before submitting",
-    //     variant: "destructive"
-    //   });
-    //   return;
-    // }
+    // We're no longer requiring file validation since it's optional
     
     if (!formData.vehicles?.length) {
       toast("No vehicles added", {
@@ -88,7 +81,7 @@ export const NavigationButtons: React.FC<NavigationButtonsProps> = ({ onSubmit }
           disabled={isSubmitting}
           className="bg-primary hover:bg-primary/90"
         >
-          {isSubmitting ? "Submitting..." : "Submit Closure"}
+          {isSubmitting ? "Submitting..." : isEditing ? "Save Changes" : "Submit Closure"}
         </Button>
       ) : (
         <Button

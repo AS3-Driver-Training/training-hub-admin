@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Edit, Users } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useEnrolledStudents } from "../hooks/useEnrolledStudents";
+import { useWizardContext } from "../wizard/WizardContext";
 
 interface ReviewStepProps {
   formData: CourseClosureData;
@@ -19,8 +20,10 @@ interface ReviewStepProps {
 
 export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: ReviewStepProps) {
   const { students, isLoading: studentsLoading } = useEnrolledStudents(courseInstance?.id);
+  const { isEditing } = useWizardContext(); // Get whether we're editing an existing closure
   
-  if (!file) {
+  // Skip file validation when editing
+  if (!file && !isEditing) {
     return (
       <div className="p-6 flex flex-col items-center justify-center">
         <Alert variant="destructive" className="mb-4">

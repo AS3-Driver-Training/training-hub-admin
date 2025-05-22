@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWizardContext } from "./WizardContext";
@@ -17,7 +18,25 @@ interface WizardContentProps {
 }
 
 export const WizardContent: React.FC<WizardContentProps> = ({ courseInstance, onSubmit }) => {
-  const { currentStep, wizardSteps, formData, updateFormData, file, setFile, completedClosureId, jumpToStep, courseId } = useWizardContext();
+  const { 
+    currentStep, 
+    wizardSteps, 
+    formData, 
+    updateFormData, 
+    file, 
+    setFile, 
+    completedClosureId, 
+    jumpToStep, 
+    courseId,
+    setCurrentStep,
+    setIsEditing 
+  } = useWizardContext();
+
+  // Handle editing an existing closure
+  const handleEditClosure = () => {
+    setIsEditing(true);
+    setCurrentStep('review');
+  };
 
   // Ensure formData is treated as CourseClosureData with guaranteed required fields
   const safeFormData: CourseClosureData = {
@@ -104,7 +123,7 @@ export const WizardContent: React.FC<WizardContentProps> = ({ courseInstance, on
             formData={safeFormData}
             courseId={courseId!}
             closureId={completedClosureId}
-            onEdit={() => jumpToStep('review')}
+            onEdit={handleEditClosure}
           />
         );
       default:

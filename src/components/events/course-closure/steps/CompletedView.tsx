@@ -105,34 +105,11 @@ export function CompletedView({ formData, courseId, closureId, onEdit }: Complet
     document.body.removeChild(link);
   };
 
-  if (editMode && courseInstance) {
-    return (
-      <div className="space-y-6">
-        <Alert>
-          <CheckCircle className="h-4 w-4" />
-          <AlertDescription>
-            You are editing a completed course closure. Changes will be saved when you submit.
-          </AlertDescription>
-        </Alert>
-        
-        <ReviewStep 
-          formData={formData}
-          courseInstance={courseInstance}
-          file={null} // We don't support changing the file after submission
-          onJumpToStep={() => {}} // No jumps in edit mode
-        />
-        
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setEditMode(false)}>
-            Cancel
-          </Button>
-          <Button onClick={() => setEditMode(false)}>
-            Save Changes
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // When the user clicks on Edit Data, properly call onEdit to return to the wizard
+  const handleEditClick = () => {
+    // Call the parent's onEdit function to navigate back to review step
+    onEdit();
+  };
 
   return (
     <div className="space-y-6">
@@ -158,7 +135,7 @@ export function CompletedView({ formData, courseId, closureId, onEdit }: Complet
               Download JSON
             </Button>
             
-            <Button variant="outline" onClick={() => setEditMode(true)}>
+            <Button variant="outline" onClick={handleEditClick}>
               <Edit className="mr-2 h-4 w-4" />
               Edit Data
             </Button>

@@ -39,7 +39,8 @@ interface CourseClosureContentProps {
 }
 
 function CourseClosureContent({ courseId, navigate }: CourseClosureContentProps) {
-  const { courseInstance, isLoading, error, submitMutation } = useCourseData(courseId);
+  const { courseInstance, isLoading, error, submitMutation, updateMutation } = useCourseData(courseId);
+  const { isEditing } = useWizardContext();
   
   if (isLoading) {
     return <LoadingDisplay text="Loading course details..." />;
@@ -55,6 +56,15 @@ function CourseClosureContent({ courseId, navigate }: CourseClosureContentProps)
     );
   }
 
+  const handleSubmit = () => {
+    // If we're editing an existing closure, use update mutation
+    if (isEditing) {
+      updateMutation.mutate();
+    } else {
+      submitMutation.mutate();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -69,7 +79,7 @@ function CourseClosureContent({ courseId, navigate }: CourseClosureContentProps)
       <WizardNavigation />
       <WizardContent 
         courseInstance={courseInstance}
-        onSubmit={() => submitMutation.mutate()}
+        onSubmit={handleSubmit}
       />
     </div>
   );

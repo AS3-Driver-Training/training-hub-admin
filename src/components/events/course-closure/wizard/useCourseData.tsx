@@ -10,7 +10,17 @@ import { CourseInstanceWithClient } from "../CourseClosureWizard";
 import { useWizardContext } from "./WizardContext";
 
 export const useCourseData = (courseId?: number) => {
-  const { formData, updateFormData, setCurrentStep, setCompletedClosureId, file, setIsSubmitting } = useWizardContext();
+  const { 
+    formData, 
+    updateFormData, 
+    setCurrentStep, 
+    setCompletedClosureId, 
+    file, 
+    setIsSubmitting, 
+    isEditing,
+    setIsEditing 
+  } = useWizardContext();
+  
   const queryClient = useQueryClient();
 
   // Fetch course details
@@ -178,7 +188,7 @@ export const useCourseData = (courseId?: number) => {
     }
   }, [existingClosure]);
 
-  // Submit closure data mutation
+  // Submit closure data mutation for creating a new closure
   const submitMutation = useMutation({
     mutationFn: async () => {
       if (!courseId) throw new Error("No course ID provided");
@@ -280,6 +290,114 @@ export const useCourseData = (courseId?: number) => {
     onSuccess: () => {
       toast.success("Course closure process completed successfully");
       setCurrentStep('completed');
+      setIsEditing(false);
+    },
+    onError: (err: any) => {
+      toast(`Error: ${err.message}`, {
+        style: { backgroundColor: "#FEF3C7" },
+        description: "Please check your input and try again."
+      });
+    },
+  });
+
+  // Update an existing course closure
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      if (!courseId) throw new Error("No course ID provided");
+      if (!existingClosure?.id) throw new Error("No closure ID to update");
+      
+      setIsSubmitting(true);
+      
+      try {
+        // First check if user is authenticated
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          throw new Error(`Authentication error: ${sessionError.message}`);
+        }
+        
+        if (!sessionData.session || !sessionData.session.user) {
+          throw new Error("You must be logged in to complete this action");
+        }
+        
+        // Convert formData to proper CourseClosureData
+        const closureData: CourseClosureData = formData as CourseClosureData;
+        const closureDataJson = JSON.stringify(apiTransformer.toApi(closureData));
+        
+        // Create the update payload
+        const payload = {
+          units: formData.course_info?.units,
+          country: formData.course_info?.country,
+          closure_data: closureDataJson,
+          updated_at: new Date()
+        };
+        
+        console.log("Updating course closure with payload:", payload);
+        
+        // Update course closure record
+        const { data, error } = await supabase
+          .from("course_closures")
+          .update(payload)
+          .eq('id', existingClosure.id)
+          .select();
+          
+        if (error) {
+          console.error("Error updating course closure:", error);
+          throw new Error(`Failed to update course closure: ${error.message}`);
+        }
+
+        // Update vehicle data in course_vehicles table
+        if (formData.vehicles && formData.vehicles.length > 0) {
+          // First delete existing vehicle records for this course
+          const { error: deleteError } = await supabase
+            .from("course_vehicles")
+            .delete()
+            .eq("course_instance_id", courseId);
+            
+          if (deleteError) {
+            console.error("Error removing old vehicle records:", deleteError);
+            // Continue anyway - we'll add the new records
+          }
+          
+          // Insert new vehicle records
+          const vehiclesToInsert = formData.vehicles
+            .filter(v => v.make && (v.make.trim() !== ""))
+            .map(vehicle => ({
+              course_instance_id: courseId,
+              vehicle_id: vehicle.car, 
+              car_number: vehicle.car
+            }));
+
+          if (vehiclesToInsert.length > 0) {
+            const { error: vehicleError } = await supabase
+              .from("course_vehicles")
+              .insert(vehiclesToInsert);
+            
+            if (vehicleError) {
+              console.error("Error inserting vehicles:", vehicleError);
+              toast(`Warning: Failed to save vehicle information`, {
+                style: { backgroundColor: "#FEF3C7" },
+                description: "Vehicle information may be incomplete."
+              });
+            } else {
+              console.log("Successfully saved vehicle data:", vehiclesToInsert);
+            }
+          }
+        }
+        
+        return data;
+      } catch (err: any) {
+        console.error("Course closure update failed:", err);
+        throw err;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    onSuccess: () => {
+      toast.success("Course closure updated successfully");
+      setCurrentStep('completed');
+      setIsEditing(false);
+      queryClient.invalidateQueries({ queryKey: ['existing-closure', courseId] });
     },
     onError: (err: any) => {
       toast(`Error: ${err.message}`, {
@@ -293,6 +411,7 @@ export const useCourseData = (courseId?: number) => {
     courseInstance,
     isLoading,
     error,
-    submitMutation
+    submitMutation,
+    updateMutation
   };
 };

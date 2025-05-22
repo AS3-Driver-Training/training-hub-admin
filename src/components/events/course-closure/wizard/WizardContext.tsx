@@ -25,6 +25,8 @@ export interface WizardContextProps {
   courseId?: number;
   jumpToStep: (step: WizardStep) => void;
   getProgress: () => number;
+  isEditing: boolean;
+  setIsEditing: (isEditing: boolean) => void;
 }
 
 const WizardContext = createContext<WizardContextProps | undefined>(undefined);
@@ -47,6 +49,7 @@ export const WizardProvider: React.FC<WizardProviderProps> = ({ children, course
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [completedClosureId, setCompletedClosureId] = useState<number | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<CourseClosureData>>({
     course_info: {
       units: "MPH",
@@ -115,7 +118,9 @@ export const WizardProvider: React.FC<WizardProviderProps> = ({ children, course
       wizardSteps,
       courseId,
       jumpToStep,
-      getProgress
+      getProgress,
+      isEditing,
+      setIsEditing
     }}>
       {children}
     </WizardContext.Provider>
