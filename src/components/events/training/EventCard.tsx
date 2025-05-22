@@ -77,10 +77,8 @@ export function EventCard({ event, onDelete }: EventCardProps) {
     navigate(`/events/${event.id}`);
   };
   
-  const handleViewAllocations = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/events/${event.id}/allocations`);
-  };
+  // Remove the separate allocations navigation since it's now the main view
+  const handleViewAllocations = handleViewDetails;
   
   const handleEditEvent = () => {
     navigate(`/events/${event.id}/edit`);
@@ -227,10 +225,10 @@ export function EventCard({ event, onDelete }: EventCardProps) {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={handleViewAllocations}
+                  onClick={handleViewDetails}
                   className="flex items-center"
                 >
-                  Allocations
+                  Manage Course
                   <ArrowRight className="ml-1 h-3 w-3" />
                 </Button>
               </div>
