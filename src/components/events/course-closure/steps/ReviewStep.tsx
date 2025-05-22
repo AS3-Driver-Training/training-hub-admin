@@ -45,6 +45,21 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
   
   // Log data for debugging
   console.log("ReviewStep rendering with formData:", formData);
+  console.log("Additional exercises:", additionalExercises);
+  
+  // Safety check - if courseInstance is null or undefined
+  if (!courseInstance) {
+    return (
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Course instance data is missing. Please go back to the previous page and try again.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">
@@ -70,10 +85,10 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
         <CardContent>
           <div className="grid grid-cols-2 gap-y-2 text-sm">
             <div className="font-medium">Course Name</div>
-            <div>{courseInstance.programs?.name}</div>
+            <div>{courseInstance.programs?.name || "Unknown Course"}</div>
             
             <div className="font-medium">Location</div>
-            <div>{courseInstance.venues?.name}</div>
+            <div>{courseInstance.venues?.name || "Unknown Location"}</div>
             
             <div className="font-medium">Dates</div>
             <div>
@@ -92,7 +107,6 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
             
             <div className="font-medium">Course Data</div>
             <div>
-              {/* Fix the null reference by adding a conditional check for file */}
               {file ? `${file.name} (${(file.size / 1024).toFixed(1)} KB)` : "No file uploaded in edit mode"}
             </div>
           </div>
@@ -245,18 +259,18 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        {exercise.parameters.chord || '-'}
+                        {exercise.parameters && exercise.parameters.chord || '-'}
                       </TableCell>
                       <TableCell className="text-center">
-                        {exercise.parameters.mo || '-'}
+                        {exercise.parameters && exercise.parameters.mo || '-'}
                       </TableCell>
                       <TableCell>
                         {exercise.measurementType === 'time' && (
                           <div className="flex flex-col text-sm">
-                            {exercise.parameters.idealTime && (
+                            {exercise.parameters && exercise.parameters.idealTime && (
                               <span>Ideal Time: {exercise.parameters.idealTime} sec</span>
                             )}
-                            {exercise.parameters.penaltyType && (
+                            {exercise.parameters && exercise.parameters.penaltyType && (
                               <span>
                                 Penalty: {exercise.parameters.penaltyType === 'time' 
                                   ? `${exercise.parameters.penaltyValue || '-'} sec` 

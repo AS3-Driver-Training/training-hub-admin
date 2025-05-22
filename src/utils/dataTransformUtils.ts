@@ -17,8 +17,31 @@ export function snakeToCamel<T = any>(obj: Record<string, any>): T {
     const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
     const value = obj[key];
     
-    // Special case mapping for known fields
-    if (camelKey === 'latAcc' && value === undefined && obj.latacc !== undefined) {
+    // Create a more comprehensive mapping that handles nested objects properly
+    if (camelKey === 'vehicles' && Array.isArray(value)) {
+      // Special handling for vehicles array
+      result[camelKey] = value.map(vehicle => {
+        const transformedVehicle = snakeToCamel(vehicle);
+        // Special case for latacc/latAcc to ensure it's properly mapped
+        if (transformedVehicle.latAcc === undefined && (vehicle.latacc !== undefined || vehicle.lat_acc !== undefined)) {
+          transformedVehicle.latAcc = vehicle.latacc !== undefined ? vehicle.latacc : vehicle.lat_acc;
+        }
+        return transformedVehicle;
+      });
+    } else if (camelKey === 'additionalExercises' && Array.isArray(value)) {
+      // Special handling for additional_exercises array with deep property conversion
+      result[camelKey] = value.map(exercise => {
+        const transformedExercise = snakeToCamel(exercise);
+        // Handle special case mappings for exercises
+        if (transformedExercise.isMeasured === undefined && exercise.is_measured !== undefined) {
+          transformedExercise.isMeasured = exercise.is_measured;
+        }
+        if (transformedExercise.measurementType === undefined && exercise.measurement_type !== undefined) {
+          transformedExercise.measurementType = exercise.measurement_type;
+        }
+        return transformedExercise;
+      });
+    } else if (camelKey === 'latAcc' && value === undefined && obj.latacc !== undefined) {
       result[camelKey] = obj.latacc;
     } else if (camelKey === 'isMeasured' && value === undefined && obj.is_measured !== undefined) {
       result[camelKey] = obj.is_measured;
@@ -51,8 +74,31 @@ export function camelToSnake<T = any>(obj: Record<string, any>): T {
     const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
     const value = obj[key];
     
-    // Special case mapping for known fields
-    if (snakeKey === 'lat_acc' && value === undefined && obj.latAcc !== undefined) {
+    // Create a more comprehensive mapping that handles nested objects properly
+    if (snakeKey === 'vehicles' && Array.isArray(value)) {
+      // Special handling for vehicles array
+      result[snakeKey] = value.map(vehicle => {
+        const transformedVehicle = camelToSnake(vehicle);
+        // Special case for latAcc/lat_acc to ensure it's properly mapped
+        if (transformedVehicle.lat_acc === undefined && vehicle.latAcc !== undefined) {
+          transformedVehicle.lat_acc = vehicle.latAcc;
+        }
+        return transformedVehicle;
+      });
+    } else if (snakeKey === 'additional_exercises' && Array.isArray(value)) {
+      // Special handling for additionalExercises array with deep property conversion
+      result[snakeKey] = value.map(exercise => {
+        const transformedExercise = camelToSnake(exercise);
+        // Handle special case mappings for exercises
+        if (transformedExercise.is_measured === undefined && exercise.isMeasured !== undefined) {
+          transformedExercise.is_measured = exercise.isMeasured;
+        }
+        if (transformedExercise.measurement_type === undefined && exercise.measurementType !== undefined) {
+          transformedExercise.measurement_type = exercise.measurementType;
+        }
+        return transformedExercise;
+      });
+    } else if (snakeKey === 'lat_acc' && value === undefined && obj.latAcc !== undefined) {
       result[snakeKey] = obj.latAcc;
     } else if (snakeKey === 'is_measured' && value === undefined && obj.isMeasured !== undefined) {
       result[snakeKey] = obj.isMeasured;
@@ -80,7 +126,19 @@ export const createApiTransformer = () => {
      */
     fromApi: <T = any>(data: any): T => {
       console.log("Before transformation (fromApi):", JSON.stringify(data, null, 2));
+      
+      // Handle case where additional_exercises might be named differently
+      if (data && data.additional_exercises === undefined && data.additionalExercises !== undefined) {
+        data.additional_exercises = data.additionalExercises;
+      }
+      
       const transformed = snakeToCamel<T>(data);
+      
+      // Create additionalExercises if it doesn't exist
+      if (transformed && (transformed as any).additionalExercises === undefined) {
+        (transformed as any).additionalExercises = (data && data.additional_exercises) || [];
+      }
+      
       console.log("After transformation (fromApi):", JSON.stringify(transformed, null, 2));
       return transformed;
     },
@@ -92,7 +150,19 @@ export const createApiTransformer = () => {
      */
     toApi: <T = any>(data: any): T => {
       console.log("Before transformation (toApi):", JSON.stringify(data, null, 2));
+      
+      // Handle case where additionalExercises might be named differently
+      if (data && data.additionalExercises === undefined && data.additional_exercises !== undefined) {
+        data.additionalExercises = data.additional_exercises;
+      }
+      
       const transformed = camelToSnake<T>(data);
+      
+      // Create additional_exercises if it doesn't exist
+      if (transformed && (transformed as any).additional_exercises === undefined) {
+        (transformed as any).additional_exercises = (data && data.additionalExercises) || [];
+      }
+      
       console.log("After transformation (toApi):", JSON.stringify(transformed, null, 2));
       return transformed;
     }
