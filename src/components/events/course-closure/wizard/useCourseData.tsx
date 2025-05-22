@@ -324,12 +324,12 @@ export const useCourseData = (courseId?: number) => {
         const closureData: CourseClosureData = formData as CourseClosureData;
         const closureDataJson = JSON.stringify(apiTransformer.toApi(closureData));
         
-        // Create the update payload
+        // Create the update payload - using a string for updated_at
         const payload = {
           units: formData.course_info?.units,
           country: formData.course_info?.country,
           closure_data: closureDataJson,
-          updated_at: new Date()
+          updated_at: new Date().toISOString() // Convert Date to ISO string format
         };
         
         console.log("Updating course closure with payload:", payload);

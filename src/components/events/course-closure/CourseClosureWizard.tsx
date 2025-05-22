@@ -9,6 +9,7 @@ import { WizardProvider } from "./wizard/WizardContext";
 import { WizardNavigation, WizardProgress } from "./wizard/WizardNavigation";
 import { WizardContent } from "./wizard/WizardContent";
 import { useCourseData } from "./wizard/useCourseData";
+import { useWizardContext } from "./wizard/WizardContext";
 
 // Define a proper type for the course instance data that includes clientName
 export interface CourseInstanceWithClient {
