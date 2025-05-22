@@ -131,7 +131,7 @@ export const useCourseData = (courseId?: number) => {
           client: formData.course_info?.client || ""
         },
         vehicles: [],
-        additionalExercises: [],
+        additional_exercises: [], // Use snake_case to match type definition
         course_layout: formData.course_layout // Initialize with default layout
       };
 
@@ -167,14 +167,21 @@ export const useCourseData = (courseId?: number) => {
             transformedData.vehicles = [];
           }
           
-          // Ensure additionalExercises array exists - crucial fix!
-          if (!transformedData.additionalExercises) {
-            transformedData.additionalExercises = [];
+          // Ensure additional_exercises array exists - crucial fix!
+          // We use the snake_case property name to match the type definition
+          if (!transformedData.additional_exercises) {
+            transformedData.additional_exercises = [];
             
-            // Look for additional_exercises in the original data (snake_case)
-            if (parsedData.additional_exercises && Array.isArray(parsedData.additional_exercises)) {
+            // Look for additionalExercises in the data (camelCase)
+            if (transformedData.additionalExercises && Array.isArray(transformedData.additionalExercises)) {
+              console.log("Found additionalExercises in transformedData:", transformedData.additionalExercises);
+              transformedData.additional_exercises = transformedData.additionalExercises;
+            }
+            
+            // Also check the original data (snake_case)
+            else if (parsedData.additional_exercises && Array.isArray(parsedData.additional_exercises)) {
               console.log("Found additional_exercises in parsedData:", parsedData.additional_exercises);
-              transformedData.additionalExercises = parsedData.additional_exercises.map((exercise: any) => {
+              transformedData.additional_exercises = parsedData.additional_exercises.map((exercise: any) => {
                 return {
                   id: exercise.id,
                   name: exercise.name,
@@ -201,8 +208,8 @@ export const useCourseData = (courseId?: number) => {
             }));
           }
           
-          if (Array.isArray(transformedData.additionalExercises)) {
-            transformedData.additionalExercises = transformedData.additionalExercises.map(exercise => ({
+          if (Array.isArray(transformedData.additional_exercises)) {
+            transformedData.additional_exercises = transformedData.additional_exercises.map(exercise => ({
               ...exercise,
               // Ensure isMeasured property is correctly mapped
               isMeasured: exercise.isMeasured !== undefined ? exercise.isMeasured : 
@@ -294,9 +301,14 @@ export const useCourseData = (courseId?: number) => {
           closureData.vehicles = [];
         }
         
-        // Ensure additionalExercises array exists
-        if (!closureData.additionalExercises) {
-          closureData.additionalExercises = [];
+        // Ensure additional_exercises array exists - use the snake_case version
+        if (!closureData.additional_exercises) {
+          closureData.additional_exercises = [];
+          
+          // If additionalExercises exists (camelCase), copy it to additional_exercises (snake_case)
+          if (closureData.additionalExercises) {
+            closureData.additional_exercises = closureData.additionalExercises;
+          }
         }
         
         // Transform data to snake_case for database storage
@@ -417,9 +429,14 @@ export const useCourseData = (courseId?: number) => {
           closureData.vehicles = [];
         }
         
-        // Ensure additionalExercises array exists
-        if (!closureData.additionalExercises) {
-          closureData.additionalExercises = [];
+        // Ensure additional_exercises array exists - use the snake_case version
+        if (!closureData.additional_exercises) {
+          closureData.additional_exercises = [];
+          
+          // If additionalExercises exists (camelCase), copy it to additional_exercises (snake_case)
+          if (closureData.additionalExercises) {
+            closureData.additional_exercises = closureData.additionalExercises;
+          }
         }
         
         // Transform data to snake_case for database storage

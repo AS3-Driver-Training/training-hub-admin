@@ -126,6 +126,7 @@ export interface CourseClosureData {
   vehicles: CourseVehicle[];
   course_layout: CourseLayout;
   notes?: string;
-  // Add additional exercises to the CourseClosureData
+  // Support both snake_case and camelCase versions for compatibility
   additional_exercises?: AdditionalExercise[];
+  additionalExercises?: AdditionalExercise[];
 }

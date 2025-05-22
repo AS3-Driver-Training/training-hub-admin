@@ -1,4 +1,3 @@
-
 /**
  * Transforms snake_case keys in an object to camelCase
  * @param obj The object with snake_case keys
@@ -46,6 +45,10 @@ export function snakeToCamel<T = any>(obj: Record<string, any> | string | null |
         }
         return transformedExercise;
       });
+      
+      // To support both naming conventions during transition, also keep snake_case version
+      result['additional_exercises'] = result['additionalExercises'];
+      
       // Skip adding with the original key
       return result;
     }
@@ -179,12 +182,14 @@ export const createApiTransformer = () => {
         }
       }
       
-      // Special handling for additional_exercises key
+      // Special handling for both additional_exercises (snake_case) and additionalExercises (camelCase)
       if (dataToTransform && dataToTransform.additional_exercises !== undefined) {
         console.log("Found additional_exercises in the data");
-        // Ensure additionalExercises will be set during transformation
+        // Ensure additionalExercises will also be set during transformation
+        // Handled by snakeToCamel
       } else if (dataToTransform && dataToTransform.additionalExercises !== undefined) {
         console.log("Found additionalExercises in the data");
+        // Copy from camelCase to snake_case for full compatibility
         dataToTransform.additional_exercises = dataToTransform.additionalExercises;
       }
       
@@ -194,11 +199,22 @@ export const createApiTransformer = () => {
       // Transform the data
       const transformed = snakeToCamel<T>(dataToTransform);
       
-      // Ensure additionalExercises exists in the transformed result
-      if (transformed && (transformed as any).additionalExercises === undefined) {
-        console.log("additionalExercises not found in transformed data, creating an empty array");
-        (transformed as any).additionalExercises = 
-          (dataToTransform && (dataToTransform.additional_exercises || dataToTransform.additionalExercises)) || [];
+      // Ensure additional_exercises and additionalExercises both exist for backward compatibility
+      if (transformed) {
+        if ((transformed as any).additionalExercises === undefined && (transformed as any).additional_exercises) {
+          console.log("Creating additionalExercises from additional_exercises");
+          (transformed as any).additionalExercises = (transformed as any).additional_exercises;
+        } else if ((transformed as any).additional_exercises === undefined && (transformed as any).additionalExercises) {
+          console.log("Creating additional_exercises from additionalExercises");
+          (transformed as any).additional_exercises = (transformed as any).additionalExercises;
+        }
+        
+        // If neither exists, create empty arrays
+        if ((transformed as any).additionalExercises === undefined && (transformed as any).additional_exercises === undefined) {
+          console.log("No additional exercises found, creating empty arrays");
+          (transformed as any).additionalExercises = [];
+          (transformed as any).additional_exercises = [];
+        }
       }
       
       console.log("After transformation (fromApi):", JSON.stringify(transformed, null, 2));
@@ -224,13 +240,13 @@ export const createApiTransformer = () => {
         }
       }
       
-      // Special handling for additionalExercises key
-      if (dataToTransform && dataToTransform.additionalExercises !== undefined) {
-        console.log("Found additionalExercises in the data");
-        // Ensure additional_exercises will be set during transformation
-      } else if (dataToTransform && dataToTransform.additional_exercises !== undefined) {
-        console.log("Found additional_exercises in the data");
-        dataToTransform.additionalExercises = dataToTransform.additional_exercises;
+      // Ensure both additional_exercises and additionalExercises are represented
+      if (dataToTransform && dataToTransform.additionalExercises && !dataToTransform.additional_exercises) {
+        console.log("Copying additionalExercises to additional_exercises");
+        dataToTransform.additional_exercises = dataToTransform.additionalExercises;
+      } else if (dataToTransform && dataToTransform.additional_exercises && !dataToTransform.additionalExercises) {
+        console.log("Copying additional_exercises to additionalExercises");
+        dataToTransform.additionalExercises = dataToTransform.additionalExercises;
       }
       
       // Log the pre-processed data
@@ -238,13 +254,6 @@ export const createApiTransformer = () => {
       
       // Transform the data
       const transformed = camelToSnake<T>(dataToTransform);
-      
-      // Ensure additional_exercises exists in the transformed result
-      if (transformed && (transformed as any).additional_exercises === undefined) {
-        console.log("additional_exercises not found in transformed data, creating an empty array");
-        (transformed as any).additional_exercises = 
-          (dataToTransform && (dataToTransform.additionalExercises || dataToTransform.additional_exercises)) || [];
-      }
       
       console.log("After transformation (toApi):", JSON.stringify(transformed, null, 2));
       return transformed;

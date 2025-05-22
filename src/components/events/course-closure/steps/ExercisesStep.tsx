@@ -49,9 +49,10 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
     reverse_time: formData.course_layout?.final_exercise?.reverse_time
   });
   
-  const [additionalExercises, setAdditionalExercises] = useState<AdditionalExercise[]>(
-    formData.additional_exercises || []
-  );
+  // Get additional exercises from either camelCase or snake_case property
+  const initialExercises = formData.additional_exercises || formData.additionalExercises || [];
+  
+  const [additionalExercises, setAdditionalExercises] = useState<AdditionalExercise[]>(initialExercises);
   
   const [newExercise, setNewExercise] = useState<AdditionalExercise>({
     id: crypto.randomUUID(),
@@ -97,6 +98,7 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
   }, [finalExercise]);
 
   // Update parent form data when additional exercises change
+  // Use the snake_case property name to match the CourseClosureData type
   useEffect(() => {
     onUpdate({
       additional_exercises: additionalExercises
