@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPrevious } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -61,6 +61,7 @@ export function useAllocationData() {
       return data;
     },
     enabled: !!id,
+    placeholderData: keepPrevious()
   });
 
   // Fetch existing allocations
@@ -93,7 +94,8 @@ export function useAllocationData() {
       console.log("Allocations data:", data);
       return data;
     },
-    enabled: !!id
+    enabled: !!id,
+    placeholderData: keepPrevious()
   });
 
   // Fetch clients for allocation (only needed for open enrollment courses)
@@ -117,7 +119,8 @@ export function useAllocationData() {
       return data;
     },
     // Only fetch clients for open enrollment courses
-    enabled: !!courseInstance && courseInstance.is_open_enrollment
+    enabled: !!courseInstance && courseInstance.is_open_enrollment,
+    placeholderData: keepPrevious()
   });
 
   // Save allocations mutation

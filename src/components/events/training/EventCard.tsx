@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPrevious } from "@tanstack/react-query";
 
 interface EventCardProps {
   event: TrainingEvent;
@@ -52,7 +52,7 @@ export function EventCard({ event, onDelete }: EventCardProps) {
     ? monthDay 
     : `${format(startDate, "MMM d")} - ${format(endDate, "d")}`;
   
-  // Check if the course has been formally closed - fix the type conversion
+  // Check if the course has been formally closed - with type conversion
   const { data: closureStatus } = useQuery({
     queryKey: ["event-card-closure", parseInt(event.id)],
     queryFn: async () => {
@@ -65,6 +65,8 @@ export function EventCard({ event, onDelete }: EventCardProps) {
       if (error) throw error;
       return data && data.length > 0;
     },
+    // Using placeholderData instead of keepPreviousData
+    placeholderData: keepPrevious(),
     // Enabled when the event might be completed by date
     enabled: event.status === "completed",
   });
@@ -95,7 +97,7 @@ export function EventCard({ event, onDelete }: EventCardProps) {
     try {
       setIsDeleting(true);
       
-      // Delete the event from the database - fix the type conversion
+      // Delete the event from the database - with type conversion
       const { error } = await supabase
         .from('course_instances')
         .delete()
