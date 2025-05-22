@@ -1,7 +1,8 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Edit, ArrowLeft, MapPin, Calendar, Users, Building2, Globe, Clock, CheckCircle, AlertCircle, FileText } from "lucide-react";
+import { Edit, ArrowLeft, MapPin, Calendar, Users, Building2, Globe, Clock, CheckCircle, AlertCircle, FileText, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,11 +11,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { LoadingDisplay } from "./allocation/LoadingDisplay";
 import { ErrorDisplay } from "./allocation/ErrorDisplay";
 import { StudentsContent } from "./allocation/StudentsContent";
+import { useCourseClosure } from "./course-closure/hooks/useCourseClosure";
 
 export function CourseDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const courseId = id ? parseInt(id) : undefined;
+  
+  // Check if course has been formally closed
+  const { isClosed, isDraft, closureId } = useCourseClosure(courseId);
   
   const { data: courseInstance, isLoading, error } = useQuery({
     queryKey: ['course-instance', courseId],
@@ -64,7 +69,23 @@ export function CourseDetails() {
 
   // Determine if the course is completed (end date is in the past)
   const isCompleted = endDate ? endDate < new Date() : startDate < new Date();
-  const status = isCompleted ? "completed" : "scheduled";
+
+  // Determine course status for display and actions:
+  // 1. If formally closed, show as "Closed" with "Edit Closure" option
+  // 2. If date-completed but not formally closed, show as "Completed" with "Finalize Course" option
+  // 3. If not completed by date, show as "Scheduled"
+  
+  const courseStatus = isClosed 
+    ? "closed" 
+    : isCompleted 
+      ? "completed" 
+      : "scheduled";
+  
+  const statusDisplayText = courseStatus === "closed" 
+    ? "Closed" 
+    : courseStatus === "completed" 
+      ? "Completed" 
+      : "Scheduled";
 
   return (
     <div className="space-y-6">
@@ -76,7 +97,7 @@ export function CourseDetails() {
         <h1 className="text-2xl font-bold">{courseInstance.programs?.name}</h1>
         <div className="flex-1"></div>
         
-        {!isCompleted && (
+        {courseStatus === "scheduled" && (
           <Button onClick={() => navigate(`/events/${courseInstance.id}/edit`)}>
             <Edit className="mr-2 h-4 w-4" />
             Edit
@@ -100,7 +121,12 @@ export function CourseDetails() {
                 <div className="space-y-1">
                   <div className="text-sm text-muted-foreground">Status</div>
                   <div>
-                    {isCompleted ? (
+                    {courseStatus === "closed" ? (
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800 border border-blue-200">
+                        <CheckCircle className="h-3 w-3 mr-1 text-blue-600" /> 
+                        Closed
+                      </Badge>
+                    ) : courseStatus === "completed" ? (
                       <Badge variant="secondary" className="bg-gray-200">
                         <CheckCircle className="h-3 w-3 mr-1 text-green-600" /> 
                         Completed
@@ -185,7 +211,7 @@ export function CourseDetails() {
                 Manage Seat Allocations
               </Button>
               
-              {!isCompleted && (
+              {courseStatus === "scheduled" && (
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
@@ -196,20 +222,38 @@ export function CourseDetails() {
                 </Button>
               )}
               
-              {/* Add Close Course button */}
-              <Button 
-                className="w-full justify-start" 
-                variant={isCompleted ? "default" : "outline"}
-                onClick={() => navigate(`/events/${courseInstance.id}/close`)}
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                {isCompleted ? "Finalize Course" : "Close Course"}
-              </Button>
+              {/* Course closure action button - varies based on status */}
+              {courseStatus === "closed" ? (
+                <Button 
+                  className="w-full justify-start" 
+                  variant="default"
+                  onClick={() => navigate(`/events/${courseInstance.id}/close`)}
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Closure
+                </Button>
+              ) : (
+                <Button 
+                  className="w-full justify-start" 
+                  variant={courseStatus === "completed" ? "default" : "outline"}
+                  onClick={() => navigate(`/events/${courseInstance.id}/close`)}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  {courseStatus === "completed" ? "Finalize Course" : "Close Course"}
+                </Button>
+              )}
               
-              {isCompleted && (
+              {courseStatus === "closed" && (
+                <Alert className="bg-blue-50 border-blue-200 text-blue-800">
+                  <CheckCircle className="h-4 w-4 text-blue-600 mr-2" />
+                  <p className="text-sm">This course has been successfully closed.</p>
+                </Alert>
+              )}
+              
+              {courseStatus === "completed" && !isClosed && (
                 <Alert className="bg-amber-50 border-amber-200 text-amber-800">
                   <AlertCircle className="h-4 w-4 text-amber-600 mr-2" />
-                  <p className="text-sm">This course has been completed and cannot be edited.</p>
+                  <p className="text-sm">This course has been completed but needs to be finalized.</p>
                 </Alert>
               )}
             </CardContent>

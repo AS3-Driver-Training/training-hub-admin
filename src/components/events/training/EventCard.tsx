@@ -1,7 +1,7 @@
 
 import { TrainingEvent } from "@/types/events";
 import { format } from "date-fns";
-import { MapPin, Clock, Users, ArrowRight, MoreVertical, Edit, Trash2, Globe, Building2, Eye } from "lucide-react";
+import { MapPin, Clock, Users, ArrowRight, MoreVertical, Edit, Trash2, Globe, Building2, Eye, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface EventCardProps {
   event: TrainingEvent;
@@ -51,6 +52,26 @@ export function EventCard({ event, onDelete }: EventCardProps) {
   const dateRangeForBox = isSameDay 
     ? monthDay 
     : `${format(startDate, "MMM d")} - ${format(endDate, "d")}`;
+  
+  // Check if the course has been formally closed
+  const { data: closureStatus } = useQuery({
+    queryKey: ["event-card-closure", event.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("course_closures")
+        .select("id")
+        .eq("course_instance_id", event.id)
+        .limit(1);
+        
+      if (error) throw error;
+      return data && data.length > 0;
+    },
+    // Enabled when the event might be completed by date
+    enabled: event.status === "completed",
+  });
+  
+  // Enhanced status handling - if event is completed by date and has a closure record
+  const enhancedStatus = closureStatus ? "closed" : event.status;
   
   const handleViewDetails = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -121,8 +142,14 @@ export function EventCard({ event, onDelete }: EventCardProps) {
             <div className="flex justify-between items-start">
               <h3 className="text-lg font-semibold">{event.title}</h3>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className={event.status === "scheduled" ? "bg-primary/10 text-primary" : ""}>
-                  {event.status === "scheduled" ? "Scheduled" : event.status === "completed" ? "Completed" : "Cancelled"}
+                <Badge variant="outline" className={
+                  enhancedStatus === "scheduled" ? "bg-primary/10 text-primary" : 
+                  enhancedStatus === "closed" ? "bg-blue-100 text-blue-800 border border-blue-200" : 
+                  ""
+                }>
+                  {enhancedStatus === "scheduled" ? "Scheduled" : 
+                   enhancedStatus === "closed" ? "Closed" :
+                   enhancedStatus === "completed" ? "Completed" : "Cancelled"}
                 </Badge>
                 
                 <DropdownMenu>
@@ -137,10 +164,24 @@ export function EventCard({ event, onDelete }: EventCardProps) {
                       <Eye className="mr-2 h-4 w-4" />
                       View Details
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleEditEvent}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
+                    
+                    {enhancedStatus === "scheduled" && (
+                      <DropdownMenuItem onClick={handleEditEvent}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                    )}
+                    
+                    {(enhancedStatus === "completed" || enhancedStatus === "closed") && (
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/events/${event.id}/close`);
+                      }}>
+                        <FileText className="mr-2 h-4 w-4" />
+                        {enhancedStatus === "closed" ? "View Closure" : "Finalize Course"}
+                      </DropdownMenuItem>
+                    )}
+                    
                     <DropdownMenuItem onClick={handleDeleteEvent} className="text-destructive">
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete Event

@@ -28,11 +28,17 @@ export function StudentsContent({
 
   // Check if user has admin privileges (superadmin or admin role)
   const hasAdminPrivileges = userRole === 'superadmin' || userRole === 'admin';
+  
+  // Enhanced query keys for better caching and data persistence between navigations
+  const courseInstanceId = courseInstance?.id || '';
+  const clientId = courseInstance?.host_client?.id || '';
+  
   const {
     students,
     enrolledCount,
     isLoading
-  } = useStudentManagement(courseInstance?.id, courseInstance?.host_client?.id || '');
+  } = useStudentManagement(courseInstanceId, clientId);
+  
   const clientName = courseInstance?.host_client?.name || 'Unknown Client';
   const allocatedSeats = courseInstance?.private_seats_allocated || 0;
 
