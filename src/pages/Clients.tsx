@@ -27,6 +27,7 @@ interface ClientWithMetrics {
   name: string;
   status: string;
   country: string;
+  contact_email: string | null;
   last_activity_at: string | null;
   created_at: string;
   active_users_count: number;
@@ -50,6 +51,7 @@ export default function Clients() {
             name,
             status,
             country,
+            contact_email,
             last_activity_at,
             created_at
           `)
@@ -102,6 +104,26 @@ export default function Clients() {
     return matchesSearch && matchesCountry;
   }) || [];
 
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      case 'inactive':
+        return 'destructive';
+      default:
+        return 'secondary';
+    }
+  };
+
+  const formatMemberSince = (createdAt: string) => {
+    return new Date(createdAt).toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
   if (isLoading) {
     return <DashboardLayout><div>Loading...</div></DashboardLayout>;
   }
@@ -147,19 +169,16 @@ export default function Clients() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Client Name</TableHead>
-                <TableHead>Country</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Activity</TableHead>
-                <TableHead>Active Users</TableHead>
-                <TableHead>Upcoming Courses</TableHead>
+                <TableHead>Client Details</TableHead>
+                <TableHead>Status & Activity</TableHead>
+                <TableHead>Metrics</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredClients.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center">
+                  <TableCell colSpan={4} className="text-center">
                     {searchQuery || countryFilter !== "all" 
                       ? "No clients match your filters." 
                       : "No clients found. Invite your first client to get started."
@@ -175,36 +194,53 @@ export default function Clients() {
                       className="cursor-pointer"
                       onClick={() => navigate(`/clients/${client.id}/settings`)}
                     >
-                      <TableCell className="font-medium">{client.name}</TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{country.flag}</span>
-                          <span className="text-sm text-muted-foreground">{country.code}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={client.status === 'pending' ? 'secondary' : 'default'}>
-                          {client.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-sm">{formatLastActivity(client.last_activity_at)}</span>
-                          <ActivityStatus 
-                            lastActivity={client.last_activity_at}
-                            activeUsers={client.active_users_count}
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-medium">{client.active_users_count}</span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{client.upcoming_courses_count}</span>
-                          {client.upcoming_courses_count === 0 && (
-                            <AlertTriangle className="h-4 w-4 text-amber-500" />
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{client.name}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {country.flag} {country.code}
+                            </Badge>
+                          </div>
+                          {client.contact_email && (
+                            <div className="text-sm text-muted-foreground">
+                              {client.contact_email}
+                            </div>
                           )}
+                          <div className="text-xs text-muted-foreground">
+                            Member since {formatMemberSince(client.created_at)}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-2">
+                          <Badge variant={getStatusVariant(client.status)}>
+                            {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
+                          </Badge>
+                          <div className="text-sm">
+                            <div className="text-muted-foreground">
+                              Last activity: {formatLastActivity(client.last_activity_at)}
+                            </div>
+                            <ActivityStatus 
+                              lastActivity={client.last_activity_at}
+                              activeUsers={client.active_users_count}
+                            />
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="text-sm">
+                            <span className="font-medium">{client.active_users_count}</span>
+                            <span className="text-muted-foreground"> active users</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="font-medium">{client.upcoming_courses_count}</span>
+                            <span className="text-muted-foreground">upcoming courses</span>
+                            {client.upcoming_courses_count === 0 && (
+                              <AlertTriangle className="h-4 w-4 text-amber-500" />
+                            )}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
