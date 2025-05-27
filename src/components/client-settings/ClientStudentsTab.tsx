@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -14,7 +13,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Users, Search, AlertCircle, Mail, Calendar } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Users, Search, AlertCircle, Mail, Phone, Calendar, MoreHorizontal, User, History, Edit } from "lucide-react";
 import { useState } from "react";
 
 interface ClientStudent {
@@ -143,6 +150,10 @@ export function ClientStudentsTab({ clientId }: ClientStudentsTabProps) {
     }
   };
 
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
+
   const filteredStudents = students?.filter(student => {
     const matchesStatus = studentFilter === "active" 
       ? student.status === 'active' 
@@ -220,89 +231,125 @@ export function ClientStudentsTab({ clientId }: ClientStudentsTabProps) {
 
               <TabsContent value={studentFilter}>
                 {filteredStudents.length === 0 ? (
-                  <div className="text-center py-8">
+                  <div className="text-center py-12 bg-muted/20 rounded-lg border border-dashed">
                     <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
+                    <h3 className="text-lg font-medium text-muted-foreground mb-2">
                       {searchQuery 
-                        ? `No ${studentFilter} students match your search.`
-                        : `No ${studentFilter} students found for this client.`
+                        ? `No ${studentFilter} students match your search`
+                        : `No ${studentFilter} students found`
+                      }
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {searchQuery 
+                        ? "Try adjusting your search terms"
+                        : `This client doesn't have any ${studentFilter} students yet`
                       }
                     </p>
                   </div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Contact</TableHead>
-                        <TableHead>Team/Group</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Enrollments</TableHead>
-                        <TableHead>Last Course</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredStudents.map((student) => (
-                        <TableRow key={student.id}>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">
-                                {student.first_name} {student.last_name}
-                              </div>
-                              {student.employee_number && (
-                                <div className="text-sm text-muted-foreground">
-                                  ID: {student.employee_number}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <Mail className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm">{student.email}</span>
-                              </div>
-                              {student.phone && (
-                                <div className="text-sm text-muted-foreground">
-                                  {student.phone}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{student.teams?.name || 'No team'}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {student.teams?.groups?.name || 'No group'}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusVariant(student.status)}>
-                              {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <span className="font-medium">{student.total_enrollments}</span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm">
-                                {formatLastCourseDate(student.last_course_date)}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm">
-                              View Profile
-                            </Button>
-                          </TableCell>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/50">
+                          <TableHead className="w-[35%]">Student</TableHead>
+                          <TableHead className="w-[25%]">Contact</TableHead>
+                          <TableHead className="w-[20%]">Team/Group</TableHead>
+                          <TableHead className="w-[15%]">Activity</TableHead>
+                          <TableHead className="w-[5%]"></TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredStudents.map((student) => (
+                          <TableRow key={student.id} className="hover:bg-muted/20">
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-10 w-10">
+                                  <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                                    {getInitials(student.first_name, student.last_name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-medium text-foreground truncate">
+                                    {student.first_name} {student.last_name}
+                                  </div>
+                                  {student.employee_number && (
+                                    <div className="text-sm text-muted-foreground truncate">
+                                      ID: {student.employee_number}
+                                    </div>
+                                  )}
+                                  <Badge variant={getStatusVariant(student.status)} className="mt-1 text-xs">
+                                    {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2 text-sm">
+                                  <Mail className="h-3 w-3 text-muted-foreground shrink-0" />
+                                  <span className="truncate">{student.email}</span>
+                                </div>
+                                {student.phone && (
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Phone className="h-3 w-3 shrink-0" />
+                                    <span className="truncate">{student.phone}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <div className="font-medium text-sm truncate">
+                                  {student.teams?.name || 'No team'}
+                                </div>
+                                <div className="text-xs text-muted-foreground truncate">
+                                  {student.teams?.groups?.name || 'No group'}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-1 text-sm font-medium">
+                                  <span className="text-primary">{student.total_enrollments}</span>
+                                  <span className="text-muted-foreground text-xs">enrollments</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Calendar className="h-3 w-3 shrink-0" />
+                                  <span className="truncate">
+                                    {formatLastCourseDate(student.last_course_date)}
+                                  </span>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Open menu</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem>
+                                    <User className="mr-2 h-4 w-4" />
+                                    View Profile
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit Student
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <History className="mr-2 h-4 w-4" />
+                                    Enrollment History
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </TabsContent>
             </Tabs>
