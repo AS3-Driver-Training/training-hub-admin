@@ -1,24 +1,28 @@
-
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TrainingEventsHeader } from "./training/TrainingEventsHeader";
-import { CompactEventFilters } from "./training/CompactEventFilters";
+import { StreamlinedEventFilters } from "./training/StreamlinedEventFilters";
 import { EventListView } from "./training/EventListView";
 import { EventCalendarView } from "./training/EventCalendarView";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingEvent } from "@/types/events";
 import { queryKeys } from "@/lib/queryKeys";
-import { getCountryCodeByName } from "@/utils/countries";
-import { isEventInDateRange, getRegionsFromEvents, DateRange } from "@/utils/dateFilters";
+import { 
+  isEventInDateRange, 
+  getDateRangeFromFilter, 
+  matchesArrayFilter, 
+  matchesEnrollmentType, 
+  getCountryFromLocation 
+} from "@/utils/dateFilters";
 
 export function TrainingEvents() {
   const [view, setView] = useState<"list" | "calendar">("list");
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState("all");
-  const [customDateRange, setCustomDateRange] = useState<DateRange>({ from: null, to: null });
-  const [countryFilter, setCountryFilter] = useState("all");
-  const [regionFilter, setRegionFilter] = useState("all");
+  const [countryFilter, setCountryFilter] = useState<string[]>([]);
+  const [regionFilter, setRegionFilter] = useState<string[]>([]);
+  const [enrollmentTypeFilter, setEnrollmentTypeFilter] = useState<string[]>([]);
   const queryClient = useQueryClient();
   
   const { data: events = [], isLoading, error } = useQuery({
@@ -127,10 +131,7 @@ export function TrainingEvents() {
     queryClient.invalidateQueries({ queryKey: queryKeys.trainingEvents() });
   };
 
-  // Get available regions from events
-  const availableRegions = getRegionsFromEvents(events);
-
-  // Enhanced filtering logic
+  // Enhanced filtering logic with new multi-select filters
   const filteredEvents = events.filter(event => {
     // Search filter
     const matchesSearch = searchQuery === "" || 
@@ -138,43 +139,35 @@ export function TrainingEvents() {
       event.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (event.clientName && event.clientName.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    // Status filter
-    const matchesStatus = statusFilter === "all" || event.status === statusFilter;
+    // Status filter (array-based)
+    const matchesStatus = matchesArrayFilter(event.status, statusFilter);
 
     // Date filter
-    const currentDateRange = dateFilter === "custom" ? customDateRange : { from: null, to: null };
-    const matchesDate = dateFilter === "all" || isEventInDateRange(event.startDate, currentDateRange);
+    const dateRange = getDateRangeFromFilter(dateFilter);
+    const matchesDate = dateFilter === "all" || isEventInDateRange(event.startDate, dateRange);
 
-    // Country filter
-    let matchesCountry = true;
-    if (countryFilter !== "all") {
-      const eventCountryCode = getCountryCodeByName(event.location.split(',').pop()?.trim() || '');
-      matchesCountry = eventCountryCode === countryFilter;
-    }
+    // Country filter (array-based)
+    const eventCountry = getCountryFromLocation(event.location);
+    const matchesCountry = matchesArrayFilter(eventCountry, countryFilter);
 
-    // Region filter
-    const matchesRegion = regionFilter === "all" || 
-      event.location.toLowerCase().includes(regionFilter.toLowerCase());
+    // Region filter (array-based)
+    const eventRegion = event.region || event.location.split(',').slice(-2, -1)[0]?.trim() || '';
+    const matchesRegion = matchesArrayFilter(eventRegion, regionFilter);
 
-    return matchesSearch && matchesStatus && matchesDate && matchesCountry && matchesRegion;
+    // Enrollment type filter
+    const matchesEnrollment = matchesEnrollmentType(event.isOpenEnrollment, enrollmentTypeFilter);
+
+    return matchesSearch && matchesStatus && matchesDate && matchesCountry && matchesRegion && matchesEnrollment;
   });
-
-  // Calculate active filter count
-  const activeFilterCount = [
-    statusFilter !== "all",
-    dateFilter !== "all",
-    countryFilter !== "all",
-    regionFilter !== "all"
-  ].filter(Boolean).length;
 
   // Clear all filters function
   const handleClearFilters = () => {
     setSearchQuery("");
-    setStatusFilter("all");
+    setStatusFilter([]);
     setDateFilter("all");
-    setCustomDateRange({ from: null, to: null });
-    setCountryFilter("all");
-    setRegionFilter("all");
+    setCountryFilter([]);
+    setRegionFilter([]);
+    setEnrollmentTypeFilter([]);
   };
   
   if (isLoading) {
@@ -211,22 +204,21 @@ export function TrainingEvents() {
   return (
     <div className="space-y-6">
       <TrainingEventsHeader view={view} setView={setView} />
-      <CompactEventFilters 
+      <StreamlinedEventFilters 
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
         dateFilter={dateFilter}
         setDateFilter={setDateFilter}
-        customDateRange={customDateRange}
-        setCustomDateRange={setCustomDateRange}
         countryFilter={countryFilter}
         setCountryFilter={setCountryFilter}
         regionFilter={regionFilter}
         setRegionFilter={setRegionFilter}
+        enrollmentTypeFilter={enrollmentTypeFilter}
+        setEnrollmentTypeFilter={setEnrollmentTypeFilter}
         onClearFilters={handleClearFilters}
-        activeFilterCount={activeFilterCount}
-        availableRegions={availableRegions}
+        events={events}
       />
       
       {view === "list" ? (

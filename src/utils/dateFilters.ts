@@ -63,3 +63,30 @@ export const getRegionsFromEvents = (events: Array<{ location: string }>): strin
   
   return Array.from(regions).sort();
 };
+
+// New helper function for multi-value filtering
+export const matchesArrayFilter = (value: string, filterArray: string[]): boolean => {
+  return filterArray.length === 0 || filterArray.includes(value);
+};
+
+// Helper to check if event matches enrollment type filter
+export const matchesEnrollmentType = (isOpenEnrollment: boolean, filterArray: string[]): boolean => {
+  if (filterArray.length === 0) return true;
+  
+  const eventType = isOpenEnrollment ? 'open' : 'private';
+  return filterArray.includes(eventType);
+};
+
+// Helper to extract country from location
+export const getCountryFromLocation = (location: string): string => {
+  const lastPart = location.split(',').pop()?.trim().toLowerCase() || '';
+  
+  if (lastPart.includes('mexico') || lastPart.includes('méxico')) {
+    return 'Mexico';
+  }
+  if (lastPart.includes('united states') || lastPart.includes('usa') || lastPart.includes('us')) {
+    return 'United States';
+  }
+  
+  return lastPart;
+};
