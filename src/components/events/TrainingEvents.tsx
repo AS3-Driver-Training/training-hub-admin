@@ -1,19 +1,24 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TrainingEventsHeader } from "./training/TrainingEventsHeader";
-import { EventFilters } from "./training/EventFilters";
+import { CompactEventFilters } from "./training/CompactEventFilters";
 import { EventListView } from "./training/EventListView";
 import { EventCalendarView } from "./training/EventCalendarView";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingEvent } from "@/types/events";
 import { queryKeys } from "@/lib/queryKeys";
+import { getCountryCodeByName } from "@/utils/countries";
+import { isEventInDateRange, getRegionsFromEvents, DateRange } from "@/utils/dateFilters";
 
 export function TrainingEvents() {
   const [view, setView] = useState<"list" | "calendar">("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [enrollmentFilter, setEnrollmentFilter] = useState("all");
-  const [capacityFilter, setCapacityFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDateRange, setCustomDateRange] = useState<DateRange>({ from: null, to: null });
+  const [countryFilter, setCountryFilter] = useState("all");
+  const [regionFilter, setRegionFilter] = useState("all");
   const queryClient = useQueryClient();
   
   const { data: events = [], isLoading, error } = useQuery({
@@ -51,7 +56,7 @@ export function TrainingEvents() {
           is_open_enrollment,
           private_seats_allocated,
           programs:program_id(name, max_students),
-          venues:venue_id(name),
+          venues:venue_id(name, address, region),
           clients:host_client_id(name)
         `)
         .order('start_date', { ascending: true });
@@ -78,18 +83,35 @@ export function TrainingEvents() {
         if (!instance.end_date) {
           endDate.setDate(startDate.getDate() + 1); // Default to next day if no end date
         }
+
+        // Enhanced location with region for better filtering
+        const venueLocation = instance.venues?.name || "Unknown Location";
+        const region = instance.venues?.region;
+        const address = instance.venues?.address;
+        let fullLocation = venueLocation;
+        
+        if (address) {
+          // Extract country from address for filtering
+          const addressParts = address.split(',').map(part => part.trim());
+          if (addressParts.length > 1) {
+            fullLocation = `${venueLocation}, ${addressParts[addressParts.length - 1]}`;
+          }
+        }
         
         return {
           id: instance.id.toString(),
           title: instance.programs?.name || "Unnamed Course",
-          location: instance.venues?.name || "Unknown Location",
+          location: fullLocation,
           startDate: instance.start_date,
           endDate: endDate.toISOString(),
           status: new Date(instance.start_date) > new Date() ? 'scheduled' : 'completed',
           capacity: capacity,
           enrolledCount: enrolledCount,
           clientName: instance.clients?.name || null,
-          isOpenEnrollment: instance.is_open_enrollment || false
+          isOpenEnrollment: instance.is_open_enrollment || false,
+          // Additional fields for filtering
+          region: region || null,
+          venue: instance.venues || null
         };
       });
       
@@ -105,6 +127,9 @@ export function TrainingEvents() {
     queryClient.invalidateQueries({ queryKey: queryKeys.trainingEvents() });
   };
 
+  // Get available regions from events
+  const availableRegions = getRegionsFromEvents(events);
+
   // Enhanced filtering logic
   const filteredEvents = events.filter(event => {
     // Search filter
@@ -116,33 +141,40 @@ export function TrainingEvents() {
     // Status filter
     const matchesStatus = statusFilter === "all" || event.status === statusFilter;
 
-    // Enrollment filter
-    const matchesEnrollment = enrollmentFilter === "all" || 
-      (enrollmentFilter === "open" && event.isOpenEnrollment) ||
-      (enrollmentFilter === "private" && !event.isOpenEnrollment);
+    // Date filter
+    const currentDateRange = dateFilter === "custom" ? customDateRange : { from: null, to: null };
+    const matchesDate = dateFilter === "all" || isEventInDateRange(event.startDate, currentDateRange);
 
-    // Capacity filter
-    const matchesCapacity = capacityFilter === "all" || 
-      (capacityFilter === "available" && event.enrolledCount < event.capacity) ||
-      (capacityFilter === "full" && event.enrolledCount === event.capacity) ||
-      (capacityFilter === "overbooked" && event.enrolledCount > event.capacity);
+    // Country filter
+    let matchesCountry = true;
+    if (countryFilter !== "all") {
+      const eventCountryCode = getCountryCodeByName(event.location.split(',').pop()?.trim() || '');
+      matchesCountry = eventCountryCode === countryFilter;
+    }
 
-    return matchesSearch && matchesStatus && matchesEnrollment && matchesCapacity;
+    // Region filter
+    const matchesRegion = regionFilter === "all" || 
+      event.location.toLowerCase().includes(regionFilter.toLowerCase());
+
+    return matchesSearch && matchesStatus && matchesDate && matchesCountry && matchesRegion;
   });
 
   // Calculate active filter count
   const activeFilterCount = [
     statusFilter !== "all",
-    enrollmentFilter !== "all",
-    capacityFilter !== "all"
+    dateFilter !== "all",
+    countryFilter !== "all",
+    regionFilter !== "all"
   ].filter(Boolean).length;
 
   // Clear all filters function
   const handleClearFilters = () => {
     setSearchQuery("");
     setStatusFilter("all");
-    setEnrollmentFilter("all");
-    setCapacityFilter("all");
+    setDateFilter("all");
+    setCustomDateRange({ from: null, to: null });
+    setCountryFilter("all");
+    setRegionFilter("all");
   };
   
   if (isLoading) {
@@ -179,17 +211,22 @@ export function TrainingEvents() {
   return (
     <div className="space-y-6">
       <TrainingEventsHeader view={view} setView={setView} />
-      <EventFilters 
+      <CompactEventFilters 
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
-        enrollmentFilter={enrollmentFilter}
-        setEnrollmentFilter={setEnrollmentFilter}
-        capacityFilter={capacityFilter}
-        setCapacityFilter={setCapacityFilter}
+        dateFilter={dateFilter}
+        setDateFilter={setDateFilter}
+        customDateRange={customDateRange}
+        setCustomDateRange={setCustomDateRange}
+        countryFilter={countryFilter}
+        setCountryFilter={setCountryFilter}
+        regionFilter={regionFilter}
+        setRegionFilter={setRegionFilter}
         onClearFilters={handleClearFilters}
         activeFilterCount={activeFilterCount}
+        availableRegions={availableRegions}
       />
       
       {view === "list" ? (
