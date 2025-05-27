@@ -1,8 +1,6 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { TabsContent } from "@/components/ui/tabs";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { ClientStudentsHeader } from "./students/ClientStudentsHeader";
@@ -174,7 +172,7 @@ export function ClientStudentsTab({ clientId }: ClientStudentsTabProps) {
             onFilterChange={setStudentFilter}
           />
 
-          <TabsContent value={studentFilter} className="mt-4">
+          <div className="mt-4">
             {filteredStudents.length === 0 ? (
               <EmptyStudentsState 
                 studentFilter={studentFilter}
@@ -183,7 +181,7 @@ export function ClientStudentsTab({ clientId }: ClientStudentsTabProps) {
             ) : (
               <StudentsTable students={filteredStudents} />
             )}
-          </TabsContent>
+          </div>
         </CardContent>
       </Card>
     </div>
