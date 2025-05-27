@@ -1,4 +1,3 @@
-
 import { TrainingEvent } from "@/types/events";
 import { format } from "date-fns";
 import { MapPin, Clock, Users, ArrowRight, MoreVertical, Edit, Trash2, Globe, Building2, Eye, FileText } from "lucide-react";
@@ -25,7 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 
 interface EventCardProps {
@@ -35,6 +34,7 @@ interface EventCardProps {
 
 export function EventCard({ event, onDelete }: EventCardProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -67,7 +67,6 @@ export function EventCard({ event, onDelete }: EventCardProps) {
       if (error) throw error;
       return data && data.length > 0;
     },
-    // Enabled when the event might be completed by date
     enabled: event.status === "completed",
   });
   
@@ -78,9 +77,6 @@ export function EventCard({ event, onDelete }: EventCardProps) {
     e.stopPropagation();
     navigate(`/events/${event.id}`);
   };
-  
-  // Remove the separate allocations navigation since it's now the main view
-  const handleViewAllocations = handleViewDetails;
   
   const handleEditEvent = () => {
     navigate(`/events/${event.id}/edit`);
@@ -95,7 +91,11 @@ export function EventCard({ event, onDelete }: EventCardProps) {
     try {
       setIsDeleting(true);
       
-      // Delete the event from the database - with type conversion
+      // Get current path to check if we're on the event's detail page
+      const currentPath = window.location.pathname;
+      const isOnEventPage = currentPath.includes(`/events/${event.id}`);
+      
+      // Delete the event from the database
       const { error } = await supabase
         .from('course_instances')
         .delete()
@@ -105,23 +105,35 @@ export function EventCard({ event, onDelete }: EventCardProps) {
         throw error;
       }
 
+      // Invalidate all related queries immediately
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.trainingEvents() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.courseInstance(event.id) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.courseAllocations(event.id) }),
+        // If this is a private course, invalidate client events
+        event.clientName ? queryClient.invalidateQueries({ 
+          queryKey: queryKeys.clientEvents(event.clientName) 
+        }) : Promise.resolve()
+      ]);
+
       // Show success message
       toast.success("Event deleted successfully");
       
-      // Close the dialog first
+      // Close the dialog
       setDeleteDialogOpen(false);
       
-      // Call the onDelete callback if provided
-      if (onDelete) {
-        onDelete();
-      } else {
-        // Navigate back to the events list if no callback provided
+      // Handle navigation based on context
+      if (isOnEventPage) {
+        // If we're on the event's detail page, navigate away immediately
         navigate('/events', { replace: true });
+      } else if (onDelete) {
+        // If we have an onDelete callback, call it
+        onDelete();
       }
+      
     } catch (error) {
       console.error("Error deleting event:", error);
       toast.error("Failed to delete event. Please try again.");
-      // Ensure dialog is closed even on error
       setDeleteDialogOpen(false);
     } finally {
       setIsDeleting(false);

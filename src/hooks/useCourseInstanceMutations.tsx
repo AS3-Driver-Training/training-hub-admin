@@ -25,18 +25,29 @@ export function useCourseInstanceMutations() {
       console.log("Course instance created:", data);
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log("Course instance created successfully, invalidating related queries");
       
-      // Invalidate training events to show the new course immediately
-      queryClient.invalidateQueries({ queryKey: queryKeys.trainingEvents() });
+      // Comprehensive cache invalidation to ensure all views are updated
+      const invalidationPromises = [
+        // Invalidate training events to show the new course immediately
+        queryClient.invalidateQueries({ queryKey: queryKeys.trainingEvents() }),
+        
+        // Invalidate the specific course instance query
+        queryClient.invalidateQueries({ queryKey: queryKeys.courseInstance(data.id.toString()) })
+      ];
       
       // If this is a private course, also invalidate client events
       if (data.host_client_id) {
-        queryClient.invalidateQueries({ 
-          queryKey: queryKeys.clientEvents(data.host_client_id) 
-        });
+        invalidationPromises.push(
+          queryClient.invalidateQueries({ 
+            queryKey: queryKeys.clientEvents(data.host_client_id) 
+          })
+        );
       }
+      
+      // Wait for all invalidations to complete
+      await Promise.all(invalidationPromises);
       
       toast.success("Course created successfully");
     },
@@ -65,21 +76,32 @@ export function useCourseInstanceMutations() {
       console.log("Course instance updated:", data);
       return data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       console.log("Course instance updated successfully, invalidating related queries");
       
-      // Invalidate training events
-      queryClient.invalidateQueries({ queryKey: queryKeys.trainingEvents() });
-      
-      // Invalidate the specific course instance
-      queryClient.invalidateQueries({ queryKey: queryKeys.courseInstance(variables.id) });
+      // Comprehensive cache invalidation
+      const invalidationPromises = [
+        // Invalidate training events
+        queryClient.invalidateQueries({ queryKey: queryKeys.trainingEvents() }),
+        
+        // Invalidate the specific course instance
+        queryClient.invalidateQueries({ queryKey: queryKeys.courseInstance(variables.id) }),
+        
+        // Invalidate course allocations
+        queryClient.invalidateQueries({ queryKey: queryKeys.courseAllocations(variables.id) })
+      ];
       
       // If this is a private course, also invalidate client events
       if (data.host_client_id) {
-        queryClient.invalidateQueries({ 
-          queryKey: queryKeys.clientEvents(data.host_client_id) 
-        });
+        invalidationPromises.push(
+          queryClient.invalidateQueries({ 
+            queryKey: queryKeys.clientEvents(data.host_client_id) 
+          })
+        );
       }
+      
+      // Wait for all invalidations to complete
+      await Promise.all(invalidationPromises);
       
       toast.success("Course updated successfully");
     },

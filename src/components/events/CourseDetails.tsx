@@ -1,8 +1,7 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Edit, ArrowLeft, MapPin, Calendar, Users, Building2, Globe, Clock, CheckCircle, AlertCircle, FileText, Eye } from "lucide-react";
+import { Edit, ArrowLeft, MapPin, Calendar, Users, Building2, Globe, Clock, CheckCircle, AlertCircle, FileText, Eye, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +11,7 @@ import { LoadingDisplay } from "./allocation/LoadingDisplay";
 import { ErrorDisplay } from "./allocation/ErrorDisplay";
 import { StudentsContent } from "./allocation/StudentsContent";
 import { useCourseClosure } from "./course-closure/hooks/useCourseClosure";
+import { queryKeys } from "@/lib/queryKeys";
 
 export function CourseDetails() {
   const { id } = useParams();
@@ -22,7 +22,7 @@ export function CourseDetails() {
   const { isClosed, isDraft, closureId } = useCourseClosure(courseId);
   
   const { data: courseInstance, isLoading, error } = useQuery({
-    queryKey: ['course-instance', courseId],
+    queryKey: queryKeys.courseInstance(id || '0'),
     queryFn: async () => {
       if (!courseId) return null;
       
@@ -71,30 +71,16 @@ export function CourseDetails() {
   const isCompleted = endDate ? endDate < new Date() : startDate < new Date();
 
   // Determine if the course can be closed
-  // Course can be closed only if:
-  // 1. It is already completed (end date is in the past)
-  // 2. It's not already formally closed
   const canBeClosed = isCompleted && !isClosed;
   
   // Determine if the course is in the future (start date is in the future)
   const isFutureCourse = startDate > new Date();
 
-  // Determine course status for display and actions:
-  // 1. If formally closed, show as "Closed" with "Edit Closure" option
-  // 2. If date-completed but not formally closed, show as "Completed" with "Finalize Course" option
-  // 3. If not completed by date, show as "Scheduled"
-  
   const courseStatus = isClosed 
     ? "closed" 
     : isCompleted 
       ? "completed" 
       : "scheduled";
-  
-  const statusDisplayText = courseStatus === "closed" 
-    ? "Closed" 
-    : courseStatus === "completed" 
-      ? "Completed" 
-      : "Scheduled";
 
   return (
     <div className="space-y-6">
@@ -214,9 +200,9 @@ export function CourseDetails() {
               <Button 
                 className="w-full justify-start" 
                 variant="outline"
-                onClick={() => navigate(`/events/${courseInstance.id}/allocations`)}
+                onClick={() => navigate(`/events/${courseInstance.id}`)}
               >
-                <Users className="mr-2 h-4 w-4" />
+                <Settings className="mr-2 h-4 w-4" />
                 Manage Seat Allocations
               </Button>
               
@@ -231,7 +217,6 @@ export function CourseDetails() {
                 </Button>
               )}
               
-              {/* Course closure action button - varies based on status */}
               {courseStatus === "closed" ? (
                 <Button 
                   className="w-full justify-start" 
@@ -267,7 +252,6 @@ export function CourseDetails() {
                 </Alert>
               )}
               
-              {/* Add an explanation alert when the button is disabled */}
               {!canBeClosed && courseStatus === "scheduled" && !isFutureCourse && (
                 <Alert className="bg-gray-50 border-gray-200 text-gray-800">
                   <Clock className="h-4 w-4 text-gray-600 mr-2" />

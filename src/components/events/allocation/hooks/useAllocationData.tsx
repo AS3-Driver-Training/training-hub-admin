@@ -122,7 +122,7 @@ export function useAllocationData() {
     enabled: !!courseInstance && courseInstance.is_open_enrollment
   });
 
-  // Save allocations mutation with proper cache invalidation
+  // Save allocations mutation with comprehensive cache invalidation
   const saveAllocationsMutation = useMutation({
     mutationFn: async (allocations: Allocation[]) => {
       console.log("Saving allocations:", allocations);
@@ -158,22 +158,32 @@ export function useAllocationData() {
 
       return { success: true };
     },
-    onSuccess: () => {
-      // Invalidate all related queries to ensure data consistency
+    onSuccess: async () => {
       console.log("Invalidating related queries after allocation save");
       
-      // Invalidate current course allocations
-      queryClient.invalidateQueries({ queryKey: queryKeys.courseAllocations(id || '0') });
+      // Comprehensive cache invalidation to ensure data consistency
+      const invalidationPromises = [
+        // Invalidate current course allocations
+        queryClient.invalidateQueries({ queryKey: queryKeys.courseAllocations(id || '0') }),
+        
+        // Invalidate training events list to update enrollment counts
+        queryClient.invalidateQueries({ queryKey: queryKeys.trainingEvents() }),
+        
+        // Invalidate the specific course instance to refresh capacity data
+        queryClient.invalidateQueries({ queryKey: queryKeys.courseInstance(id || '0') })
+      ];
       
-      // Invalidate training events list to update enrollment counts
-      queryClient.invalidateQueries({ queryKey: queryKeys.trainingEvents() });
-      
-      // Invalidate client events if this course has a host client
+      // If this is a private course with a host client, invalidate client events
       if (courseInstance?.host_client_id) {
-        queryClient.invalidateQueries({ 
-          queryKey: queryKeys.clientEvents(courseInstance.host_client_id) 
-        });
+        invalidationPromises.push(
+          queryClient.invalidateQueries({ 
+            queryKey: queryKeys.clientEvents(courseInstance.host_client_id) 
+          })
+        );
       }
+      
+      // Wait for all invalidations to complete
+      await Promise.all(invalidationPromises);
       
       // Show success message
       toast.success("Success", {
