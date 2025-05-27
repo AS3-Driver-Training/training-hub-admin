@@ -29,6 +29,7 @@ export function PlaceField({
   isRequired = true 
 }: PlaceFieldProps) {
   const [inputValue, setInputValue] = useState(value || '');
+  const [isSearching, setIsSearching] = useState(false);
   
   // When external value changes, update the input value
   useEffect(() => {
@@ -41,6 +42,8 @@ export function PlaceField({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
+    setIsSearching(newValue.length > 2); // Show searching state when typing
+    
     if (onChange) {
       onChange(newValue);
     }
@@ -50,6 +53,16 @@ export function PlaceField({
     
     // Log the input change for debugging
     console.log('PlaceField input changed:', newValue);
+  };
+
+  // Handle focus to show that Google Places is ready
+  const handleInputFocus = () => {
+    console.log('PlaceField focused - Google Places autocomplete should be active');
+    if (window.google?.maps?.places) {
+      console.log('Google Places API is ready');
+    } else {
+      console.log('Google Places API not yet loaded');
+    }
   };
 
   return (
@@ -64,20 +77,36 @@ export function PlaceField({
           ref={inputRef}
           value={inputValue}
           onChange={handleInputChange}
+          onFocus={handleInputFocus}
           placeholder="Search for a place or venue"
           className="pr-8 z-[1]"
           required={isRequired}
           autoComplete="off"
-          // Let click events propagate normally to the Google element
-          onClick={(e) => e.stopPropagation()}
-          // We're now relying on our global hook for handling clicks on Google Places elements
+          // Prevent event bubbling that might close the dialog
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('PlaceField clicked - should not close dialog');
+          }}
+          onKeyDown={(e) => {
+            // Log key events for debugging
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+              console.log('Arrow key pressed - navigating Google Places suggestions');
+            }
+          }}
         />
         
         {/* Loading indicator */}
         <div className="absolute inset-y-0 right-2 flex items-center">
-          <LoadingIndicator isLoading={!!form.formState.isSubmitting} />
+          <LoadingIndicator isLoading={isSearching && !scriptError} />
         </div>
       </div>
+
+      {/* Helper text */}
+      {!scriptError && (
+        <p className="text-xs text-muted-foreground">
+          Start typing to search for places with Google Places
+        </p>
+      )}
 
       {/* Error message */}
       {scriptError && <GoogleMapsError scriptError={scriptError} />}

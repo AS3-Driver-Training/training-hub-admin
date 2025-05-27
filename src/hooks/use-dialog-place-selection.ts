@@ -36,19 +36,38 @@ export function useDialogPlaceSelection() {
         isSelectingRef.current = true;
         console.log('Google Places element clicked - blocking dialog close');
         
-        // Reset after a delay
+        // Extended timeout for better protection
         setTimeout(() => {
           isSelectingRef.current = false;
           console.log('Reset Google Places selection flag');
-        }, 500);
+        }, 1000);
+      }
+    };
+    
+    // Handler to detect mousedown on pac elements for better timing
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      
+      if (
+        target.closest('.pac-container') || 
+        target.classList.contains('pac-item') ||
+        target.classList.contains('pac-item-query') ||
+        target.classList.contains('pac-icon')
+      ) {
+        isSelectingRef.current = true;
+        console.log('Google Places mousedown detected - setting protection');
       }
     };
     
     // Use capture phase to get the event first
     document.addEventListener('mousedown', handleGlobalClick, true);
+    document.addEventListener('mousedown', handleMouseDown, true);
+    document.addEventListener('click', handleGlobalClick, true);
     
     return () => {
       document.removeEventListener('mousedown', handleGlobalClick, true);
+      document.removeEventListener('mousedown', handleMouseDown, true);
+      document.removeEventListener('click', handleGlobalClick, true);
       // Clean up the global function when the component unmounts
       delete window.isSelectingGooglePlace;
     };

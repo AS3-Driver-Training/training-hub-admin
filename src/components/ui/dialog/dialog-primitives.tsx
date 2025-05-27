@@ -16,6 +16,15 @@ const PatchedDialogRoot = React.forwardRef<React.ElementRef<typeof DialogPrimiti
       return;
     }
 
+    // Additional check for Google Places elements in the DOM
+    if (!open) {
+      const pacContainer = document.querySelector('.pac-container');
+      if (pacContainer && pacContainer.style.display !== 'none') {
+        console.log('Blocked dialog close - Google Places dropdown is visible');
+        return;
+      }
+    }
+
     // Otherwise call the original handler
     if (onOpenChange) {
       onOpenChange(open);
@@ -48,13 +57,38 @@ export const DialogContent = React.forwardRef<React.ElementRef<typeof DialogPrim
 }, ref) => <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content ref={ref} className={cn("fixed left-[50%] top-[50%] z-[8100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg md:w-full", className)} aria-hidden={undefined} onOpenAutoFocus={props.onOpenAutoFocus} onCloseAutoFocus={props.onCloseAutoFocus} onPointerDownOutside={e => {
-    // Prevent closing when clicking elements with data-stop-propagation attribute
-    if (e.target && (e.target as HTMLElement).closest('[data-stop-propagation="true"]')) {
+    // Enhanced protection for Google Places elements
+    const target = e.target as HTMLElement;
+    
+    // Prevent closing when clicking Google Places elements
+    if (target && (
+      target.closest('.pac-container') ||
+      target.closest('.pac-item') ||
+      target.classList.contains('pac-item') ||
+      target.classList.contains('pac-item-query') ||
+      target.classList.contains('pac-icon') ||
+      target.closest('[data-stop-propagation="true"]')
+    )) {
+      console.log('Prevented dialog close - clicked on Google Places element');
       e.preventDefault();
+      return;
     }
+    
     // Call original handler if provided
     if (props.onPointerDownOutside) {
       props.onPointerDownOutside(e);
+    }
+  }} onEscapeKeyDown={e => {
+    // Prevent closing with Escape if Google Places is active
+    if (window.isSelectingGooglePlace && window.isSelectingGooglePlace()) {
+      console.log('Prevented dialog close with Escape - Google Places is active');
+      e.preventDefault();
+      return;
+    }
+    
+    // Call original handler if provided
+    if (props.onEscapeKeyDown) {
+      props.onEscapeKeyDown(e);
     }
   }} {...props}>
       {children}
