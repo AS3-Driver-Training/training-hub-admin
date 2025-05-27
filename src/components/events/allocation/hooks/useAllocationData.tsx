@@ -197,8 +197,8 @@ export function useAllocationData() {
       console.log("Save mutation successful, starting cache invalidation...");
       
       try {
-        // Wait for all invalidations to complete with better error handling
-        const invalidationResults = await Promise.allSettled([
+        // Prepare invalidation promises - only add client events if we have a host client
+        const invalidationPromises = [
           // Invalidate current course allocations
           queryClient.invalidateQueries({ queryKey: queryKeys.courseAllocations(id || '0') }),
           
@@ -207,7 +207,20 @@ export function useAllocationData() {
           
           // Invalidate the specific course instance to refresh capacity data
           queryClient.invalidateQueries({ queryKey: queryKeys.courseInstance(id || '0') })
-        ]);
+        ];
+        
+        // If this course has a host client, invalidate their client events
+        if (courseInstance?.host_client_id) {
+          console.log("Adding client events invalidation for host client:", courseInstance.host_client_id);
+          invalidationPromises.push(
+            queryClient.invalidateQueries({ 
+              queryKey: queryKeys.clientEvents(courseInstance.host_client_id) 
+            })
+          );
+        }
+        
+        // Wait for all invalidations to complete with better error handling
+        const invalidationResults = await Promise.allSettled(invalidationPromises);
         
         // Log any invalidation failures
         invalidationResults.forEach((result, index) => {
@@ -217,19 +230,6 @@ export function useAllocationData() {
             console.log(`Invalidation ${index} succeeded`);
           }
         });
-        
-        // If this is a private course with a host client, invalidate client events
-        if (courseInstance?.host_client_id) {
-          console.log("Invalidating client events for host client:", courseInstance.host_client_id);
-          try {
-            await queryClient.invalidateQueries({ 
-              queryKey: queryKeys.clientEvents(courseInstance.host_client_id) 
-            });
-            console.log("Client events invalidated successfully");
-          } catch (error) {
-            console.error("Failed to invalidate client events:", error);
-          }
-        }
         
         console.log("All cache invalidations completed");
         

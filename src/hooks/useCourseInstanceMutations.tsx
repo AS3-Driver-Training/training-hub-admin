@@ -39,6 +39,7 @@ export function useCourseInstanceMutations() {
       
       // If this is a private course, also invalidate client events
       if (data.host_client_id) {
+        console.log("Invalidating client events for new course host client:", data.host_client_id);
         invalidationPromises.push(
           queryClient.invalidateQueries({ 
             queryKey: queryKeys.clientEvents(data.host_client_id) 
@@ -93,6 +94,7 @@ export function useCourseInstanceMutations() {
       
       // If this is a private course, also invalidate client events
       if (data.host_client_id) {
+        console.log("Invalidating client events for updated course host client:", data.host_client_id);
         invalidationPromises.push(
           queryClient.invalidateQueries({ 
             queryKey: queryKeys.clientEvents(data.host_client_id) 

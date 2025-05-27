@@ -21,7 +21,9 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
     queryFn: async () => {
       try {
         console.log('Fetching events for client:', clientId);
-        const { data, error } = await supabase
+        
+        // First, get all course instances for this client
+        const { data: courseInstances, error: instancesError } = await supabase
           .from('course_instances')
           .select(`
             id,
@@ -29,45 +31,58 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
             end_date,
             is_open_enrollment,
             private_seats_allocated,
-            programs:program_id (
+            program:program_id (
               name,
               max_students
             ),
-            venues:venue_id (
+            venue:venue_id (
               name
             )
           `)
           .eq('host_client_id', clientId)
           .order('start_date', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching client events:', error);
-          throw error;
+        if (instancesError) {
+          console.error('Error fetching client course instances:', instancesError);
+          throw instancesError;
         }
 
-        // Get enrollment counts for these course instances
-        const courseInstanceIds = (data || []).map(instance => instance.id);
-        
-        let enrollmentCounts: Record<string, number> = {};
-        if (courseInstanceIds.length > 0) {
-          const { data: allocations, error: allocationsError } = await supabase
-            .from('course_allocations')
-            .select('course_instance_id, seats_allocated')
-            .in('course_instance_id', courseInstanceIds);
-          
-          if (allocationsError) {
-            console.error('Error fetching allocations:', allocationsError);
-          } else {
-            enrollmentCounts = (allocations || []).reduce((acc, allocation) => {
-              const instanceId = allocation.course_instance_id.toString();
-              acc[instanceId] = (acc[instanceId] || 0) + allocation.seats_allocated;
-              return acc;
-            }, {} as Record<string, number>);
-          }
+        console.log('Course instances found:', courseInstances);
+
+        if (!courseInstances || courseInstances.length === 0) {
+          console.log('No course instances found for client:', clientId);
+          return [];
         }
+
+        // Get all allocations for these course instances in one query
+        const courseInstanceIds = courseInstances.map(instance => instance.id);
+        console.log('Fetching allocations for course instances:', courseInstanceIds);
+        
+        const { data: allocations, error: allocationsError } = await supabase
+          .from('course_allocations')
+          .select('course_instance_id, seats_allocated')
+          .in('course_instance_id', courseInstanceIds);
+        
+        if (allocationsError) {
+          console.error('Error fetching allocations:', allocationsError);
+          // Don't throw here, just log and continue with empty allocations
+        }
+
+        console.log('Allocations found:', allocations);
+
+        // Calculate enrollment counts by course instance
+        const enrollmentCounts: Record<string, number> = {};
+        if (allocations) {
+          allocations.forEach(allocation => {
+            const instanceId = allocation.course_instance_id.toString();
+            enrollmentCounts[instanceId] = (enrollmentCounts[instanceId] || 0) + allocation.seats_allocated;
+          });
+        }
+
+        console.log('Calculated enrollment counts:', enrollmentCounts);
 
         // Transform to TrainingEvent format
-        const transformedEvents: TrainingEvent[] = (data || []).map(instance => {
+        const transformedEvents: TrainingEvent[] = courseInstances.map(instance => {
           const startDate = new Date(instance.start_date);
           const endDate = instance.end_date ? new Date(instance.end_date) : new Date(startDate);
           
@@ -77,13 +92,22 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
           }
 
           const enrolledCount = enrollmentCounts[instance.id.toString()] || 0;
-          const capacity = instance.private_seats_allocated || 
-                          (instance.programs?.max_students || 0);
+          
+          // For private courses, use private_seats_allocated as capacity
+          // For open enrollment, use program max_students
+          let capacity = 0;
+          if (instance.is_open_enrollment) {
+            capacity = instance.program?.max_students || 0;
+          } else {
+            capacity = instance.private_seats_allocated || 0;
+          }
+
+          console.log(`Instance ${instance.id}: enrolled=${enrolledCount}, capacity=${capacity}, isOpen=${instance.is_open_enrollment}`);
 
           return {
             id: instance.id.toString(),
-            title: instance.programs?.name || "Unnamed Course",
-            location: instance.venues?.name || "Unknown Location",
+            title: instance.program?.name || "Unnamed Course",
+            location: instance.venue?.name || "Unknown Location",
             startDate: instance.start_date,
             endDate: endDate.toISOString(),
             status: new Date(instance.start_date) > new Date() ? 'scheduled' : 'completed',
@@ -97,7 +121,7 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
         console.log('Transformed client events:', transformedEvents);
         return transformedEvents;
       } catch (error) {
-        console.error('Error in events query:', error);
+        console.error('Error in client events query:', error);
         throw error;
       }
     },
@@ -149,7 +173,10 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
         <CardContent className="p-6">
           <div className="text-center text-destructive">
             <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-            Error loading events. Please try again.
+            Error loading events: {error instanceof Error ? error.message : 'Unknown error'}
+            <div className="mt-2 text-sm">
+              Please check the console for more details.
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -162,14 +189,14 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Client Events
+            Client Events ({events?.length || 0} total)
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs value={eventFilter} onValueChange={(value) => setEventFilter(value as "upcoming" | "past")}>
             <TabsList className="mb-4">
-              <TabsTrigger value="upcoming">Upcoming Events</TabsTrigger>
-              <TabsTrigger value="past">Past Events</TabsTrigger>
+              <TabsTrigger value="upcoming">Upcoming Events ({upcomingEvents.length})</TabsTrigger>
+              <TabsTrigger value="past">Past Events ({pastEvents.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="upcoming">
