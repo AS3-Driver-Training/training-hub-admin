@@ -2,35 +2,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Calendar, MapPin, Users, AlertCircle } from "lucide-react";
+import { Calendar, AlertCircle } from "lucide-react";
 import { useState } from "react";
-
-interface ClientEvent {
-  id: string;
-  start_date: string;
-  end_date: string | null;
-  programs: {
-    name: string;
-    duration_days: number;
-  };
-  venues: {
-    name: string;
-    address: string;
-  };
-  enrolled_count: number;
-  status: string;
-}
+import { EventListView } from "@/components/events/training/EventListView";
+import { TrainingEvent } from "@/types/events";
 
 interface ClientEventsTabProps {
   clientId: string;
@@ -39,7 +15,7 @@ interface ClientEventsTabProps {
 export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
   const [eventFilter, setEventFilter] = useState<"upcoming" | "past">("upcoming");
 
-  const { data: events, isLoading, error } = useQuery({
+  const { data: events, isLoading, error, refetch } = useQuery({
     queryKey: ['client-events', clientId],
     queryFn: async () => {
       try {
@@ -50,15 +26,15 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
             id,
             start_date,
             end_date,
+            is_open_enrollment,
+            private_seats_allocated,
             programs:program_id (
               name,
-              duration_days
+              max_students
             ),
             venues:venue_id (
-              name,
-              address
-            ),
-            session_attendees(count)
+              name
+            )
           `)
           .eq('host_client_id', clientId)
           .order('start_date', { ascending: false });
@@ -68,15 +44,57 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
           throw error;
         }
 
-        // Transform data to include enrolled count
-        const eventsWithCount = (data || []).map(event => ({
-          ...event,
-          enrolled_count: event.session_attendees?.[0]?.count || 0,
-          status: getEventStatus(event.start_date, event.end_date)
-        }));
+        // Get enrollment counts for these course instances
+        const courseInstanceIds = (data || []).map(instance => instance.id);
+        
+        let enrollmentCounts: Record<string, number> = {};
+        if (courseInstanceIds.length > 0) {
+          const { data: allocations, error: allocationsError } = await supabase
+            .from('course_allocations')
+            .select('course_instance_id, seats_allocated')
+            .in('course_instance_id', courseInstanceIds);
+          
+          if (allocationsError) {
+            console.error('Error fetching allocations:', allocationsError);
+          } else {
+            enrollmentCounts = (allocations || []).reduce((acc, allocation) => {
+              const instanceId = allocation.course_instance_id.toString();
+              acc[instanceId] = (acc[instanceId] || 0) + allocation.seats_allocated;
+              return acc;
+            }, {} as Record<string, number>);
+          }
+        }
 
-        console.log('Client events:', eventsWithCount);
-        return eventsWithCount;
+        // Transform to TrainingEvent format
+        const transformedEvents: TrainingEvent[] = (data || []).map(instance => {
+          const startDate = new Date(instance.start_date);
+          const endDate = instance.end_date ? new Date(instance.end_date) : new Date(startDate);
+          
+          // Set default end date if not provided
+          if (!instance.end_date) {
+            endDate.setDate(startDate.getDate() + 1);
+          }
+
+          const enrolledCount = enrollmentCounts[instance.id.toString()] || 0;
+          const capacity = instance.private_seats_allocated || 
+                          (instance.programs?.max_students || 0);
+
+          return {
+            id: instance.id.toString(),
+            title: instance.programs?.name || "Unnamed Course",
+            location: instance.venues?.name || "Unknown Location",
+            startDate: instance.start_date,
+            endDate: endDate.toISOString(),
+            status: new Date(instance.start_date) > new Date() ? 'scheduled' : 'completed',
+            capacity: capacity,
+            enrolledCount: enrolledCount,
+            clientName: null, // Not needed for client view
+            isOpenEnrollment: instance.is_open_enrollment || false
+          };
+        });
+
+        console.log('Transformed client events:', transformedEvents);
+        return transformedEvents;
       } catch (error) {
         console.error('Error in events query:', error);
         throw error;
@@ -84,67 +102,33 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
     },
   });
 
-  const getEventStatus = (startDate: string, endDate: string | null) => {
-    const now = new Date();
-    const start = new Date(startDate);
-    const end = endDate ? new Date(endDate) : null;
-
-    if (end && end < now) return 'completed';
-    if (start <= now && (!end || end >= now)) return 'in-progress';
-    if (start > now) return 'scheduled';
-    return 'scheduled';
-  };
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'secondary';
-      case 'in-progress':
-        return 'default';
-      case 'scheduled':
-        return 'success';
-      default:
-        return 'outline';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'Completed';
-      case 'in-progress':
-        return 'In Progress';
-      case 'scheduled':
-        return 'Scheduled';
-      default:
-        return 'Unknown';
-    }
-  };
-
+  // Filter events by upcoming/past
   const filteredEvents = events?.filter(event => {
     const now = new Date();
-    const start = new Date(event.start_date);
+    const eventDate = new Date(event.startDate);
     
     if (eventFilter === "upcoming") {
-      return start >= now || event.status === 'in-progress';
+      return eventDate >= now || event.status === 'scheduled';
     } else {
-      return start < now && event.status === 'completed';
+      return eventDate < now && event.status === 'completed';
     }
   }) || [];
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
+  const upcomingEvents = filteredEvents.filter(event => {
+    const now = new Date();
+    const eventDate = new Date(event.startDate);
+    return eventDate >= now || event.status === 'scheduled';
+  });
 
-  const formatDateRange = (startDate: string, endDate: string | null) => {
-    const start = formatDate(startDate);
-    if (!endDate) return start;
-    const end = formatDate(endDate);
-    return `${start} - ${end}`;
+  const pastEvents = filteredEvents.filter(event => {
+    const now = new Date();
+    const eventDate = new Date(event.startDate);
+    return eventDate < now && event.status === 'completed';
+  });
+
+  // Handle event deletion/updates
+  const handleEventDeleted = () => {
+    refetch();
   };
 
   if (isLoading) {
@@ -186,77 +170,24 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
               <TabsTrigger value="past">Past Events</TabsTrigger>
             </TabsList>
 
-            <TabsContent value={eventFilter}>
-              {filteredEvents.length === 0 ? (
-                <div className="text-center py-8">
-                  <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">
-                    No {eventFilter} events found for this client.
-                  </p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Program</TableHead>
-                      <TableHead>Dates</TableHead>
-                      <TableHead>Venue</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Enrolled</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredEvents.map((event) => (
-                      <TableRow key={event.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{event.programs.name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {event.programs.duration_days} days
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">
-                              {formatDateRange(event.start_date, event.end_date)}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="font-medium">{event.venues.name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {event.venues.address}
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(event.status)}>
-                            {getStatusLabel(event.status)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                            <span>{event.enrolled_count} students</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">
-                            View Details
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+            <TabsContent value="upcoming">
+              {eventFilter === "upcoming" ? (
+                <EventListView 
+                  upcomingEvents={upcomingEvents}
+                  pastEvents={[]}
+                  onEventDeleted={handleEventDeleted}
+                />
+              ) : null}
+            </TabsContent>
+
+            <TabsContent value="past">
+              {eventFilter === "past" ? (
+                <EventListView 
+                  upcomingEvents={[]}
+                  pastEvents={pastEvents}
+                  onEventDeleted={handleEventDeleted}
+                />
+              ) : null}
             </TabsContent>
           </Tabs>
         </CardContent>
