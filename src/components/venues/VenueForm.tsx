@@ -11,7 +11,6 @@ import { PlaceField } from "./form/PlaceField";
 import { LocationFields } from "./form/LocationFields";
 import { GoogleMapsError } from "./form/GoogleMapsError";
 import { LoadingIndicator } from "./form/LoadingIndicator";
-import { SubmitButton } from "./form/SubmitButton";
 import { CheckCircle } from "lucide-react";
 
 interface VenueFormProps {
@@ -114,7 +113,7 @@ export function VenueForm({ defaultValues, onSubmit, isSubmitting, isEditing }: 
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmitForm)} className="space-y-4">
+      <form id="venue-form" onSubmit={form.handleSubmit(handleSubmitForm)} className="space-y-6">
         <GoogleMapsError scriptError={scriptError} />
         <LoadingIndicator isLoading={isLoadingScript} />
         
@@ -128,7 +127,7 @@ export function VenueForm({ defaultValues, onSubmit, isSubmitting, isEditing }: 
           
           {/* Success indicator when place is selected */}
           {placeSelected && (
-            <div className="absolute top-2 right-2 flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-md text-sm">
+            <div className="absolute top-2 right-2 flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-md text-sm z-10">
               <CheckCircle className="h-4 w-4 mr-1" />
               Place selected!
             </div>
@@ -136,7 +135,7 @@ export function VenueForm({ defaultValues, onSubmit, isSubmitting, isEditing }: 
           
           {/* Processing indicator */}
           {isProcessingPlace && (
-            <div className="absolute top-2 right-2 flex items-center text-blue-600 bg-blue-50 px-2 py-1 rounded-md text-sm">
+            <div className="absolute top-2 right-2 flex items-center text-blue-600 bg-blue-50 px-2 py-1 rounded-md text-sm z-10">
               <LoadingIndicator isLoading={true} />
               <span className="ml-1">Processing...</span>
             </div>
@@ -153,8 +152,6 @@ export function VenueForm({ defaultValues, onSubmit, isSubmitting, isEditing }: 
         />
         
         <LocationFields form={form} />
-        
-        <SubmitButton isSubmitting={isSubmitting} isEditing={isEditing} />
       </form>
     </Form>
   );

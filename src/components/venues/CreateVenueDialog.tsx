@@ -103,7 +103,7 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
       onOpenChange={handleOpenChange}
       modal={true}
     >
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Edit Venue" : "Create New Venue"}</DialogTitle>
           <DialogDescription>
@@ -111,16 +111,25 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
           </DialogDescription>
         </DialogHeader>
         
-        <VenueForm 
-          defaultValues={defaultValues}
-          onSubmit={handleSubmit}
-          isSubmitting={isSubmitting}
-          isEditing={isEditing}
-        />
+        <div className="flex-1 overflow-y-auto py-4">
+          <VenueForm 
+            defaultValues={defaultValues}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            isEditing={isEditing}
+          />
+        </div>
         
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0 border-t pt-4">
           <Button type="button" variant="outline" onClick={() => onClose()}>
             Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            form="venue-form"
+          >
+            {isSubmitting ? "Saving..." : isEditing ? "Update Venue" : "Create Venue"}
           </Button>
         </DialogFooter>
       </DialogContent>

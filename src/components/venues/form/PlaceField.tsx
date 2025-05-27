@@ -31,6 +31,17 @@ export function PlaceField({
   const [inputValue, setInputValue] = useState(value || '');
   const [isSearching, setIsSearching] = useState(false);
   
+  // Watch the form's place field value and sync with local state
+  const formPlaceValue = form.watch("place");
+  
+  // Sync input value with form value when it changes
+  useEffect(() => {
+    if (formPlaceValue !== undefined && formPlaceValue !== inputValue) {
+      setInputValue(formPlaceValue);
+      console.log('PlaceField synced with form value:', formPlaceValue);
+    }
+  }, [formPlaceValue]);
+
   // When external value changes, update the input value
   useEffect(() => {
     if (value !== undefined) {

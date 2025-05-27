@@ -6,12 +6,7 @@ interface SubmitButtonProps {
   isEditing: boolean;
 }
 
+// This component is deprecated - buttons are now handled in the dialog footer
 export function SubmitButton({ isSubmitting, isEditing }: SubmitButtonProps) {
-  return (
-    <div className="flex justify-end space-x-2 pt-4">
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Saving..." : isEditing ? "Update Venue" : "Create Venue"}
-      </Button>
-    </div>
-  );
+  return null;
 }
