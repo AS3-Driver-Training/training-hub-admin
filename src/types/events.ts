@@ -10,4 +10,6 @@ export interface TrainingEvent {
   enrolledCount: number;
   clientName: string | null;
   isOpenEnrollment: boolean;
+  region: string | null;
+  venue: any | null;
 }
