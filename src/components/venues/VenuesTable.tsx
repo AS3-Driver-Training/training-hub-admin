@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { getCountryByCode } from "@/utils/countries";
 
 interface VenuesTableProps {
   venues: Venue[];
@@ -46,7 +47,7 @@ export function VenuesTable({ venues, onEdit, onDelete }: VenuesTableProps) {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Short Name</TableHead>
-              <TableHead>Address</TableHead>
+              <TableHead>Country</TableHead>
               <TableHead>Region</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -59,24 +60,32 @@ export function VenuesTable({ venues, onEdit, onDelete }: VenuesTableProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              venues.map((venue) => (
-                <TableRow key={venue.id}>
-                  <TableCell className="font-medium">{venue.name}</TableCell>
-                  <TableCell>{venue.short_name}</TableCell>
-                  <TableCell>{venue.address}</TableCell>
-                  <TableCell>{venue.region}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => onEdit(venue)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(venue)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+              venues.map((venue) => {
+                const country = getCountryByCode(venue.country || 'US');
+                return (
+                  <TableRow key={venue.id}>
+                    <TableCell className="font-medium">{venue.name}</TableCell>
+                    <TableCell>{venue.short_name}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{country.flag}</span>
+                        <span>{country.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{venue.region}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => onEdit(venue)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(venue)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

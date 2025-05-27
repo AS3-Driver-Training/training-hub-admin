@@ -6,6 +6,7 @@ export interface Venue {
   address: string;
   google_location: string;  // Snake case for DB field names 
   region: string;
+  country: string;  // Added country field
 }
 
 // We'll add a client-side version of the venue with camelCase properties
@@ -16,6 +17,7 @@ export interface VenueDisplay {
   address: string;
   googleLocation: string;  // Camel case for client-side usage
   region: string;
+  country: string;  // Added country field
 }
 
 // Utility function to convert between DB and display formats
@@ -26,6 +28,7 @@ export const toVenueDisplay = (venue: Venue): VenueDisplay => ({
   address: venue.address,
   googleLocation: venue.google_location,
   region: venue.region,
+  country: venue.country,
 });
 
 export const toVenueModel = (venue: VenueDisplay): Venue => ({
@@ -35,4 +38,5 @@ export const toVenueModel = (venue: VenueDisplay): Venue => ({
   address: venue.address,
   google_location: venue.googleLocation,
   region: venue.region,
+  country: venue.country,
 });

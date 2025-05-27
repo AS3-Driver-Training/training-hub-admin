@@ -33,7 +33,7 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
     address: venue.address || "",
     googleLocation: venue.google_location || "",
     region: venue.region || "",
-    country: ""
+    country: venue.country || "US"
   } : {
     place: "",
     name: "",
@@ -41,7 +41,7 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
     address: "",
     googleLocation: "",
     region: "",
-    country: ""
+    country: "US"
   };
 
   const handleSubmit = async (data: VenueFormValues) => {
@@ -54,7 +54,8 @@ export function CreateVenueDialog({ open, onClose, venue }: CreateVenueDialogPro
         short_name: data.shortName,
         address: data.address,
         google_location: data.googleLocation,
-        region: data.region
+        region: data.region,
+        country: data.country
       };
       
       let result;

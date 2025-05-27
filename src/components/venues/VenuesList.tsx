@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { VenuesTable } from "@/components/venues/VenuesTable";
 import { CreateVenueDialog } from "@/components/venues/CreateVenueDialog";
-import { VenueFilters } from "@/components/venues/VenueFilters";
+import { VenueSearchAndFilters } from "@/components/venues/VenueSearchAndFilters";
 import { Venue } from "@/types/venues";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,7 @@ const fetchVenues = async (): Promise<Venue[]> => {
     address: venue.address || "",
     google_location: venue.google_location || "",
     region: venue.region || "",
+    country: venue.country || "US",
   }));
 };
 
@@ -37,24 +38,13 @@ export function VenuesList() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [venueToEdit, setVenueToEdit] = useState<Venue | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [regionFilter, setRegionFilter] = useState("all");
+  const [countryFilter, setCountryFilter] = useState("all");
   const { toast } = useToast();
 
   const { data: venues, isLoading, refetch } = useQuery({
     queryKey: ["venues"],
     queryFn: fetchVenues,
   });
-
-  // Get unique regions for filter dropdown
-  const availableRegions = useMemo(() => {
-    if (!venues) return [];
-    const regions = venues
-      .map(venue => venue.region)
-      .filter((region): region is string => Boolean(region))
-      .filter((region, index, array) => array.indexOf(region) === index)
-      .sort();
-    return regions;
-  }, [venues]);
 
   // Filter venues based on search and filters
   const filteredVenues = useMemo(() => {
@@ -64,23 +54,22 @@ export function VenuesList() {
       // Search filter
       const matchesSearch = searchQuery === "" || 
         venue.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        venue.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
         venue.region.toLowerCase().includes(searchQuery.toLowerCase()) ||
         venue.short_name.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Region filter
-      const matchesRegion = regionFilter === "all" || venue.region === regionFilter;
+      // Country filter
+      const matchesCountry = countryFilter === "all" || venue.country === countryFilter;
 
-      return matchesSearch && matchesRegion;
+      return matchesSearch && matchesCountry;
     });
-  }, [venues, searchQuery, regionFilter]);
+  }, [venues, searchQuery, countryFilter]);
 
   // Count active filters
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (regionFilter !== "all") count++;
+    if (countryFilter !== "all") count++;
     return count;
-  }, [regionFilter]);
+  }, [countryFilter]);
 
   const handleCreateVenue = () => {
     setIsCreateDialogOpen(true);
@@ -127,7 +116,7 @@ export function VenuesList() {
 
   const handleClearFilters = () => {
     setSearchQuery("");
-    setRegionFilter("all");
+    setCountryFilter("all");
   };
 
   return (
@@ -141,14 +130,13 @@ export function VenuesList() {
       </div>
 
       <div className="space-y-6">
-        <VenueFilters
+        <VenueSearchAndFilters
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          regionFilter={regionFilter}
-          setRegionFilter={setRegionFilter}
+          countryFilter={countryFilter}
+          setCountryFilter={setCountryFilter}
           onClearFilters={handleClearFilters}
           activeFilterCount={activeFilterCount}
-          availableRegions={availableRegions}
         />
 
         <Card>

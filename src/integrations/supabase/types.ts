@@ -818,6 +818,7 @@ export type Database = {
       venues: {
         Row: {
           address: string | null
+          country: string | null
           created_at: string | null
           google_location: string | null
           id: number
@@ -828,6 +829,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          country?: string | null
           created_at?: string | null
           google_location?: string | null
           id?: number
@@ -838,6 +840,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          country?: string | null
           created_at?: string | null
           google_location?: string | null
           id?: number
