@@ -1,4 +1,3 @@
-
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InviteClientDialog } from "@/components/InviteClientDialog";
 import { CountryFilter } from "@/components/clients/CountryFilter";
-import { ActivityStatus } from "@/components/clients/ActivityStatus";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -199,7 +197,7 @@ export default function Clients() {
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{client.name}</span>
                             <Badge variant="outline" className="text-xs">
-                              {country.flag} {country.code}
+                              {country.flag}
                             </Badge>
                           </div>
                           {client.contact_email && (
@@ -221,10 +219,11 @@ export default function Clients() {
                             <div className="text-muted-foreground">
                               Last activity: {formatLastActivity(client.last_activity_at)}
                             </div>
-                            <ActivityStatus 
-                              lastActivity={client.last_activity_at}
-                              activeUsers={client.active_users_count}
-                            />
+                            {client.active_users_count > 0 && (
+                              <div className="text-xs text-muted-foreground">
+                                {client.active_users_count} active users
+                              </div>
+                            )}
                           </div>
                         </div>
                       </TableCell>
