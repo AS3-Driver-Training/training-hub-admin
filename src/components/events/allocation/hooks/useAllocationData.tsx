@@ -1,8 +1,10 @@
+
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface Allocation {
   id?: number;
@@ -22,7 +24,7 @@ export function useAllocationData() {
     isLoading: courseLoading, 
     error: courseError 
   } = useQuery({
-    queryKey: ["courseInstance", id],
+    queryKey: queryKeys.courseInstance(id || '0'),
     queryFn: async () => {
       console.log("Fetching course instance with ID:", id);
       const { data, error } = await supabase
@@ -69,7 +71,7 @@ export function useAllocationData() {
     isLoading: allocationsLoading, 
     error: allocationsError 
   } = useQuery({
-    queryKey: ["courseAllocations", id],
+    queryKey: queryKeys.courseAllocations(id || '0'),
     queryFn: async () => {
       console.log("Fetching course allocations for instance ID:", id);
       const { data, error } = await supabase
@@ -102,7 +104,7 @@ export function useAllocationData() {
     isLoading: clientsLoading, 
     error: clientsError 
   } = useQuery({
-    queryKey: ["clients"],
+    queryKey: queryKeys.clients(),
     queryFn: async () => {
       console.log("Fetching clients");
       const { data, error } = await supabase.from("clients").select("*");
@@ -120,7 +122,7 @@ export function useAllocationData() {
     enabled: !!courseInstance && courseInstance.is_open_enrollment
   });
 
-  // Save allocations mutation
+  // Save allocations mutation with proper cache invalidation
   const saveAllocationsMutation = useMutation({
     mutationFn: async (allocations: Allocation[]) => {
       console.log("Saving allocations:", allocations);
@@ -157,7 +159,23 @@ export function useAllocationData() {
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["courseAllocations", id] });
+      // Invalidate all related queries to ensure data consistency
+      console.log("Invalidating related queries after allocation save");
+      
+      // Invalidate current course allocations
+      queryClient.invalidateQueries({ queryKey: queryKeys.courseAllocations(id || '0') });
+      
+      // Invalidate training events list to update enrollment counts
+      queryClient.invalidateQueries({ queryKey: queryKeys.trainingEvents() });
+      
+      // Invalidate client events if this course has a host client
+      if (courseInstance?.host_client_id) {
+        queryClient.invalidateQueries({ 
+          queryKey: queryKeys.clientEvents(courseInstance.host_client_id) 
+        });
+      }
+      
+      // Show success message
       toast.success("Success", {
         description: "Seat allocations have been saved successfully"
       });

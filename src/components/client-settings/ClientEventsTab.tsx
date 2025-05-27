@@ -7,6 +7,7 @@ import { Calendar, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { EventListView } from "@/components/events/training/EventListView";
 import { TrainingEvent } from "@/types/events";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface ClientEventsTabProps {
   clientId: string;
@@ -16,7 +17,7 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
   const [eventFilter, setEventFilter] = useState<"upcoming" | "past">("upcoming");
 
   const { data: events, isLoading, error, refetch } = useQuery({
-    queryKey: ['client-events', clientId],
+    queryKey: queryKeys.clientEvents(clientId),
     queryFn: async () => {
       try {
         console.log('Fetching events for client:', clientId);
@@ -128,6 +129,7 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
 
   // Handle event deletion/updates
   const handleEventDeleted = () => {
+    console.log("Client event deleted, refetching client events");
     refetch();
   };
 

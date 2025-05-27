@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -10,6 +9,7 @@ import { VenueSearchAndFilters } from "@/components/venues/VenueSearchAndFilters
 import { Venue } from "@/types/venues";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { queryKeys } from "@/lib/queryKeys";
 
 // Function to fetch venues from Supabase
 const fetchVenues = async (): Promise<Venue[]> => {
@@ -42,7 +42,7 @@ export function VenuesList() {
   const { toast } = useToast();
 
   const { data: venues, isLoading, refetch } = useQuery({
-    queryKey: ["venues"],
+    queryKey: queryKeys.venues(),
     queryFn: fetchVenues,
   });
 

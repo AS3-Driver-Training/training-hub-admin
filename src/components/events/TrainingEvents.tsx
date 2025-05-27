@@ -6,6 +6,7 @@ import { EventListView } from "./training/EventListView";
 import { EventCalendarView } from "./training/EventCalendarView";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingEvent } from "@/types/events";
+import { queryKeys } from "@/lib/queryKeys";
 
 export function TrainingEvents() {
   const [view, setView] = useState<"list" | "calendar">("list");
@@ -16,7 +17,7 @@ export function TrainingEvents() {
   const queryClient = useQueryClient();
   
   const { data: events = [], isLoading, error } = useQuery({
-    queryKey: ['training-events'],
+    queryKey: queryKeys.trainingEvents(),
     queryFn: async () => {
       console.log("Fetching course instances...");
       
@@ -97,10 +98,11 @@ export function TrainingEvents() {
     }
   });
   
-  // Function to handle event deletion
+  // Function to handle event deletion with proper cache invalidation
   const handleEventDeleted = () => {
+    console.log("Event deleted, invalidating training events query");
     // Invalidate the query to refetch the events
-    queryClient.invalidateQueries({ queryKey: ['training-events'] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.trainingEvents() });
   };
 
   // Enhanced filtering logic

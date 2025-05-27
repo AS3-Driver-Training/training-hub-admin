@@ -1,3 +1,4 @@
+
 import { TrainingEvent } from "@/types/events";
 import { format } from "date-fns";
 import { MapPin, Clock, Users, ArrowRight, MoreVertical, Edit, Trash2, Globe, Building2, Eye, FileText } from "lucide-react";
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface EventCardProps {
   event: TrainingEvent;
@@ -54,7 +56,7 @@ export function EventCard({ event, onDelete }: EventCardProps) {
   
   // Check if the course has been formally closed - with type conversion
   const { data: closureStatus } = useQuery({
-    queryKey: ["event-card-closure", parseInt(event.id)],
+    queryKey: queryKeys.eventCardClosure(parseInt(event.id)),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("course_closures")
