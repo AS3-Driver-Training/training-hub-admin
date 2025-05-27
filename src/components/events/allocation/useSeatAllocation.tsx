@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Allocation } from "./hooks/useAllocationData";
@@ -8,8 +9,10 @@ export function useSeatAllocation(existingAllocations: any[] | undefined, course
   const [showAddForm, setShowAddForm] = useState(false);
   const isPrivateCourse = courseInstance && !courseInstance.is_open_enrollment;
 
-  // Update allocations state when existing allocations are fetched
+  // Update allocations state when existing allocations are fetched from database
   useEffect(() => {
+    console.log("useSeatAllocation: Processing existing allocations:", existingAllocations);
+    
     if (existingAllocations) {
       const formattedAllocations = existingAllocations.map(allocation => ({
         id: allocation.id,
@@ -18,28 +21,43 @@ export function useSeatAllocation(existingAllocations: any[] | undefined, course
         seatsAllocated: allocation.seats_allocated
       }));
       
+      console.log("useSeatAllocation: Formatted allocations:", formattedAllocations);
       setAllocations(formattedAllocations);
       updateRemainingSeats(formattedAllocations);
+    } else {
+      console.log("useSeatAllocation: No existing allocations, resetting state");
+      setAllocations([]);
+      updateRemainingSeats([]);
     }
   }, [existingAllocations, courseInstance]);
 
   // Update remaining seats calculation
   const updateRemainingSeats = (currentAllocations: Allocation[]) => {
+    console.log("useSeatAllocation: Updating remaining seats for allocations:", currentAllocations);
+    
     if (isPrivateCourse && courseInstance?.private_seats_allocated) {
       // For private courses, use the predetermined seat allocation
-      setRemainingSeats(0); // No remaining seats to allocate to other clients
+      console.log("useSeatAllocation: Private course, no remaining seats to allocate");
+      setRemainingSeats(0);
     } else if (courseInstance?.program?.max_students) {
       // For open enrollment courses, calculate based on program max students
       const totalAllocated = currentAllocations.reduce(
         (sum, allocation) => sum + allocation.seatsAllocated, 
         0
       );
-      setRemainingSeats(courseInstance.program.max_students - totalAllocated);
+      const remaining = courseInstance.program.max_students - totalAllocated;
+      console.log(`useSeatAllocation: Open enrollment - Max: ${courseInstance.program.max_students}, Allocated: ${totalAllocated}, Remaining: ${remaining}`);
+      setRemainingSeats(remaining);
+    } else {
+      console.log("useSeatAllocation: No course instance or max students data available");
+      setRemainingSeats(0);
     }
   };
 
-  // Add a new allocation
+  // Add a new allocation (local state only - not saved until user clicks save)
   const handleAddAllocation = (values: {clientId: string; seatsAllocated: number;}, clients: any[] | undefined) => {
+    console.log("useSeatAllocation: Adding allocation:", values);
+    
     // For private courses, don't allow adding allocations
     if (isPrivateCourse) {
       return { error: "Cannot allocate seats for a private course" };
@@ -57,6 +75,7 @@ export function useSeatAllocation(existingAllocations: any[] | undefined, course
       // Update existing allocation
       const updatedAllocations = [...allocations];
       updatedAllocations[existingIndex].seatsAllocated += values.seatsAllocated;
+      console.log("useSeatAllocation: Updated existing allocation:", updatedAllocations);
       setAllocations(updatedAllocations);
       updateRemainingSeats(updatedAllocations);
     } else {
@@ -70,6 +89,7 @@ export function useSeatAllocation(existingAllocations: any[] | undefined, course
           seatsAllocated: values.seatsAllocated
         }
       ];
+      console.log("useSeatAllocation: Added new allocation:", newAllocations);
       setAllocations(newAllocations);
       updateRemainingSeats(newAllocations);
     }
@@ -78,14 +98,16 @@ export function useSeatAllocation(existingAllocations: any[] | undefined, course
     setShowAddForm(false);
     
     toast.success("Allocation Added", {
-      description: "The seat allocation has been added successfully."
+      description: "The seat allocation has been added. Click 'Save Allocations' to persist changes."
     });
     
     return { success: true };
   };
 
-  // Remove an allocation
+  // Remove an allocation (local state only - not saved until user clicks save)
   const handleRemoveAllocation = (index: number) => {
+    console.log("useSeatAllocation: Removing allocation at index:", index);
+    
     // For private courses, don't allow removing allocations
     if (isPrivateCourse) {
       return;
@@ -96,11 +118,12 @@ export function useSeatAllocation(existingAllocations: any[] | undefined, course
     
     const newAllocations = [...allocations];
     newAllocations.splice(index, 1);
+    console.log("useSeatAllocation: Allocations after removal:", newAllocations);
     setAllocations(newAllocations);
     updateRemainingSeats(newAllocations);
     
     toast.success("Allocation Removed", {
-      description: `Removed ${seatsAllocated} seats for ${clientName}.`
+      description: `Removed ${seatsAllocated} seats for ${clientName}. Click 'Save Allocations' to persist changes.`
     });
   };
 

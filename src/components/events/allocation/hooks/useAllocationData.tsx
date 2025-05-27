@@ -122,78 +122,133 @@ export function useAllocationData() {
     enabled: !!courseInstance && courseInstance.is_open_enrollment
   });
 
-  // Save allocations mutation with comprehensive cache invalidation
+  // Save allocations mutation with improved error handling and cache invalidation
   const saveAllocationsMutation = useMutation({
     mutationFn: async (allocations: Allocation[]) => {
-      console.log("Saving allocations:", allocations);
+      console.log("Starting allocation save with data:", allocations);
       
-      // Delete all existing allocations
-      const { error: deleteError } = await supabase
-        .from("course_allocations")
-        .delete()
-        .eq("course_instance_id", parseInt(id || '0', 10));
-      
-      if (deleteError) {
-        console.error("Error deleting allocations:", deleteError);
-        throw deleteError;
+      if (!id) {
+        throw new Error("Course instance ID is required");
       }
 
-      // Insert new allocations
-      if (allocations.length > 0) {
-        const { error: insertError } = await supabase
+      const courseInstanceId = parseInt(id, 10);
+      console.log("Saving allocations for course instance:", courseInstanceId);
+      
+      try {
+        // Delete all existing allocations first
+        console.log("Deleting existing allocations...");
+        const { error: deleteError } = await supabase
           .from("course_allocations")
-          .insert(
-            allocations.map(a => ({
-              course_instance_id: parseInt(id || '0', 10),
-              client_id: a.clientId,
-              seats_allocated: a.seatsAllocated
-            }))
-          );
+          .delete()
+          .eq("course_instance_id", courseInstanceId);
         
-        if (insertError) {
-          console.error("Error inserting allocations:", insertError);
-          throw insertError;
+        if (deleteError) {
+          console.error("Error deleting existing allocations:", deleteError);
+          throw new Error(`Failed to clear existing allocations: ${deleteError.message}`);
         }
-      }
+        console.log("Successfully deleted existing allocations");
 
-      return { success: true };
-    },
-    onSuccess: async () => {
-      console.log("Invalidating related queries after allocation save");
-      
-      // Comprehensive cache invalidation to ensure data consistency
-      const invalidationPromises = [
-        // Invalidate current course allocations
-        queryClient.invalidateQueries({ queryKey: queryKeys.courseAllocations(id || '0') }),
+        // Insert new allocations if any exist
+        if (allocations.length > 0) {
+          console.log("Inserting new allocations...");
+          const allocationsToInsert = allocations.map(a => ({
+            course_instance_id: courseInstanceId,
+            client_id: a.clientId,
+            seats_allocated: a.seatsAllocated
+          }));
+          
+          console.log("Allocation data to insert:", allocationsToInsert);
+          
+          const { error: insertError, data: insertedData } = await supabase
+            .from("course_allocations")
+            .insert(allocationsToInsert)
+            .select();
+          
+          if (insertError) {
+            console.error("Error inserting new allocations:", insertError);
+            throw new Error(`Failed to save new allocations: ${insertError.message}`);
+          }
+          
+          console.log("Successfully inserted allocations:", insertedData);
+        } else {
+          console.log("No allocations to insert");
+        }
+
+        // Verify the save by fetching the data back
+        console.log("Verifying save by fetching current allocations...");
+        const { data: verificationData, error: verificationError } = await supabase
+          .from("course_allocations")
+          .select("*")
+          .eq("course_instance_id", courseInstanceId);
         
-        // Invalidate training events list to update enrollment counts
-        queryClient.invalidateQueries({ queryKey: queryKeys.trainingEvents() }),
-        
-        // Invalidate the specific course instance to refresh capacity data
-        queryClient.invalidateQueries({ queryKey: queryKeys.courseInstance(id || '0') })
-      ];
-      
-      // If this is a private course with a host client, invalidate client events
-      if (courseInstance?.host_client_id) {
-        invalidationPromises.push(
-          queryClient.invalidateQueries({ 
-            queryKey: queryKeys.clientEvents(courseInstance.host_client_id) 
-          })
-        );
+        if (verificationError) {
+          console.error("Error verifying save:", verificationError);
+        } else {
+          console.log("Verification: Current allocations in DB:", verificationData);
+        }
+
+        return { success: true, allocations: verificationData };
+      } catch (error) {
+        console.error("Save operation failed:", error);
+        throw error;
       }
+    },
+    onSuccess: async (result) => {
+      console.log("Save mutation successful, starting cache invalidation...");
       
-      // Wait for all invalidations to complete
-      await Promise.all(invalidationPromises);
-      
-      // Show success message
-      toast.success("Success", {
-        description: "Seat allocations have been saved successfully"
-      });
+      try {
+        // Wait for all invalidations to complete with better error handling
+        const invalidationResults = await Promise.allSettled([
+          // Invalidate current course allocations
+          queryClient.invalidateQueries({ queryKey: queryKeys.courseAllocations(id || '0') }),
+          
+          // Invalidate training events list to update enrollment counts
+          queryClient.invalidateQueries({ queryKey: queryKeys.trainingEvents() }),
+          
+          // Invalidate the specific course instance to refresh capacity data
+          queryClient.invalidateQueries({ queryKey: queryKeys.courseInstance(id || '0') })
+        ]);
+        
+        // Log any invalidation failures
+        invalidationResults.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            console.error(`Invalidation ${index} failed:`, result.reason);
+          } else {
+            console.log(`Invalidation ${index} succeeded`);
+          }
+        });
+        
+        // If this is a private course with a host client, invalidate client events
+        if (courseInstance?.host_client_id) {
+          console.log("Invalidating client events for host client:", courseInstance.host_client_id);
+          try {
+            await queryClient.invalidateQueries({ 
+              queryKey: queryKeys.clientEvents(courseInstance.host_client_id) 
+            });
+            console.log("Client events invalidated successfully");
+          } catch (error) {
+            console.error("Failed to invalidate client events:", error);
+          }
+        }
+        
+        console.log("All cache invalidations completed");
+        
+        // Show success message
+        toast.success("Success", {
+          description: "Seat allocations have been saved successfully"
+        });
+      } catch (error) {
+        console.error("Error during cache invalidation:", error);
+        // Still show success since the save worked, just mention cache issue
+        toast.success("Saved", {
+          description: "Allocations saved. Please refresh if data doesn't update immediately."
+        });
+      }
     },
     onError: (error: any) => {
-      console.error("Error in saveAllocationsMutation:", error);
+      console.error("Save mutation failed:", error);
       toast.error("Error", {
-        description: "Failed to save allocations: " + error.message,
+        description: "Failed to save allocations: " + (error.message || "Unknown error"),
       });
     },
   });
