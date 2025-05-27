@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
@@ -19,7 +20,7 @@ const PatchedDialogRoot = React.forwardRef<React.ElementRef<typeof DialogPrimiti
     // Additional check for Google Places elements in the DOM
     if (!open) {
       const pacContainer = document.querySelector('.pac-container');
-      if (pacContainer && pacContainer.style.display !== 'none') {
+      if (pacContainer && (pacContainer as HTMLElement).style.display !== 'none') {
         console.log('Blocked dialog close - Google Places dropdown is visible');
         return;
       }
