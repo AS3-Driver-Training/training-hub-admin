@@ -1,4 +1,5 @@
 import { GooglePlaceData } from './types';
+import { getCountryCodeByName } from '@/utils/countries';
 
 // Fix the error with PlacesService
 export const setupPacContainerObserver = (): MutationObserver => {
@@ -118,7 +119,10 @@ export const initializeAutocomplete = (
             placeData.region = component.long_name;
           }
           if (component.types.includes('country')) {
-            placeData.country = component.long_name;
+            // Convert full country name to country code
+            const countryName = component.long_name;
+            placeData.country = getCountryCodeByName(countryName);
+            console.log(`Converted country "${countryName}" to code "${placeData.country}"`);
           }
         });
       }
@@ -213,7 +217,11 @@ export const extractPlaceData = (place: google.maps.places.PlaceResult): GoogleP
 
   const getCountry = () => {
     const component = addressComponents.find(c => c.types.includes("country"));
-    return component ? component.long_name : "";
+    if (component) {
+      // Convert full country name to country code
+      return getCountryCodeByName(component.long_name);
+    }
+    return "US"; // Default fallback
   };
 
   const getPostalCode = () => {

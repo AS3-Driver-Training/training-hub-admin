@@ -8,7 +8,7 @@ export const venueSchema = z.object({
   address: z.string().min(1, "Address is required"),
   googleLocation: z.string().optional(),
   region: z.string().min(1, "Region is required"),
-  country: z.string().min(2, "Country is required"),
+  country: z.string().length(2, "Country must be a valid 2-letter code"),
 });
 
 export type VenueFormValues = z.infer<typeof venueSchema>;
