@@ -55,7 +55,7 @@ export function VenuesTable({ venues, onEdit, onDelete }: VenuesTableProps) {
             {venues.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-6">
-                  No venues found. Create your first venue to get started.
+                  No venues found. Try adjusting your search or filters.
                 </TableCell>
               </TableRow>
             ) : (
@@ -98,7 +98,7 @@ export function VenuesTable({ venues, onEdit, onDelete }: VenuesTableProps) {
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogContent>
+        </AlertDialogFooter>
       </AlertDialog>
     </>
   );
