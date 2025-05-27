@@ -59,9 +59,11 @@ export type Database = {
           address: string | null
           city: string | null
           contact_email: string | null
+          country: string | null
           created_at: string
           created_by: string | null
           id: string
+          last_activity_at: string | null
           logo_url: string | null
           name: string
           phone: string | null
@@ -76,9 +78,11 @@ export type Database = {
           address?: string | null
           city?: string | null
           contact_email?: string | null
+          country?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
+          last_activity_at?: string | null
           logo_url?: string | null
           name: string
           phone?: string | null
@@ -93,9 +97,11 @@ export type Database = {
           address?: string | null
           city?: string | null
           contact_email?: string | null
+          country?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
+          last_activity_at?: string | null
           logo_url?: string | null
           name?: string
           phone?: string | null
