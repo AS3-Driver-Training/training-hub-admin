@@ -26,6 +26,8 @@ interface CourseInstanceWithAllocation {
   };
   venue: {
     name: string;
+    region?: string;
+    address?: string;
   };
   seats_allocated?: number; // From allocations table for open enrollment courses
 }
@@ -53,7 +55,9 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
               max_students
             ),
             venue:venue_id (
-              name
+              name,
+              region,
+              address
             )
           `)
           .eq('host_client_id', clientId)
@@ -82,7 +86,9 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
                 max_students
               ),
               venue:venue_id (
-                name
+                name,
+                region,
+                address
               )
             )
           `)
@@ -148,7 +154,9 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
             capacity: capacity,
             enrolledCount: enrolledCount,
             clientName: null, // Not needed for client view
-            isOpenEnrollment: instance.is_open_enrollment || false
+            isOpenEnrollment: instance.is_open_enrollment || false,
+            region: instance.venue?.region || null,
+            venue: instance.venue || null
           };
         });
 
