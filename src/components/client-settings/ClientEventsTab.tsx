@@ -13,6 +13,23 @@ interface ClientEventsTabProps {
   clientId: string;
 }
 
+// Extended interface for course instances with allocation data
+interface CourseInstanceWithAllocation {
+  id: number;
+  start_date: string;
+  end_date: string | null;
+  is_open_enrollment: boolean;
+  private_seats_allocated: number | null;
+  program: {
+    name: string;
+    max_students: number;
+  };
+  venue: {
+    name: string;
+  };
+  seats_allocated?: number; // From allocations table for open enrollment courses
+}
+
 export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
   const [eventFilter, setEventFilter] = useState<"upcoming" | "past">("upcoming");
 
@@ -53,7 +70,6 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
         const { data: allocations, error: allocationsError } = await supabase
           .from('course_allocations')
           .select(`
-            course_instance_id,
             seats_allocated,
             course_instance:course_instance_id (
               id,
@@ -79,18 +95,18 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
 
         console.log('Allocations found:', allocations);
 
-        // Extract open enrollment courses from allocations
-        const openEnrollmentCourses = allocations
+        // Transform allocations data to include seats_allocated
+        const openEnrollmentCourses: CourseInstanceWithAllocation[] = allocations
           ?.filter(alloc => alloc.course_instance?.is_open_enrollment)
           .map(alloc => ({
-            ...alloc.course_instance,
-            client_allocated_seats: alloc.seats_allocated
+            ...alloc.course_instance!,
+            seats_allocated: alloc.seats_allocated
           })) || [];
 
         console.log('Open enrollment courses with allocations:', openEnrollmentCourses);
 
         // Combine both types of courses
-        const allCourses = [
+        const allCourses: CourseInstanceWithAllocation[] = [
           ...(privateCourses || []),
           ...openEnrollmentCourses
         ];
@@ -111,9 +127,9 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
           let enrolledCount = 0;
 
           if (instance.is_open_enrollment) {
-            // For open enrollment courses, show the client's allocated seats
-            capacity = instance.client_allocated_seats || 0;
-            enrolledCount = instance.client_allocated_seats || 0;
+            // For open enrollment courses, use the client's allocated seats
+            capacity = instance.seats_allocated || 0;
+            enrolledCount = instance.seats_allocated || 0;
             console.log(`Open enrollment course ${instance.id}: client allocated seats=${capacity}`);
           } else {
             // For private courses, use private_seats_allocated as capacity
