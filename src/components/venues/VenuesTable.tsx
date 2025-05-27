@@ -98,7 +98,7 @@ export function VenuesTable({ venues, onEdit, onDelete }: VenuesTableProps) {
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </>
   );
