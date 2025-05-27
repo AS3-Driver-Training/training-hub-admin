@@ -80,6 +80,12 @@ export function useCourseInstanceMutations() {
     onSuccess: async (data, variables) => {
       console.log("Course instance updated successfully, invalidating related queries");
       
+      // Get all clients that might be affected by this update
+      const { data: allocations } = await supabase
+        .from('course_allocations')
+        .select('client_id')
+        .eq('course_instance_id', parseInt(variables.id));
+      
       // Comprehensive cache invalidation
       const invalidationPromises = [
         // Invalidate training events
@@ -92,7 +98,7 @@ export function useCourseInstanceMutations() {
         queryClient.invalidateQueries({ queryKey: queryKeys.courseAllocations(variables.id) })
       ];
       
-      // If this is a private course, also invalidate client events
+      // If this is a private course, also invalidate client events for the host
       if (data.host_client_id) {
         console.log("Invalidating client events for updated course host client:", data.host_client_id);
         invalidationPromises.push(
@@ -100,6 +106,18 @@ export function useCourseInstanceMutations() {
             queryKey: queryKeys.clientEvents(data.host_client_id) 
           })
         );
+      }
+      
+      // Invalidate client events for all clients with allocations
+      if (allocations) {
+        allocations.forEach(allocation => {
+          console.log("Invalidating client events for allocation client:", allocation.client_id);
+          invalidationPromises.push(
+            queryClient.invalidateQueries({ 
+              queryKey: queryKeys.clientEvents(allocation.client_id) 
+            })
+          );
+        });
       }
       
       // Wait for all invalidations to complete

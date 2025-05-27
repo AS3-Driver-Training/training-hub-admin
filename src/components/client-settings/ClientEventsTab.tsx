@@ -20,10 +20,10 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
     queryKey: queryKeys.clientEvents(clientId),
     queryFn: async () => {
       try {
-        console.log('Fetching events for client:', clientId);
+        console.log('Fetching all events for client:', clientId);
         
-        // First, get all course instances for this client
-        const { data: courseInstances, error: instancesError } = await supabase
+        // Query 1: Get private courses hosted by this client
+        const { data: privateCourses, error: privateError } = await supabase
           .from('course_instances')
           .select(`
             id,
@@ -42,47 +42,63 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
           .eq('host_client_id', clientId)
           .order('start_date', { ascending: false });
 
-        if (instancesError) {
-          console.error('Error fetching client course instances:', instancesError);
-          throw instancesError;
+        if (privateError) {
+          console.error('Error fetching private courses:', privateError);
+          throw privateError;
         }
 
-        console.log('Course instances found:', courseInstances);
+        console.log('Private courses found:', privateCourses);
 
-        if (!courseInstances || courseInstances.length === 0) {
-          console.log('No course instances found for client:', clientId);
-          return [];
-        }
-
-        // Get all allocations for these course instances in one query
-        const courseInstanceIds = courseInstances.map(instance => instance.id);
-        console.log('Fetching allocations for course instances:', courseInstanceIds);
-        
+        // Query 2: Get open enrollment courses where this client has allocations
         const { data: allocations, error: allocationsError } = await supabase
           .from('course_allocations')
-          .select('course_instance_id, seats_allocated')
-          .in('course_instance_id', courseInstanceIds);
-        
+          .select(`
+            course_instance_id,
+            seats_allocated,
+            course_instance:course_instance_id (
+              id,
+              start_date,
+              end_date,
+              is_open_enrollment,
+              private_seats_allocated,
+              program:program_id (
+                name,
+                max_students
+              ),
+              venue:venue_id (
+                name
+              )
+            )
+          `)
+          .eq('client_id', clientId);
+
         if (allocationsError) {
           console.error('Error fetching allocations:', allocationsError);
-          // Don't throw here, just log and continue with empty allocations
+          throw allocationsError;
         }
 
         console.log('Allocations found:', allocations);
 
-        // Calculate enrollment counts by course instance
-        const enrollmentCounts: Record<string, number> = {};
-        if (allocations) {
-          allocations.forEach(allocation => {
-            const instanceId = allocation.course_instance_id.toString();
-            enrollmentCounts[instanceId] = (enrollmentCounts[instanceId] || 0) + allocation.seats_allocated;
-          });
-        }
+        // Extract open enrollment courses from allocations
+        const openEnrollmentCourses = allocations
+          ?.filter(alloc => alloc.course_instance?.is_open_enrollment)
+          .map(alloc => ({
+            ...alloc.course_instance,
+            client_allocated_seats: alloc.seats_allocated
+          })) || [];
 
-        console.log('Calculated enrollment counts:', enrollmentCounts);
+        console.log('Open enrollment courses with allocations:', openEnrollmentCourses);
+
+        // Combine both types of courses
+        const allCourses = [
+          ...(privateCourses || []),
+          ...openEnrollmentCourses
+        ];
+
+        console.log('Combined courses:', allCourses);
 
         // Transform to TrainingEvent format
-        const transformedEvents: TrainingEvent[] = courseInstances.map(instance => {
+        const transformedEvents: TrainingEvent[] = allCourses.map(instance => {
           const startDate = new Date(instance.start_date);
           const endDate = instance.end_date ? new Date(instance.end_date) : new Date(startDate);
           
@@ -91,18 +107,20 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
             endDate.setDate(startDate.getDate() + 1);
           }
 
-          const enrolledCount = enrollmentCounts[instance.id.toString()] || 0;
-          
-          // For private courses, use private_seats_allocated as capacity
-          // For open enrollment, use program max_students
           let capacity = 0;
-          if (instance.is_open_enrollment) {
-            capacity = instance.program?.max_students || 0;
-          } else {
-            capacity = instance.private_seats_allocated || 0;
-          }
+          let enrolledCount = 0;
 
-          console.log(`Instance ${instance.id}: enrolled=${enrolledCount}, capacity=${capacity}, isOpen=${instance.is_open_enrollment}`);
+          if (instance.is_open_enrollment) {
+            // For open enrollment courses, show the client's allocated seats
+            capacity = instance.client_allocated_seats || 0;
+            enrolledCount = instance.client_allocated_seats || 0;
+            console.log(`Open enrollment course ${instance.id}: client allocated seats=${capacity}`);
+          } else {
+            // For private courses, use private_seats_allocated as capacity
+            capacity = instance.private_seats_allocated || 0;
+            enrolledCount = instance.private_seats_allocated || 0;
+            console.log(`Private course ${instance.id}: private seats=${capacity}`);
+          }
 
           return {
             id: instance.id.toString(),
@@ -118,7 +136,7 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
           };
         });
 
-        console.log('Transformed client events:', transformedEvents);
+        console.log('Final transformed client events:', transformedEvents);
         return transformedEvents;
       } catch (error) {
         console.error('Error in client events query:', error);

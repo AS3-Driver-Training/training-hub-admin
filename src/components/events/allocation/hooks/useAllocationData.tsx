@@ -197,7 +197,26 @@ export function useAllocationData() {
       console.log("Save mutation successful, starting cache invalidation...");
       
       try {
-        // Prepare invalidation promises - only add client events if we have a host client
+        // Get all clients that have allocations for comprehensive cache invalidation
+        const clientIds = new Set<string>();
+        
+        // Add clients from the saved allocations
+        if (result.allocations) {
+          result.allocations.forEach(alloc => {
+            clientIds.add(alloc.client_id);
+          });
+        }
+        
+        // Also add clients from existing allocations (in case some were removed)
+        if (existingAllocations) {
+          existingAllocations.forEach(alloc => {
+            clientIds.add(alloc.client?.id);
+          });
+        }
+
+        console.log("Invalidating cache for clients:", Array.from(clientIds));
+
+        // Prepare invalidation promises
         const invalidationPromises = [
           // Invalidate current course allocations
           queryClient.invalidateQueries({ queryKey: queryKeys.courseAllocations(id || '0') }),
@@ -209,7 +228,19 @@ export function useAllocationData() {
           queryClient.invalidateQueries({ queryKey: queryKeys.courseInstance(id || '0') })
         ];
         
-        // If this course has a host client, invalidate their client events
+        // Invalidate client events for all affected clients
+        clientIds.forEach(clientId => {
+          if (clientId) {
+            console.log("Adding client events invalidation for client:", clientId);
+            invalidationPromises.push(
+              queryClient.invalidateQueries({ 
+                queryKey: queryKeys.clientEvents(clientId) 
+              })
+            );
+          }
+        });
+        
+        // If this course has a host client, also invalidate their client events
         if (courseInstance?.host_client_id) {
           console.log("Adding client events invalidation for host client:", courseInstance.host_client_id);
           invalidationPromises.push(
