@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TrainingEventsHeader } from "./training/TrainingEventsHeader";
-import { EventSearch } from "./training/EventSearch";
+import { EventFilters } from "./training/EventFilters";
 import { EventListView } from "./training/EventListView";
 import { EventCalendarView } from "./training/EventCalendarView";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +10,9 @@ import { TrainingEvent } from "@/types/events";
 export function TrainingEvents() {
   const [view, setView] = useState<"list" | "calendar">("list");
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [enrollmentFilter, setEnrollmentFilter] = useState("all");
+  const [capacityFilter, setCapacityFilter] = useState("all");
   const queryClient = useQueryClient();
   
   const { data: events = [], isLoading, error } = useQuery({
@@ -100,6 +102,46 @@ export function TrainingEvents() {
     // Invalidate the query to refetch the events
     queryClient.invalidateQueries({ queryKey: ['training-events'] });
   };
+
+  // Enhanced filtering logic
+  const filteredEvents = events.filter(event => {
+    // Search filter
+    const matchesSearch = searchQuery === "" || 
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (event.clientName && event.clientName.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    // Status filter
+    const matchesStatus = statusFilter === "all" || event.status === statusFilter;
+
+    // Enrollment filter
+    const matchesEnrollment = enrollmentFilter === "all" || 
+      (enrollmentFilter === "open" && event.isOpenEnrollment) ||
+      (enrollmentFilter === "private" && !event.isOpenEnrollment);
+
+    // Capacity filter
+    const matchesCapacity = capacityFilter === "all" || 
+      (capacityFilter === "available" && event.enrolledCount < event.capacity) ||
+      (capacityFilter === "full" && event.enrolledCount === event.capacity) ||
+      (capacityFilter === "overbooked" && event.enrolledCount > event.capacity);
+
+    return matchesSearch && matchesStatus && matchesEnrollment && matchesCapacity;
+  });
+
+  // Calculate active filter count
+  const activeFilterCount = [
+    statusFilter !== "all",
+    enrollmentFilter !== "all",
+    capacityFilter !== "all"
+  ].filter(Boolean).length;
+
+  // Clear all filters function
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("all");
+    setEnrollmentFilter("all");
+    setCapacityFilter("all");
+  };
   
   if (isLoading) {
     return (
@@ -124,11 +166,6 @@ export function TrainingEvents() {
     );
   }
   
-  const filteredEvents = events.filter(event => 
-    event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    event.location.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
   const currentDate = new Date();
   const upcomingEvents = filteredEvents.filter(
     event => new Date(event.startDate) > currentDate
@@ -140,7 +177,18 @@ export function TrainingEvents() {
   return (
     <div className="space-y-6">
       <TrainingEventsHeader view={view} setView={setView} />
-      <EventSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+      <EventFilters 
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        enrollmentFilter={enrollmentFilter}
+        setEnrollmentFilter={setEnrollmentFilter}
+        capacityFilter={capacityFilter}
+        setCapacityFilter={setCapacityFilter}
+        onClearFilters={handleClearFilters}
+        activeFilterCount={activeFilterCount}
+      />
       
       {view === "list" ? (
         <EventListView 
