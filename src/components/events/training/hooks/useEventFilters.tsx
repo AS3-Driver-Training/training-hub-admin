@@ -5,8 +5,7 @@ import {
   isEventInDateRange, 
   getDateRangeFromFilter, 
   matchesArrayFilter, 
-  matchesEnrollmentType, 
-  getCountryFromLocation 
+  matchesEnrollmentType
 } from "@/utils/dateFilters";
 
 export function useEventFilters(events: TrainingEvent[]) {
@@ -17,7 +16,7 @@ export function useEventFilters(events: TrainingEvent[]) {
   const [regionFilter, setRegionFilter] = useState<string[]>([]);
   const [enrollmentTypeFilter, setEnrollmentTypeFilter] = useState<string[]>([]);
 
-  // Enhanced filtering logic with new multi-select filters
+  // Enhanced filtering logic with proper country handling
   const filteredEvents = events.filter(event => {
     // Search filter
     const matchesSearch = searchQuery === "" || 
@@ -32,9 +31,9 @@ export function useEventFilters(events: TrainingEvent[]) {
     const dateRange = getDateRangeFromFilter(dateFilter);
     const matchesDate = dateFilter === "all" || isEventInDateRange(event.startDate, dateRange);
 
-    // Country filter (array-based)
-    const eventCountry = getCountryFromLocation(event.location);
-    const matchesCountry = matchesArrayFilter(eventCountry, countryFilter);
+    // Country filter (using actual country field from venue)
+    const eventCountry = event.country;
+    const matchesCountry = matchesArrayFilter(eventCountry || '', countryFilter);
 
     // Region filter (array-based)
     const eventRegion = event.region || event.location.split(',').slice(-2, -1)[0]?.trim() || '';

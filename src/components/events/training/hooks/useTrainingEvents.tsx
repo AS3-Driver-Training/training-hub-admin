@@ -31,7 +31,7 @@ export function useTrainingEvents() {
       
       console.log("Enrollment by instance:", enrollmentByInstance);
       
-      // Then fetch the course instances with related data including client information
+      // Then fetch the course instances with related data including venue country
       const { data, error } = await supabase
         .from('course_instances')
         .select(`
@@ -41,7 +41,7 @@ export function useTrainingEvents() {
           is_open_enrollment,
           private_seats_allocated,
           programs:program_id(name, max_students),
-          venues:venue_id(name, address, region),
+          venues:venue_id(name, address, region, country),
           clients:host_client_id(name)
         `)
         .order('start_date', { ascending: true });
@@ -73,10 +73,12 @@ export function useTrainingEvents() {
         const venueLocation = instance.venues?.name || "Unknown Location";
         const region = instance.venues?.region;
         const address = instance.venues?.address;
+        const country = instance.venues?.country; // Now we have the actual country field
+        
         let fullLocation = venueLocation;
         
         if (address) {
-          // Extract country from address for filtering
+          // Extract country from address for display purposes only
           const addressParts = address.split(',').map(part => part.trim());
           if (addressParts.length > 1) {
             fullLocation = `${venueLocation}, ${addressParts[addressParts.length - 1]}`;
@@ -96,6 +98,7 @@ export function useTrainingEvents() {
           isOpenEnrollment: instance.is_open_enrollment || false,
           // Additional fields for filtering
           region: region || null,
+          country: country || null, // Use the actual country field from venue
           venue: instance.venues || null
         };
       });

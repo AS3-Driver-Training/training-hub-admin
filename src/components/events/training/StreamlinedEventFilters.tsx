@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { TrainingEvent } from "@/types/events";
+import { getCountryInfo, getCountryName, getCountryFlag } from "@/utils/countryMapping";
 
 interface StreamlinedEventFiltersProps {
   searchQuery: string;
@@ -65,17 +66,11 @@ export function StreamlinedEventFilters({
 }: StreamlinedEventFiltersProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Extract actual countries and regions from events
-  const availableCountries = [...new Set(events.map(event => {
-    const location = event.location.split(',').pop()?.trim() || '';
-    if (location.toLowerCase().includes('mexico') || location.toLowerCase().includes('méxico')) {
-      return 'Mexico';
-    }
-    if (location.toLowerCase().includes('united states') || location.toLowerCase().includes('usa') || location.toLowerCase().includes('us')) {
-      return 'United States';
-    }
-    return location;
-  }).filter(Boolean))].sort();
+  // Extract actual countries from events using the country field
+  const availableCountries = [...new Set(events
+    .map(event => event.country)
+    .filter((country): country is string => Boolean(country))
+  )].sort();
 
   const availableRegions = [...new Set(events.map(event => {
     if (event.region) return event.region;
@@ -123,12 +118,6 @@ export function StreamlinedEventFilters({
     } else {
       setEnrollmentTypeFilter([...enrollmentTypeFilter, type]);
     }
-  };
-
-  const getCountryFlag = (country: string) => {
-    if (country === 'Mexico') return '🇲🇽';
-    if (country === 'United States') return '🇺🇸';
-    return '🏳️';
   };
 
   return (
@@ -226,16 +215,16 @@ export function StreamlinedEventFilters({
                   <div>
                     <Label className="text-sm font-medium">Countries</Label>
                     <div className="mt-2 space-y-2">
-                      {availableCountries.map((country) => (
-                        <div key={country} className="flex items-center space-x-2">
+                      {availableCountries.map((countryCode) => (
+                        <div key={countryCode} className="flex items-center space-x-2">
                           <Checkbox
-                            id={`country-${country}`}
-                            checked={countryFilter.includes(country)}
-                            onCheckedChange={() => handleCountryToggle(country)}
+                            id={`country-${countryCode}`}
+                            checked={countryFilter.includes(countryCode)}
+                            onCheckedChange={() => handleCountryToggle(countryCode)}
                           />
-                          <Label htmlFor={`country-${country}`} className="text-sm flex items-center gap-2">
-                            <span>{getCountryFlag(country)}</span>
-                            {country}
+                          <Label htmlFor={`country-${countryCode}`} className="text-sm flex items-center gap-2">
+                            <span>{getCountryFlag(countryCode)}</span>
+                            {getCountryName(countryCode)}
                           </Label>
                         </div>
                       ))}

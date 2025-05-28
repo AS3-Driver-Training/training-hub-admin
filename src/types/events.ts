@@ -11,5 +11,6 @@ export interface TrainingEvent {
   clientName: string | null;
   isOpenEnrollment: boolean;
   region: string | null;
+  country: string | null; // Added country field
   venue: any | null;
 }
