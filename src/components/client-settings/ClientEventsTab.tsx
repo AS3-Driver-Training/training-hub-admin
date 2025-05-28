@@ -28,6 +28,7 @@ interface CourseInstanceWithAllocation {
     name: string;
     region?: string;
     address?: string;
+    country?: string;
   };
   seats_allocated?: number; // From allocations table for open enrollment courses
 }
