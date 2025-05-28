@@ -140,9 +140,29 @@ export function EventCard({ event, onDelete }: EventCardProps) {
     }
   };
   
+  // Determine primary button text and action based on status
+  const getPrimaryButtonConfig = () => {
+    if (enhancedStatus === "scheduled") {
+      return { text: "Manage Course", action: handleViewDetails };
+    } else if (enhancedStatus === "completed") {
+      return { text: "Close Course", action: (e: React.MouseEvent) => {
+        e.stopPropagation();
+        navigate(`/events/${event.id}/close`);
+      }};
+    } else if (enhancedStatus === "closed") {
+      return { text: "View Report", action: (e: React.MouseEvent) => {
+        e.stopPropagation();
+        navigate(`/events/${event.id}/close`);
+      }};
+    }
+    return { text: "Manage Course", action: handleViewDetails };
+  };
+
+  const primaryButton = getPrimaryButtonConfig();
+  
   return (
     <>
-      <Card className="overflow-hidden hover:shadow-md transition-shadow" onClick={handleViewDetails}>
+      <Card className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={handleViewDetails}>
         <div className="flex flex-col sm:flex-row">
           <div className="bg-muted p-4 text-center sm:w-32 flex flex-col justify-center">
             <div className="font-medium">{dayName}</div>
@@ -239,10 +259,10 @@ export function EventCard({ event, onDelete }: EventCardProps) {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={handleViewDetails}
+                  onClick={primaryButton.action}
                   className="flex items-center"
                 >
-                  Manage Course
+                  {primaryButton.text}
                   <ArrowRight className="ml-1 h-3 w-3" />
                 </Button>
               </div>

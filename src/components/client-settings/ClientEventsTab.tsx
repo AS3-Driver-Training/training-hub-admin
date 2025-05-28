@@ -57,7 +57,8 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
             venue:venue_id (
               name,
               region,
-              address
+              address,
+              country
             )
           `)
           .eq('host_client_id', clientId)
@@ -88,7 +89,8 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
               venue:venue_id (
                 name,
                 region,
-                address
+                address,
+                country
               )
             )
           `)
@@ -156,6 +158,7 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
             clientName: null, // Not needed for client view
             isOpenEnrollment: instance.is_open_enrollment || false,
             region: instance.venue?.region || null,
+            country: instance.venue?.country || null,
             venue: instance.venue || null
           };
         });
