@@ -59,6 +59,7 @@ export const WizardContent: React.FC<WizardContentProps> = ({ courseInstance, on
         lane_change: { chord: 120, mo: 20 }
       }
     },
+    students: formData.students || [],
     notes: formData.notes,
     additional_exercises: formData.additional_exercises || []
   };

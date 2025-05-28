@@ -26,6 +26,7 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
   
   // Ensure we have required arrays to prevent errors
   const vehicles = formData.vehicles || [];
+  const students = formData.students || [];
   
   // Handle both camelCase and snake_case versions of additional_exercises
   const additionalExercises = Array.isArray(formData.additionalExercises) 
@@ -35,6 +36,7 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
         : []);
   
   console.log("Additional exercises in ReviewStep:", additionalExercises);
+  console.log("Students in ReviewStep:", students);
   
   // Skip file validation when editing
   if (!file && !isEditing) {
@@ -68,7 +70,7 @@ export function ReviewStep({ formData, courseInstance, file, onJumpToStep }: Rev
         onJumpToStep={onJumpToStep} 
       />
       
-      <StudentsList courseInstance={courseInstance} />
+      <StudentsList students={students} />
       
       <NotesCard notes={formData.notes} />
     </div>
