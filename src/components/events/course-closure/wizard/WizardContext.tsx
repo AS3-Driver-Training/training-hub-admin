@@ -71,7 +71,8 @@ export const WizardProvider: React.FC<WizardProviderProps> = ({ children, course
       }
     },
     students: [],
-    additional_exercises: []
+    additional_exercises: [],
+    additionalExercises: [] // Also maintain camelCase version for compatibility
   });
 
   // Define wizard steps
@@ -85,10 +86,22 @@ export const WizardProvider: React.FC<WizardProviderProps> = ({ children, course
 
   const updateFormData = (stepData: Partial<CourseClosureData>) => {
     console.log("Updating form data with:", stepData);
-    setFormData(prevData => ({
-      ...prevData,
-      ...stepData
-    }));
+    setFormData(prevData => {
+      const newData = {
+        ...prevData,
+        ...stepData
+      };
+      
+      // Ensure both additional_exercises naming conventions are synchronized
+      if (stepData.additional_exercises) {
+        newData.additionalExercises = stepData.additional_exercises;
+      } else if (stepData.additionalExercises) {
+        newData.additional_exercises = stepData.additionalExercises;
+      }
+      
+      console.log("Updated form data:", newData);
+      return newData;
+    });
   };
 
   // Move to a specific step

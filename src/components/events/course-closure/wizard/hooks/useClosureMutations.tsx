@@ -78,11 +78,19 @@ export const useClosureMutations = (courseId?: number) => {
         const currentUserId = sessionData.session.user.id;
         console.log("Current user ID for course closure:", currentUserId);
         
-        // Fetch student data for the course
-        const students = await fetchStudentsForClosure(courseId);
-        console.log("Students fetched for closure:", students);
+        // Fetch student data for the course if not already in form data
+        let students = formData.students || [];
+        if (students.length === 0) {
+          students = await fetchStudentsForClosure(courseId);
+          console.log("Students fetched for closure:", students);
+        } else {
+          console.log("Using students from form data:", students);
+        }
         
-        // Convert formData to proper CourseClosureData
+        // Debug: Log the current form data before creating closure data
+        console.log("Form data before creating closure data:", JSON.stringify(formData, null, 2));
+        
+        // Convert formData to proper CourseClosureData - preserve existing additional exercises
         const closureData: CourseClosureData = {
           ...formData as CourseClosureData,
           students: students
@@ -93,23 +101,32 @@ export const useClosureMutations = (courseId?: number) => {
           closureData.vehicles = [];
         }
         
-        // Ensure additional_exercises array exists - use the snake_case version
-        if (!closureData.additional_exercises) {
+        // Preserve additional exercises from form data - use both naming conventions
+        if (formData.additional_exercises) {
+          closureData.additional_exercises = formData.additional_exercises;
+        } else if (formData.additionalExercises) {
+          closureData.additional_exercises = formData.additionalExercises;
+        } else {
           closureData.additional_exercises = [];
-          
-          // If additionalExercises exists (camelCase), copy it to additional_exercises (snake_case)
-          if (closureData.additionalExercises) {
-            closureData.additional_exercises = closureData.additionalExercises;
-          }
         }
+        
+        // Also ensure camelCase version exists for compatibility
+        if (!closureData.additionalExercises) {
+          closureData.additionalExercises = closureData.additional_exercises;
+        }
+        
+        // Debug: Log the closure data before transformation
+        console.log("Closure data before API transformation:", JSON.stringify(closureData, null, 2));
         
         // Transform data to snake_case for database storage
         const closureDataJson = JSON.stringify(apiTransformer.toApi(closureData));
         
+        // Debug: Log the transformed data
+        console.log("Transformed closure data JSON:", closureDataJson);
+        
         let zipfileUrl = null;
         
         // Skip file upload for now as the bucket doesn't exist
-        // Only attempt file upload if file exists and user still wants to proceed
         if (file) {
           console.log("File upload skipped - storage bucket not available");
           toast(`File upload will be available in a future update`, {
@@ -126,7 +143,7 @@ export const useClosureMutations = (courseId?: number) => {
           country: formData.course_info?.country,
           zipfile_url: zipfileUrl,
           closure_data: closureDataJson,
-          closed_by: currentUserId  // Use the real authenticated user ID
+          closed_by: currentUserId
         };
         
         console.log("Submitting course closure with payload:", payload);
@@ -148,10 +165,10 @@ export const useClosureMutations = (courseId?: number) => {
         // Insert vehicle data into course_vehicles table
         if (formData.vehicles && formData.vehicles.length > 0) {
           const vehiclesToInsert = formData.vehicles
-            .filter(v => v.make && (v.make.trim() !== "")) // Only insert vehicles with actual make values
+            .filter(v => v.make && (v.make.trim() !== ""))
             .map(vehicle => ({
               course_instance_id: courseId,
-              vehicle_id: vehicle.car, // Using car as vehicle_id for now
+              vehicle_id: vehicle.car,
               car_number: vehicle.car
             }));
 
@@ -213,11 +230,19 @@ export const useClosureMutations = (courseId?: number) => {
           throw new Error("You must be logged in to complete this action");
         }
         
-        // Fetch student data for the course
-        const students = await fetchStudentsForClosure(courseId);
-        console.log("Students fetched for closure update:", students);
+        // Fetch student data for the course if not already in form data
+        let students = formData.students || [];
+        if (students.length === 0) {
+          students = await fetchStudentsForClosure(courseId);
+          console.log("Students fetched for closure update:", students);
+        } else {
+          console.log("Using students from form data for update:", students);
+        }
         
-        // Convert formData to proper CourseClosureData
+        // Debug: Log the current form data before updating closure data
+        console.log("Form data before updating closure data:", JSON.stringify(formData, null, 2));
+        
+        // Convert formData to proper CourseClosureData - preserve existing additional exercises
         const closureData: CourseClosureData = {
           ...formData as CourseClosureData,
           students: students
@@ -228,25 +253,35 @@ export const useClosureMutations = (courseId?: number) => {
           closureData.vehicles = [];
         }
         
-        // Ensure additional_exercises array exists - use the snake_case version
-        if (!closureData.additional_exercises) {
+        // Preserve additional exercises from form data - use both naming conventions
+        if (formData.additional_exercises) {
+          closureData.additional_exercises = formData.additional_exercises;
+        } else if (formData.additionalExercises) {
+          closureData.additional_exercises = formData.additionalExercises;
+        } else {
           closureData.additional_exercises = [];
-          
-          // If additionalExercises exists (camelCase), copy it to additional_exercises (snake_case)
-          if (closureData.additionalExercises) {
-            closureData.additional_exercises = closureData.additionalExercises;
-          }
         }
+        
+        // Also ensure camelCase version exists for compatibility
+        if (!closureData.additionalExercises) {
+          closureData.additionalExercises = closureData.additional_exercises;
+        }
+        
+        // Debug: Log the closure data before transformation
+        console.log("Closure data before API transformation (update):", JSON.stringify(closureData, null, 2));
         
         // Transform data to snake_case for database storage
         const closureDataJson = JSON.stringify(apiTransformer.toApi(closureData));
         
-        // Create the update payload - using a string for updated_at
+        // Debug: Log the transformed data
+        console.log("Transformed closure data JSON (update):", closureDataJson);
+        
+        // Create the update payload
         const payload = {
           units: formData.course_info?.units,
           country: formData.course_info?.country,
           closure_data: closureDataJson,
-          updated_at: new Date().toISOString() // Convert Date to ISO string format
+          updated_at: new Date().toISOString()
         };
         
         console.log("Updating course closure with payload:", payload);

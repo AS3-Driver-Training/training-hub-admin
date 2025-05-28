@@ -98,17 +98,22 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
   }, [finalExercise]);
 
   // Update parent form data when additional exercises change
-  // Use the snake_case property name to match the CourseClosureData type
   useEffect(() => {
+    console.log("ExercisesStep: Updating additional exercises:", additionalExercises);
     onUpdate({
-      additional_exercises: additionalExercises
+      additional_exercises: additionalExercises,
+      additionalExercises: additionalExercises // Also update camelCase version
     });
   }, [additionalExercises]);
 
   const handleAddExercise = () => {
     if (!newExercise.name) return;
     
-    setAdditionalExercises([...additionalExercises, { ...newExercise }]);
+    const updatedExercises = [...additionalExercises, { ...newExercise }];
+    console.log("ExercisesStep: Adding new exercise:", newExercise);
+    console.log("ExercisesStep: Updated exercises list:", updatedExercises);
+    
+    setAdditionalExercises(updatedExercises);
     setNewExercise({
       id: crypto.randomUUID(),
       name: "",
@@ -120,7 +125,10 @@ export function ExercisesStep({ formData, onUpdate }: ExercisesStepProps) {
   };
 
   const handleRemoveExercise = (id: string) => {
-    setAdditionalExercises(additionalExercises.filter(ex => ex.id !== id));
+    const updatedExercises = additionalExercises.filter(ex => ex.id !== id);
+    console.log("ExercisesStep: Removing exercise with id:", id);
+    console.log("ExercisesStep: Updated exercises list after removal:", updatedExercises);
+    setAdditionalExercises(updatedExercises);
   };
 
   const updateSlalomParams = (field: keyof SlalomParameters, value: number) => {
