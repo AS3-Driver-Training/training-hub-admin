@@ -70,6 +70,7 @@ export const WizardProvider: React.FC<WizardProviderProps> = ({ children, course
         lane_change: { chord: 120, mo: 20 }
       }
     },
+    students: [],
     additional_exercises: []
   });
 

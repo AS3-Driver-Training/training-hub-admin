@@ -9,6 +9,12 @@ type EnrolledStudent = {
   email: string;
 };
 
+// Simplified student data for course closure
+export type CourseClosureStudent = {
+  id: string;
+  name: string;
+};
+
 export function useEnrolledStudents(courseInstanceId: number | undefined) {
   const [students, setStudents] = useState<EnrolledStudent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,9 +74,18 @@ export function useEnrolledStudents(courseInstanceId: number | undefined) {
     fetchEnrolledStudents();
   }, [courseInstanceId]);
 
+  // Transform students for course closure (name + UUID only)
+  const getStudentsForClosure = (): CourseClosureStudent[] => {
+    return students.map(student => ({
+      id: student.id,
+      name: `${student.first_name} ${student.last_name}`
+    }));
+  };
+
   return {
     students,
     isLoading,
-    error
+    error,
+    getStudentsForClosure
   };
 }

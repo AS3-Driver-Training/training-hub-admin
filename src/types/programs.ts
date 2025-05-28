@@ -121,10 +121,17 @@ export interface AdditionalExercise {
   };
 }
 
+// New interface for student data in course closure
+export interface CourseStudent {
+  id: string;
+  name: string;
+}
+
 export interface CourseClosureData {
   course_info: CourseInfo;
   vehicles: CourseVehicle[];
   course_layout: CourseLayout;
+  students: CourseStudent[];
   notes?: string;
   // Support both snake_case and camelCase versions for compatibility
   additional_exercises?: AdditionalExercise[];

@@ -20,6 +20,43 @@ export const useClosureMutations = (courseId?: number) => {
   } = useWizardContext();
   const queryClient = useQueryClient();
 
+  // Helper function to fetch enrolled students for closure
+  const fetchStudentsForClosure = async (courseInstanceId: number) => {
+    try {
+      // Get all attendees for this course instance that are confirmed
+      const { data: attendees, error: attendeesError } = await supabase
+        .from('session_attendees')
+        .select(`student_id`)
+        .eq('course_instance_id', courseInstanceId)
+        .neq('status', 'cancelled');
+        
+      if (attendeesError) throw attendeesError;
+      
+      if (!attendees || attendees.length === 0) {
+        return [];
+      }
+      
+      const studentIds = attendees.map(a => a.student_id);
+      
+      // Get student details for the enrolled students
+      const { data: studentDetails, error: studentsError } = await supabase
+        .from('students')
+        .select(`id, first_name, last_name`)
+        .in('id', studentIds);
+      
+      if (studentsError) throw studentsError;
+      
+      // Transform to CourseStudent format
+      return (studentDetails || []).map(student => ({
+        id: student.id,
+        name: `${student.first_name} ${student.last_name}`
+      }));
+    } catch (err: any) {
+      console.error("Error fetching students for closure:", err);
+      return [];
+    }
+  };
+
   // Submit closure data mutation for creating a new closure
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -41,8 +78,15 @@ export const useClosureMutations = (courseId?: number) => {
         const currentUserId = sessionData.session.user.id;
         console.log("Current user ID for course closure:", currentUserId);
         
+        // Fetch student data for the course
+        const students = await fetchStudentsForClosure(courseId);
+        console.log("Students fetched for closure:", students);
+        
         // Convert formData to proper CourseClosureData
-        const closureData: CourseClosureData = formData as CourseClosureData;
+        const closureData: CourseClosureData = {
+          ...formData as CourseClosureData,
+          students: students
+        };
         
         // Ensure vehicles array exists
         if (!closureData.vehicles) {
@@ -169,8 +213,15 @@ export const useClosureMutations = (courseId?: number) => {
           throw new Error("You must be logged in to complete this action");
         }
         
+        // Fetch student data for the course
+        const students = await fetchStudentsForClosure(courseId);
+        console.log("Students fetched for closure update:", students);
+        
         // Convert formData to proper CourseClosureData
-        const closureData: CourseClosureData = formData as CourseClosureData;
+        const closureData: CourseClosureData = {
+          ...formData as CourseClosureData,
+          students: students
+        };
         
         // Ensure vehicles array exists
         if (!closureData.vehicles) {
