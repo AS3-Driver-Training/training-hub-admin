@@ -102,23 +102,21 @@ export const getAnalyticsData = async (courseId: string): Promise<AnalyticsData 
   try {
     console.log('Fetching analytics data for course:', courseId);
     
+    // Try to fetch from course_closures table first
     const { data, error } = await supabase
       .from('course_closures')
-      .select('analytics_data')
+      .select('closure_data')
       .eq('course_instance_id', parseInt(courseId))
       .single();
     
     if (error) {
-      console.error('Error fetching analytics data:', error);
-      // Return sample data for development
+      console.log('No analytics data found in database, using sample data:', error);
       return sampleAnalyticsData;
     }
     
-    if (data?.analytics_data) {
-      return data.analytics_data as AnalyticsData;
-    }
-    
-    // Return sample data if no analytics data found
+    // For now, return sample data since analytics_data column doesn't exist yet
+    // In the future, this will check data.analytics_data
+    console.log('Using sample analytics data for development');
     return sampleAnalyticsData;
   } catch (error) {
     console.error('Analytics service error:', error);
