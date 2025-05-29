@@ -45,7 +45,7 @@ export function ExercisePerformanceCharts({ studentData, content }: ExercisePerf
       xref: 'paper' as const,
       y0: 80,
       y1: 80,
-      line: { color: '#F59E0B', width: 2, dash: 'dash' }
+      line: { color: '#F59E0B', width: 2, dash: 'dash' as const }
     }],
     annotations: [{
       x: 0.02,
@@ -94,7 +94,7 @@ export function ExercisePerformanceCharts({ studentData, content }: ExercisePerf
       xref: 'paper' as const,
       y0: 80,
       y1: 80,
-      line: { color: '#F59E0B', width: 2, dash: 'dash' }
+      line: { color: '#F59E0B', width: 2, dash: 'dash' as const }
     }],
     annotations: [{
       x: 0.02,

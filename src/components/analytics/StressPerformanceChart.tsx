@@ -64,7 +64,7 @@ export function StressPerformanceChart({ studentData, content }: StressPerforman
     x: [minScore, maxScore],
     y: [minScore, maxScore],
     name: 'Equal Performance',
-    line: { color: '#94A3B8', dash: 'dash', width: 2 },
+    line: { color: '#94A3B8', dash: 'dash' as const, width: 2 },
     hoverinfo: 'skip' as const,
     showlegend: true
   });
