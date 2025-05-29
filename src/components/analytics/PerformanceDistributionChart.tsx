@@ -32,12 +32,12 @@ export function PerformanceDistributionChart({ studentData, content }: Performan
       font: { size: 16 }
     },
     xaxis: {
-      title: 'Number of Students',
+      title: { text: 'Number of Students' },
       showgrid: true,
       gridcolor: '#f1f5f9'
     },
     yaxis: {
-      title: '',
+      title: { text: '' },
       automargin: true
     },
     margin: { l: 150, r: 50, t: 50, b: 50 },

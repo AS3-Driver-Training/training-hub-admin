@@ -31,11 +31,11 @@ export function ExercisePerformanceCharts({ studentData, content }: ExercisePerf
       font: { size: 16 }
     },
     xaxis: {
-      title: 'Students',
+      title: { text: 'Students' },
       tickangle: -45
     },
     yaxis: {
-      title: 'Vehicle Control %',
+      title: { text: 'Vehicle Control %' },
       range: [0, 100]
     },
     shapes: [{
@@ -80,11 +80,11 @@ export function ExercisePerformanceCharts({ studentData, content }: ExercisePerf
       font: { size: 16 }
     },
     xaxis: {
-      title: 'Students',
+      title: { text: 'Students' },
       tickangle: -45
     },
     yaxis: {
-      title: 'Vehicle Control %',
+      title: { text: 'Vehicle Control %' },
       range: [0, 100]
     },
     shapes: [{

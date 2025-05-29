@@ -75,12 +75,12 @@ export function StressPerformanceChart({ studentData, content }: StressPerforman
       font: { size: 16 }
     },
     xaxis: {
-      title: 'Low Stress Performance Score',
+      title: { text: 'Low Stress Performance Score' },
       showgrid: true,
       gridcolor: '#f1f5f9'
     },
     yaxis: {
-      title: 'High Stress Performance Score',
+      title: { text: 'High Stress Performance Score' },
       showgrid: true,
       gridcolor: '#f1f5f9'
     },
