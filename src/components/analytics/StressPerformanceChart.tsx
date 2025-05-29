@@ -36,7 +36,8 @@ export function StressPerformanceChart({ studentData, content }: StressPerforman
     affected: 'Stress Affected'
   };
 
-  const traces = categories.map(category => {
+  // Create traces array with proper typing
+  const traces: any[] = categories.map(category => {
     const categoryData = scatterData.filter(d => d.category === category);
     return {
       type: 'scatter' as const,
