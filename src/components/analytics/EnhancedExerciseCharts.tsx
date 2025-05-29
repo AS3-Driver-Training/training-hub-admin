@@ -23,7 +23,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
     textposition: 'middle center',
     marker: {
       size: 16,
-      color: sortedStudents.map(s => s.slalom_control >= 80 ? '#10B981' : '#EF4444'),
+      color: sortedStudents.map(s => s.slalom_control >= 80 ? '#119DA4' : '#C10230'),
       line: { width: 2, color: 'white' }
     },
     hovertemplate: '<b>%{text}</b><br>Performance: %{y}%<br>Attempts: %{x}<extra></extra>',
@@ -33,15 +33,15 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
   const slalomLayout = {
     title: {
       text: 'Slalom Exercise: Performance % vs Attempts',
-      font: { size: 16 }
+      font: { size: 16, color: '#1f2937' }
     },
     xaxis: {
-      title: { text: 'Number of Attempts' },
+      title: { text: 'Number of Attempts', font: { color: '#374151' } },
       showgrid: true,
       gridcolor: '#f1f5f9'
     },
     yaxis: {
-      title: { text: 'Vehicle Control Performance %' },
+      title: { text: 'Vehicle Control Performance %', font: { color: '#374151' } },
       range: [0, 100],
       showgrid: true,
       gridcolor: '#f1f5f9'
@@ -53,7 +53,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       xref: 'paper' as const,
       y0: 80,
       y1: 80,
-      line: { color: '#F59E0B', width: 2, dash: 'dash' as const }
+      line: { color: '#FF9F1C', width: 2, dash: 'dash' as const }
     }],
     annotations: [{
       x: 0.02,
@@ -62,7 +62,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       yref: 'y' as const,
       text: '80% Performance Threshold',
       showarrow: false,
-      font: { color: '#F59E0B', size: 12 }
+      font: { color: '#FF9F1C', size: 12 }
     }],
     margin: { l: 60, r: 50, t: 60, b: 60 },
     height: 400,
@@ -81,7 +81,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
     textposition: 'middle center',
     marker: {
       size: 16,
-      color: sortedStudents.map(s => s.evasion_control >= 80 ? '#10B981' : '#EF4444'),
+      color: sortedStudents.map(s => s.evasion_control >= 80 ? '#119DA4' : '#C10230'),
       line: { width: 2, color: 'white' }
     },
     hovertemplate: '<b>%{text}</b><br>Performance: %{y}%<br>Attempts: %{x}<extra></extra>',
@@ -91,15 +91,15 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
   const evasionLayout = {
     title: {
       text: 'Barricade Evasion: Performance % vs Attempts',
-      font: { size: 16 }
+      font: { size: 16, color: '#1f2937' }
     },
     xaxis: {
-      title: { text: 'Number of Attempts' },
+      title: { text: 'Number of Attempts', font: { color: '#374151' } },
       showgrid: true,
       gridcolor: '#f1f5f9'
     },
     yaxis: {
-      title: { text: 'Vehicle Control Performance %' },
+      title: { text: 'Vehicle Control Performance %', font: { color: '#374151' } },
       range: [0, 100],
       showgrid: true,
       gridcolor: '#f1f5f9'
@@ -111,7 +111,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       xref: 'paper' as const,
       y0: 80,
       y1: 80,
-      line: { color: '#F59E0B', width: 2, dash: 'dash' as const }
+      line: { color: '#FF9F1C', width: 2, dash: 'dash' as const }
     }],
     annotations: [{
       x: 0.02,
@@ -120,7 +120,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       yref: 'y' as const,
       text: '80% Performance Threshold',
       showarrow: false,
-      font: { color: '#F59E0B', size: 12 }
+      font: { color: '#FF9F1C', size: 12 }
     }],
     margin: { l: 60, r: 50, t: 60, b: 60 },
     height: 400,
@@ -137,9 +137,9 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Exercise Performance Analysis</CardTitle>
+        <CardTitle className="text-primary">Exercise Performance Analysis</CardTitle>
         <div className="text-sm text-gray-600">
-          Performance % represents vehicle control mastery in each exercise. This differs from overall score which encompasses all training aspects.
+          Performance % represents vehicle control mastery in each exercise. This differs from overall composite score which encompasses all training aspects including efficiency and final exercise performance.
         </div>
       </CardHeader>
       <CardContent>
@@ -164,17 +164,17 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
         
         {/* Performance Summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-medium text-blue-900 mb-2">Key Insights</h4>
-            <ul className="text-sm text-blue-800 space-y-1">
+          <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+            <h4 className="font-medium text-primary mb-2">Key Insights</h4>
+            <ul className="text-sm text-gray-700 space-y-1">
               <li>• Lower attempts = Better initial skill acquisition</li>
               <li>• Performance % = Vehicle control mastery per exercise</li>
-              <li>• Overall Score = Comprehensive training assessment</li>
+              <li>• Composite Score = Overall training assessment (30% + 30% + 40%)</li>
             </ul>
           </div>
-          <div className="p-4 bg-green-50 rounded-lg">
-            <h4 className="font-medium text-green-900 mb-2">Performance Standards</h4>
-            <ul className="text-sm text-green-800 space-y-1">
+          <div className="p-4 bg-tertiary/5 rounded-lg border border-tertiary/20">
+            <h4 className="font-medium text-tertiary mb-2">Performance Standards</h4>
+            <ul className="text-sm text-gray-700 space-y-1">
               <li>• 80%+ Performance: Proficient vehicle control</li>
               <li>• Fewer attempts: Faster skill mastery</li>
               <li>• Consistent performance across exercises preferred</li>
