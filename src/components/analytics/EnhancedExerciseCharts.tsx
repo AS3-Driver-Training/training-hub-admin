@@ -14,13 +14,13 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
   const sortedStudents = [...studentData].sort((a, b) => b.overall_score - a.overall_score);
 
   // Performance vs Attempts Scatter Plot for Slalom
-  const slalomScatterData = [{
-    type: 'scatter' as const,
-    mode: 'markers+text' as const,
+  const slalomScatterData: any[] = [{
+    type: 'scatter',
+    mode: 'markers+text',
     x: sortedStudents.map(s => s.slalom_attempts),
     y: sortedStudents.map(s => s.slalom_control),
     text: sortedStudents.map(s => s.name.split(' ').map(n => n[0]).join('')),
-    textposition: 'middle center' as const,
+    textposition: 'middle center',
     marker: {
       size: 16,
       color: sortedStudents.map(s => s.slalom_control >= 80 ? '#10B981' : '#EF4444'),
@@ -72,13 +72,13 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
   };
 
   // Performance vs Attempts Scatter Plot for Evasion
-  const evasionScatterData = [{
-    type: 'scatter' as const,
-    mode: 'markers+text' as const,
+  const evasionScatterData: any[] = [{
+    type: 'scatter',
+    mode: 'markers+text',
     x: sortedStudents.map(s => s.evasion_attempts),
     y: sortedStudents.map(s => s.evasion_control),
     text: sortedStudents.map(s => s.name.split(' ').map(n => n[0]).join('')),
-    textposition: 'middle center' as const,
+    textposition: 'middle center',
     marker: {
       size: 16,
       color: sortedStudents.map(s => s.evasion_control >= 80 ? '#10B981' : '#EF4444'),
