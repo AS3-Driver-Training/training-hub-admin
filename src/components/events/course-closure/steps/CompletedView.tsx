@@ -111,12 +111,17 @@ export function CompletedView({ formData, courseId, closureId, onEdit }: Complet
     onEdit();
   };
 
+  const handleViewAnalytics = () => {
+    // Navigate to analytics report
+    window.location.href = `/events/${courseId}/analytics`;
+  };
+
   return (
     <div className="space-y-6">
       <Alert>
         <CheckCircle className="h-4 w-4" />
         <AlertDescription>
-          Course has been successfully closed. You can download the data or edit if needed.
+          Course has been successfully closed. You can download the data, view analytics, or edit if needed.
         </AlertDescription>
       </Alert>
       
@@ -130,7 +135,11 @@ export function CompletedView({ formData, courseId, closureId, onEdit }: Complet
           </div>
           
           <div className="flex flex-wrap gap-2">
-            <Button onClick={downloadJson}>
+            <Button onClick={handleViewAnalytics} className="bg-blue-600 hover:bg-blue-700">
+              View Analytics Report
+            </Button>
+            
+            <Button variant="outline" onClick={downloadJson}>
               <Download className="mr-2 h-4 w-4" />
               Download JSON
             </Button>

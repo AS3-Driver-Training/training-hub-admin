@@ -150,9 +150,9 @@ export function EventCard({ event, onDelete }: EventCardProps) {
         navigate(`/events/${event.id}/close`);
       }};
     } else if (enhancedStatus === "closed") {
-      return { text: "View Report", action: (e: React.MouseEvent) => {
+      return { text: "View Analytics", action: (e: React.MouseEvent) => {
         e.stopPropagation();
-        navigate(`/events/${event.id}/close`);
+        navigate(`/events/${event.id}/analytics`);
       }};
     }
     return { text: "Manage Course", action: handleViewDetails };
@@ -210,6 +210,16 @@ export function EventCard({ event, onDelete }: EventCardProps) {
                       }}>
                         <FileText className="mr-2 h-4 w-4" />
                         {enhancedStatus === "closed" ? "View Closure" : "Finalize Course"}
+                      </DropdownMenuItem>
+                    )}
+                    
+                    {enhancedStatus === "closed" && (
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/events/${event.id}/analytics`);
+                      }}>
+                        <FileText className="mr-2 h-4 w-4" />
+                        Analytics Report
                       </DropdownMenuItem>
                     )}
                     
