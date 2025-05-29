@@ -21,6 +21,11 @@ export function AnalyticsDashboardHeader({ data }: AnalyticsDashboardHeaderProps
   const proficientStudents = data.student_performance_data.filter(s => s.overall_score >= 80).length;
   const proficiencyRate = Math.round((proficientStudents / totalStudents) * 100);
   
+  // Find best performing student
+  const bestStudent = data.student_performance_data.reduce((best, current) => 
+    current.overall_score > best.overall_score ? current : best
+  );
+  
   return (
     <div className="space-y-8">
       {/* Course Header */}
@@ -53,43 +58,87 @@ export function AnalyticsDashboardHeader({ data }: AnalyticsDashboardHeaderProps
         </Card>
       </div>
       
-      {/* Supporting Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Proficiency Rate */}
-        <Card className="bg-gradient-to-br from-tertiary/10 to-tertiary/20 border-tertiary/30">
-          <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-tertiary mb-2">{proficiencyRate}%</div>
+      {/* Performance Distribution Gauge */}
+      <div className="space-y-6">
+        <h3 className="text-xl font-semibold text-center text-gray-900">Performance Distribution</h3>
+        
+        {/* Color Bar with Markers */}
+        <div className="relative max-w-4xl mx-auto">
+          {/* Color gradient bar */}
+          <div className="h-16 rounded-lg bg-gradient-to-r from-red-500 via-yellow-500 via-blue-500 to-green-500 relative overflow-hidden shadow-lg">
+            {/* Score markers */}
+            <div className="absolute inset-0 flex items-center">
+              {/* Global Average Marker */}
+              <div 
+                className="absolute transform -translate-x-1/2 flex flex-col items-center"
+                style={{ left: `${globalAverage}%` }}
+              >
+                <div className="w-1 h-16 bg-black shadow-md"></div>
+                <div className="absolute -top-8 bg-black text-white px-2 py-1 rounded text-xs font-medium whitespace-nowrap">
+                  Global Avg: {globalAverage}
+                </div>
+              </div>
+              
+              {/* Group Average Marker */}
+              <div 
+                className="absolute transform -translate-x-1/2 flex flex-col items-center z-10"
+                style={{ left: `${groupAverage}%` }}
+              >
+                <div className="w-2 h-16 bg-primary shadow-lg"></div>
+                <div className="absolute -top-8 bg-primary text-white px-2 py-1 rounded text-xs font-medium whitespace-nowrap">
+                  Group: {groupAverage.toFixed(1)}
+                </div>
+              </div>
+              
+              {/* Best Student Marker */}
+              <div 
+                className="absolute transform -translate-x-1/2 flex flex-col items-center"
+                style={{ left: `${bestStudent.overall_score}%` }}
+              >
+                <div className="w-1 h-16 bg-yellow-400 shadow-md"></div>
+                <div className="absolute -bottom-8 bg-yellow-400 text-black px-2 py-1 rounded text-xs font-medium whitespace-nowrap">
+                  Best: {bestStudent.overall_score.toFixed(1)}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Scale indicators */}
+          <div className="flex justify-between mt-2 text-sm text-gray-600">
+            <span>0</span>
+            <span className="text-red-600 font-medium">&lt;80 (Need Training)</span>
+            <span className="text-blue-600 font-medium">80-89 (Proficient)</span>
+            <span className="text-green-600 font-medium">90+ (Excellent)</span>
+            <span>100</span>
+          </div>
+        </div>
+        
+        {/* Quick Stats Below the Gauge */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-8">
+          <div className="text-center p-4 bg-tertiary/10 rounded-lg border border-tertiary/20">
+            <div className="text-2xl font-bold text-tertiary">{proficiencyRate}%</div>
             <div className="text-sm text-tertiary font-medium">Proficiency Rate</div>
-            <div className="mt-1 text-xs text-tertiary/80">{proficientStudents}/{totalStudents} students ≥80%</div>
-          </CardContent>
-        </Card>
-
-        {/* Excellence Rate */}
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-green-600 mb-2">{studentsAbove90}</div>
-            <div className="text-sm text-green-700 font-medium">Excellent Performance</div>
-            <div className="mt-1 text-xs text-green-600">Students scoring 90%+</div>
-          </CardContent>
-        </Card>
-
-        {/* Students Needing Additional Training */}
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-          <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-red-600 mb-2">{studentsBelow80}</div>
-            <div className="text-sm text-red-700 font-medium">Need Additional Training</div>
-            <div className="mt-1 text-xs text-red-600">Students scoring &lt;80%</div>
-          </CardContent>
-        </Card>
-
-        {/* Total Students Trained */}
-        <Card className="bg-gradient-to-br from-secondary/10 to-secondary/20 border-secondary/30">
-          <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-secondary mb-2">{totalStudents}</div>
-            <div className="text-sm text-secondary font-medium">Students Trained</div>
-            <div className="mt-1 text-xs text-secondary/80">100% Completion Rate</div>
-          </CardContent>
-        </Card>
+            <div className="text-xs text-tertiary/70">{proficientStudents}/{totalStudents} students ≥80%</div>
+          </div>
+          
+          <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="text-2xl font-bold text-green-600">{studentsAbove90}</div>
+            <div className="text-sm text-green-700 font-medium">Excellent (90%+)</div>
+            <div className="text-xs text-green-600">High proficiency</div>
+          </div>
+          
+          <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
+            <div className="text-2xl font-bold text-red-600">{studentsBelow80}</div>
+            <div className="text-sm text-red-700 font-medium">Need Training (&lt;80%)</div>
+            <div className="text-xs text-red-600">Additional support needed</div>
+          </div>
+          
+          <div className="text-center p-4 bg-secondary/10 rounded-lg border border-secondary/20">
+            <div className="text-2xl font-bold text-secondary">{totalStudents}</div>
+            <div className="text-sm text-secondary font-medium">Total Students</div>
+            <div className="text-xs text-secondary/70">100% completion</div>
+          </div>
+        </div>
       </div>
     </div>
   );
