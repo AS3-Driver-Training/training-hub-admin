@@ -3,12 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Download, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { getAnalyticsData } from "@/services/analyticsService";
+import { AnalyticsDashboardHeader } from "@/components/analytics/AnalyticsDashboardHeader";
 import { ExecutiveSummary } from "@/components/analytics/ExecutiveSummary";
-import { PerformanceDistributionChart } from "@/components/analytics/PerformanceDistributionChart";
+import { ModernPerformanceDistribution } from "@/components/analytics/ModernPerformanceDistribution";
+import { InformationCards } from "@/components/analytics/InformationCards";
 import { StressPerformanceChart } from "@/components/analytics/StressPerformanceChart";
-import { ExercisePerformanceCharts } from "@/components/analytics/ExercisePerformanceCharts";
+import { EnhancedExerciseCharts } from "@/components/analytics/EnhancedExerciseCharts";
 import { RiskAssessment } from "@/components/analytics/RiskAssessment";
 
 export default function AnalyticsReport() {
@@ -36,7 +38,7 @@ export default function AnalyticsReport() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <Button variant="ghost" size="sm" onClick={handleBack} className="mr-4">
@@ -57,7 +59,7 @@ export default function AnalyticsReport() {
 
   if (error || !analyticsData) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
         <div className="flex items-center">
           <Button variant="ghost" size="sm" onClick={handleBack} className="mr-4">
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -77,20 +79,13 @@ export default function AnalyticsReport() {
   }
 
   return (
-    <div className="space-y-6 print:space-y-4">
+    <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 print:space-y-6">
+      {/* Navigation and Actions */}
       <div className="flex items-center justify-between print:hidden">
-        <div className="flex items-center">
-          <Button variant="ghost" size="sm" onClick={handleBack} className="mr-4">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">{analyticsData.metadata.course_program}</h1>
-            <p className="text-muted-foreground">
-              Analytics Report - {analyticsData.metadata.course_date}
-            </p>
-          </div>
-        </div>
+        <Button variant="ghost" size="sm" onClick={handleBack} className="mr-4">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back
+        </Button>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
@@ -103,6 +98,7 @@ export default function AnalyticsReport() {
         </div>
       </div>
 
+      {/* Print Header */}
       <div className="print:block hidden">
         <h1 className="text-2xl font-bold mb-2">{analyticsData.metadata.course_program}</h1>
         <p className="text-muted-foreground mb-4">
@@ -110,23 +106,34 @@ export default function AnalyticsReport() {
         </p>
       </div>
 
+      {/* Dashboard Header with Key Metrics */}
+      <AnalyticsDashboardHeader data={analyticsData} />
+
+      {/* Executive Summary */}
       <ExecutiveSummary data={analyticsData.anthropic_responses.executive_summary} />
       
-      <PerformanceDistributionChart 
+      {/* Information Cards */}
+      <InformationCards data={analyticsData} />
+      
+      {/* Performance Distribution */}
+      <ModernPerformanceDistribution 
         studentData={analyticsData.student_performance_data}
         content={analyticsData.anthropic_responses.performance_distribution.content}
       />
       
+      {/* Exercise Performance Charts */}
+      <EnhancedExerciseCharts 
+        studentData={analyticsData.student_performance_data}
+        content={analyticsData.anthropic_responses.exercise_breakdown.content}
+      />
+      
+      {/* Stress Performance Analysis */}
       <StressPerformanceChart 
         studentData={analyticsData.student_performance_data}
         content={analyticsData.anthropic_responses.stress_performance_analysis.content}
       />
       
-      <ExercisePerformanceCharts 
-        studentData={analyticsData.student_performance_data}
-        content={analyticsData.anthropic_responses.exercise_breakdown.content}
-      />
-      
+      {/* Risk Assessment */}
       <RiskAssessment 
         content={analyticsData.anthropic_responses.risk_assessment_recommendations.content}
       />
