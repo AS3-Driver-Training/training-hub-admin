@@ -14,6 +14,30 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
   const sortedStudents = [...studentData].sort((a, b) => b.overall_score - a.overall_score);
   const studentNames = sortedStudents.map(s => s.name);
 
+  // Calculate performance statistics
+  const slalomGroupAverage = Math.round(sortedStudents.reduce((sum, s) => sum + s.slalom_control, 0) / sortedStudents.length);
+  const evasionGroupAverage = Math.round(sortedStudents.reduce((sum, s) => sum + s.evasion_control, 0) / sortedStudents.length);
+
+  // Get top 3 performers for Slalom (by performance %, then by fewer attempts)
+  const slalomTopPerformers = [...sortedStudents]
+    .sort((a, b) => {
+      if (a.slalom_control !== b.slalom_control) {
+        return b.slalom_control - a.slalom_control;
+      }
+      return a.slalom_attempts - b.slalom_attempts;
+    })
+    .slice(0, 3);
+
+  // Get top 3 performers for Evasion (by performance %, then by fewer attempts)
+  const evasionTopPerformers = [...sortedStudents]
+    .sort((a, b) => {
+      if (a.evasion_control !== b.evasion_control) {
+        return b.evasion_control - a.evasion_control;
+      }
+      return a.evasion_attempts - b.evasion_attempts;
+    })
+    .slice(0, 3);
+
   // Slalom Exercise Chart Data
   const slalomData: any[] = [
     // Red dots for slalom max performance
@@ -95,7 +119,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
     height: 500,
     plot_bgcolor: 'white',
     paper_bgcolor: 'white',
-    legend: { x: 0, y: 1.1, orientation: 'h' as const }
+    showlegend: false
   };
 
   // Barricade Evasion Chart Data
@@ -179,7 +203,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
     height: 500,
     plot_bgcolor: 'white',
     paper_bgcolor: 'white',
-    legend: { x: 0, y: 1.1, orientation: 'h' as const }
+    showlegend: false
   };
 
   // Final Exercise Chart Data - using low and high stress scores
@@ -256,7 +280,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
     height: 500,
     plot_bgcolor: 'white',
     paper_bgcolor: 'white',
-    legend: { x: 0, y: 1.1, orientation: 'h' as const }
+    showlegend: false
   };
 
   const config = {
@@ -269,8 +293,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       <CardHeader>
         <CardTitle className="text-primary">Exercise Performance Analysis</CardTitle>
         <div className="text-sm text-gray-600">
-          Red dots show maximum performance achieved. Grey squares show number of attempts until passing. 
-          Charts display individual student performance across all training exercises.
+          Individual student performance across all training exercises. Red dots show maximum performance achieved, grey squares show attempts until passing.
         </div>
       </CardHeader>
       <CardContent>
@@ -282,6 +305,29 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
             config={config}
             style={{ width: '100%', height: '500px' }}
           />
+          
+          {/* Slalom Performance Legend */}
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 className="font-bold text-blue-900 text-lg mb-3">SLALOM EXERCISE</h4>
+            <div className="text-blue-800 mb-3">
+              <span className="font-semibold">Group Average Vehicle Control: {slalomGroupAverage}%</span>
+            </div>
+            <div className="mb-3">
+              <span className="font-semibold text-blue-900">Top Performers:</span>
+              <ul className="mt-2 space-y-1">
+                {slalomTopPerformers.map((student, index) => (
+                  <li key={student.name} className="text-blue-800">
+                    <span className="font-medium">{student.name}</span>: {student.slalom_control}% control, {student.slalom_attempts} attempts
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="text-sm text-blue-700 bg-blue-100 p-3 rounded border-l-4 border-blue-400">
+              <strong>What it teaches:</strong> The slalom exercise develops precise vehicle control, spatial awareness, and smooth steering inputs. 
+              Students learn to navigate through tight spaces while maintaining vehicle stability and speed control. This exercise is critical for 
+              developing the fine motor skills needed for evasive maneuvers in real-world scenarios.
+            </div>
+          </div>
         </div>
 
         {/* Barricade Evasion Chart */}
@@ -292,6 +338,29 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
             config={config}
             style={{ width: '100%', height: '500px' }}
           />
+          
+          {/* Evasion Performance Legend */}
+          <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+            <h4 className="font-bold text-green-900 text-lg mb-3">BARRICADE EVASION EXERCISE</h4>
+            <div className="text-green-800 mb-3">
+              <span className="font-semibold">Group Average Vehicle Control: {evasionGroupAverage}%</span>
+            </div>
+            <div className="mb-3">
+              <span className="font-semibold text-green-900">Top Performers:</span>
+              <ul className="mt-2 space-y-1">
+                {evasionTopPerformers.map((student, index) => (
+                  <li key={student.name} className="text-green-800">
+                    <span className="font-medium">{student.name}</span>: {student.evasion_control}% control, {student.evasion_attempts} attempts
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="text-sm text-green-700 bg-green-100 p-3 rounded border-l-4 border-green-400">
+              <strong>What it teaches:</strong> The barricade evasion exercise simulates emergency lane changes and obstacle avoidance. 
+              Students develop rapid decision-making skills, emergency braking techniques, and the ability to maintain control during 
+              sudden directional changes. This exercise is essential for counter-ambush scenarios and emergency situation response.
+            </div>
+          </div>
         </div>
 
         {/* Final Exercise Chart */}
@@ -302,9 +371,33 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
             config={config}
             style={{ width: '100%', height: '500px' }}
           />
+          
+          {/* Final Exercise Legend */}
+          <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+            <h4 className="font-bold text-purple-900 text-lg mb-3">FINAL MULTIDISCIPLINARY EXERCISE</h4>
+            <div className="text-purple-800 mb-3">
+              <span className="font-semibold">Low Stress vs High Stress Performance Comparison</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+              <div>
+                <span className="font-semibold text-red-600">● Low Stress Conditions:</span>
+                <div className="text-sm text-purple-700">Standard training environment with predictable scenarios</div>
+              </div>
+              <div>
+                <span className="font-semibold text-blue-600">● High Stress Conditions:</span>
+                <div className="text-sm text-purple-700">Time pressure, multiple threats, decision complexity</div>
+              </div>
+            </div>
+            <div className="text-sm text-purple-700 bg-purple-100 p-3 rounded border-l-4 border-purple-400">
+              <strong>What it teaches:</strong> The final exercise combines all learned skills under varying stress levels to evaluate 
+              real-world performance capability. It tests students' ability to maintain proficiency when facing time pressure, 
+              multiple simultaneous challenges, and high-stakes decision making. This exercise identifies students who can perform 
+              effectively in actual operational environments versus controlled training conditions.
+            </div>
+          </div>
         </div>
         
-        {/* Performance Summary */}
+        {/* Chart Legend */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
             <h4 className="font-medium text-primary mb-2">Chart Legend</h4>
