@@ -68,7 +68,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
     yaxis2: {
       title: { text: 'Number of Attempts', font: { color: '#6B7280' } },
       side: 'right' as const,
-      overlaying: 'y',
+      overlaying: 'y' as const,
       range: [0, Math.max(...sortedStudents.map(s => s.slalom_attempts)) + 2],
       showgrid: false
     },
@@ -152,7 +152,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
     yaxis2: {
       title: { text: 'Number of Attempts', font: { color: '#6B7280' } },
       side: 'right' as const,
-      overlaying: 'y',
+      overlaying: 'y' as const,
       range: [0, Math.max(...sortedStudents.map(s => s.evasion_attempts)) + 2],
       showgrid: false
     },
