@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Plot from "react-plotly.js";
 import { AnalyticsData } from "@/types/analytics";
@@ -321,11 +320,6 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
                   </li>
                 ))}
               </ul>
-            </div>
-            <div className="text-sm text-blue-700 bg-blue-100 p-3 rounded border-l-4 border-blue-400">
-              <strong>What it teaches:</strong> The slalom exercise develops precise vehicle control, spatial awareness, and smooth steering inputs. 
-              Students learn to navigate through tight spaces while maintaining vehicle stability and speed control. This exercise is critical for 
-              developing the fine motor skills needed for evasive maneuvers in real-world scenarios.
             </div>
           </div>
         </div>
