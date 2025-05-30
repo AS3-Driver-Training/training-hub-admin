@@ -16,14 +16,14 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
 
   // Slalom Exercise Chart Data
   const slalomData: any[] = [
-    // Red dots for slalom_max (performance)
+    // Red dots for slalom max performance
     {
       type: 'scatter',
       mode: 'markers',
       x: studentNames,
       y: sortedStudents.map(s => s.slalom_control),
       marker: {
-        size: 12,
+        size: 14,
         color: '#DC2626',
         symbol: 'circle'
       },
@@ -38,7 +38,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       x: studentNames,
       y: sortedStudents.map(s => s.slalom_attempts),
       marker: {
-        size: 10,
+        size: 12,
         color: '#6B7280',
         symbol: 'square'
       },
@@ -60,14 +60,14 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
     },
     yaxis: {
       title: { text: 'Performance %', font: { color: '#DC2626' } },
-      side: 'left',
+      side: 'left' as const,
       range: [0, 100],
       showgrid: true,
       gridcolor: '#f1f5f9'
     },
     yaxis2: {
       title: { text: 'Number of Attempts', font: { color: '#6B7280' } },
-      side: 'right',
+      side: 'right' as const,
       overlaying: 'y',
       range: [0, Math.max(...sortedStudents.map(s => s.slalom_attempts)) + 2],
       showgrid: false
@@ -92,7 +92,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       font: { color: '#FF9F1C', size: 12 }
     }],
     margin: { l: 80, r: 80, t: 60, b: 120 },
-    height: 400,
+    height: 500,
     plot_bgcolor: 'white',
     paper_bgcolor: 'white',
     legend: { x: 0, y: 1.1, orientation: 'h' as const }
@@ -100,14 +100,14 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
 
   // Barricade Evasion Chart Data
   const evasionData: any[] = [
-    // Red dots for lane change max (performance)
+    // Red dots for evasion max performance
     {
       type: 'scatter',
       mode: 'markers',
       x: studentNames,
       y: sortedStudents.map(s => s.evasion_control),
       marker: {
-        size: 12,
+        size: 14,
         color: '#DC2626',
         symbol: 'circle'
       },
@@ -122,7 +122,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       x: studentNames,
       y: sortedStudents.map(s => s.evasion_attempts),
       marker: {
-        size: 10,
+        size: 12,
         color: '#6B7280',
         symbol: 'square'
       },
@@ -144,14 +144,14 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
     },
     yaxis: {
       title: { text: 'Performance %', font: { color: '#DC2626' } },
-      side: 'left',
+      side: 'left' as const,
       range: [0, 100],
       showgrid: true,
       gridcolor: '#f1f5f9'
     },
     yaxis2: {
       title: { text: 'Number of Attempts', font: { color: '#6B7280' } },
-      side: 'right',
+      side: 'right' as const,
       overlaying: 'y',
       range: [0, Math.max(...sortedStudents.map(s => s.evasion_attempts)) + 2],
       showgrid: false
@@ -176,7 +176,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       font: { color: '#FF9F1C', size: 12 }
     }],
     margin: { l: 80, r: 80, t: 60, b: 120 },
-    height: 400,
+    height: 500,
     plot_bgcolor: 'white',
     paper_bgcolor: 'white',
     legend: { x: 0, y: 1.1, orientation: 'h' as const }
@@ -191,7 +191,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       x: studentNames,
       y: sortedStudents.map(s => s.low_stress_score),
       marker: {
-        size: 12,
+        size: 14,
         color: '#DC2626',
         symbol: 'circle'
       },
@@ -206,7 +206,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       x: studentNames,
       y: sortedStudents.map(s => s.high_stress_score),
       marker: {
-        size: 12,
+        size: 14,
         color: '#2563EB',
         symbol: 'circle'
       },
@@ -228,7 +228,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
     },
     yaxis: {
       title: { text: 'Performance Score', font: { color: '#374151' } },
-      side: 'left',
+      side: 'left' as const,
       range: [0, 100],
       showgrid: true,
       gridcolor: '#f1f5f9'
@@ -253,7 +253,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       font: { color: '#FF9F1C', size: 12 }
     }],
     margin: { l: 80, r: 80, t: 60, b: 120 },
-    height: 400,
+    height: 500,
     plot_bgcolor: 'white',
     paper_bgcolor: 'white',
     legend: { x: 0, y: 1.1, orientation: 'h' as const }
@@ -280,7 +280,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
             data={slalomData}
             layout={slalomLayout}
             config={config}
-            style={{ width: '100%', height: '400px' }}
+            style={{ width: '100%', height: '500px' }}
           />
         </div>
 
@@ -290,7 +290,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
             data={evasionData}
             layout={evasionLayout}
             config={config}
-            style={{ width: '100%', height: '400px' }}
+            style={{ width: '100%', height: '500px' }}
           />
         </div>
 
@@ -300,7 +300,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
             data={finalExerciseData}
             layout={finalExerciseLayout}
             config={config}
-            style={{ width: '100%', height: '400px' }}
+            style={{ width: '100%', height: '500px' }}
           />
         </div>
         
