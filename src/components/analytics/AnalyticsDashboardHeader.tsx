@@ -15,10 +15,10 @@ export function AnalyticsDashboardHeader({ data }: AnalyticsDashboardHeaderProps
   const totalStudents = data.metadata.total_students;
   const courseDate = new Date(data.metadata.course_date).toLocaleDateString();
   
-  // Calculate correct performance metrics based on the scoring guide
+  // Calculate correct performance metrics based on composite scores (not percentages)
   const studentsAbove90 = data.student_performance_data.filter(s => s.overall_score >= 90).length;
-  const studentsBelow80 = data.student_performance_data.filter(s => s.overall_score < 80).length;
-  const proficientStudents = data.student_performance_data.filter(s => s.overall_score >= 80).length;
+  const studentsBelow70 = data.student_performance_data.filter(s => s.overall_score < 70).length;
+  const proficientStudents = data.student_performance_data.filter(s => s.overall_score >= 85).length;
   const proficiencyRate = Math.round((proficientStudents / totalStudents) * 100);
   
   // Find best performing student
@@ -106,8 +106,8 @@ export function AnalyticsDashboardHeader({ data }: AnalyticsDashboardHeaderProps
           {/* Scale indicators */}
           <div className="flex justify-between mt-2 text-sm text-gray-600">
             <span>0</span>
-            <span className="text-red-600 font-medium">&lt;80 (Need Training)</span>
-            <span className="text-blue-600 font-medium">80-89 (Proficient)</span>
+            <span className="text-red-600 font-medium">&lt;70 (Need Training)</span>
+            <span className="text-blue-600 font-medium">85-89 (Proficient)</span>
             <span className="text-green-600 font-medium">90+ (Excellent)</span>
             <span>100</span>
           </div>
@@ -118,18 +118,18 @@ export function AnalyticsDashboardHeader({ data }: AnalyticsDashboardHeaderProps
           <div className="text-center p-4 bg-tertiary/10 rounded-lg border border-tertiary/20">
             <div className="text-2xl font-bold text-tertiary">{proficiencyRate}%</div>
             <div className="text-sm text-tertiary font-medium">Proficiency Rate</div>
-            <div className="text-xs text-tertiary/70">{proficientStudents}/{totalStudents} students ≥80%</div>
+            <div className="text-xs text-tertiary/70">{proficientStudents}/{totalStudents} students ≥85</div>
           </div>
           
           <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
             <div className="text-2xl font-bold text-green-600">{studentsAbove90}</div>
-            <div className="text-sm text-green-700 font-medium">Excellent (90%+)</div>
+            <div className="text-sm text-green-700 font-medium">Excellent (90+)</div>
             <div className="text-xs text-green-600">High proficiency</div>
           </div>
           
           <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
-            <div className="text-2xl font-bold text-red-600">{studentsBelow80}</div>
-            <div className="text-sm text-red-700 font-medium">Need Training (&lt;80%)</div>
+            <div className="text-2xl font-bold text-red-600">{studentsBelow70}</div>
+            <div className="text-sm text-red-700 font-medium">Need Training (&lt;70)</div>
             <div className="text-xs text-red-600">Additional support needed</div>
           </div>
           

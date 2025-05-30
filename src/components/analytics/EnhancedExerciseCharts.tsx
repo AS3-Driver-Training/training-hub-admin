@@ -26,13 +26,13 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       color: sortedStudents.map(s => s.slalom_control >= 80 ? '#119DA4' : '#C10230'),
       line: { width: 2, color: 'white' }
     },
-    hovertemplate: '<b>%{text}</b><br>Performance: %{y}%<br>Attempts: %{x}<extra></extra>',
+    hovertemplate: '<b>%{text}</b><br>Vehicle Control: %{y}%<br>Attempts: %{x}<extra></extra>',
     name: 'Students'
   }];
 
   const slalomLayout = {
     title: {
-      text: 'Slalom Exercise: Performance % vs Attempts',
+      text: 'Slalom Exercise: Vehicle Control Performance vs Attempts',
       font: { size: 16, color: '#1f2937' }
     },
     xaxis: {
@@ -60,7 +60,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       y: 82,
       xref: 'paper' as const,
       yref: 'y' as const,
-      text: '80% Performance Threshold',
+      text: '80% Vehicle Control Threshold',
       showarrow: false,
       font: { color: '#FF9F1C', size: 12 }
     }],
@@ -84,13 +84,13 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       color: sortedStudents.map(s => s.evasion_control >= 80 ? '#119DA4' : '#C10230'),
       line: { width: 2, color: 'white' }
     },
-    hovertemplate: '<b>%{text}</b><br>Performance: %{y}%<br>Attempts: %{x}<extra></extra>',
+    hovertemplate: '<b>%{text}</b><br>Vehicle Control: %{y}%<br>Attempts: %{x}<extra></extra>',
     name: 'Students'
   }];
 
   const evasionLayout = {
     title: {
-      text: 'Barricade Evasion: Performance % vs Attempts',
+      text: 'Barricade Evasion: Vehicle Control Performance vs Attempts',
       font: { size: 16, color: '#1f2937' }
     },
     xaxis: {
@@ -118,7 +118,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       y: 82,
       xref: 'paper' as const,
       yref: 'y' as const,
-      text: '80% Performance Threshold',
+      text: '80% Vehicle Control Threshold',
       showarrow: false,
       font: { color: '#FF9F1C', size: 12 }
     }],
@@ -139,7 +139,7 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       <CardHeader>
         <CardTitle className="text-primary">Exercise Performance Analysis</CardTitle>
         <div className="text-sm text-gray-600">
-          Performance % represents vehicle control mastery in each exercise. This differs from overall composite score which encompasses all training aspects including efficiency and final exercise performance.
+          Vehicle control performance (%) measures mastery within each exercise. Composite scores (shown elsewhere) combine all training aspects including efficiency and final exercise performance.
         </div>
       </CardHeader>
       <CardContent>
@@ -167,15 +167,15 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
           <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
             <h4 className="font-medium text-primary mb-2">Key Insights</h4>
             <ul className="text-sm text-gray-700 space-y-1">
-              <li>• Lower attempts = Better initial skill acquisition</li>
-              <li>• Performance % = Vehicle control mastery per exercise</li>
-              <li>• Composite Score = Overall training assessment (30% + 30% + 40%)</li>
+              <li>• Fewer attempts = Better initial skill acquisition</li>
+              <li>• Vehicle Control % = Mastery level within each exercise</li>
+              <li>• Composite Score = Overall training assessment (different scale)</li>
             </ul>
           </div>
           <div className="p-4 bg-tertiary/5 rounded-lg border border-tertiary/20">
             <h4 className="font-medium text-tertiary mb-2">Performance Standards</h4>
             <ul className="text-sm text-gray-700 space-y-1">
-              <li>• 80%+ Performance: Proficient vehicle control</li>
+              <li>• 80%+ Vehicle Control: Proficient in exercise</li>
               <li>• Fewer attempts: Faster skill mastery</li>
               <li>• Consistent performance across exercises preferred</li>
             </ul>
