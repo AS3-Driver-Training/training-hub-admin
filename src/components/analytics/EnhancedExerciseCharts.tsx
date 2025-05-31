@@ -43,9 +43,24 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
     })
     .slice(0, 3);
 
+  // Parse content to extract exercise-specific sections
+  const parseExerciseContent = (content: string) => {
+    const sections = content.split('###');
+    const slalomSection = sections.find(section => section.trim().startsWith('SLALOM EXERCISE'));
+    const evasionSection = sections.find(section => section.trim().startsWith('BARRICADE EVASION'));
+    const finalSection = sections.find(section => section.trim().startsWith('FINAL EXERCISE'));
+    
+    return {
+      slalom: slalomSection ? `### ${slalomSection.trim()}` : '',
+      evasion: evasionSection ? `### ${evasionSection.trim()}` : '',
+      final: finalSection ? `### ${finalSection.trim()}` : ''
+    };
+  };
+
+  const exerciseSections = parseExerciseContent(content);
+
   // Slalom Exercise Chart Data
   const slalomData: any[] = [
-    // Red dots for slalom max performance
     {
       type: 'scatter',
       mode: 'markers',
@@ -64,7 +79,6 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       hovertemplate: '<b>%{x}</b><br>Max Performance: %{y}%<extra></extra>',
       yaxis: 'y'
     },
-    // Grey squares for attempts until pass
     {
       type: 'scatter',
       mode: 'markers',
@@ -133,26 +147,6 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
         text: '80% Performance Threshold',
         showarrow: false,
         font: { color: '#F59E0B', size: 12, family: 'Inter, sans-serif' }
-      },
-      {
-        x: 0.98,
-        y: slalomGroupAverage + 2,
-        xref: 'paper' as const,
-        yref: 'y' as const,
-        text: `Group Avg: ${slalomGroupAverage}%`,
-        showarrow: false,
-        font: { color: '#6B7280', size: 11, family: 'Inter, sans-serif' },
-        xanchor: 'right' as const
-      },
-      {
-        x: 0.98,
-        y: slalomAttemptsAverage + 0.5,
-        xref: 'paper' as const,
-        yref: 'y2' as const,
-        text: `Avg Attempts: ${slalomAttemptsAverage}`,
-        showarrow: false,
-        font: { color: '#9CA3AF', size: 11, family: 'Inter, sans-serif' },
-        xanchor: 'right' as const
       }
     ],
     margin: { l: 80, r: 100, t: 60, b: 120 },
@@ -165,7 +159,6 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
 
   // Barricade Evasion Chart Data
   const evasionData: any[] = [
-    // Red dots for evasion max performance
     {
       type: 'scatter',
       mode: 'markers',
@@ -184,7 +177,6 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       hovertemplate: '<b>%{x}</b><br>Max Performance: %{y}%<extra></extra>',
       yaxis: 'y'
     },
-    // Grey squares for attempts until pass
     {
       type: 'scatter',
       mode: 'markers',
@@ -253,26 +245,6 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
         text: '80% Performance Threshold',
         showarrow: false,
         font: { color: '#F59E0B', size: 12, family: 'Inter, sans-serif' }
-      },
-      {
-        x: 0.98,
-        y: evasionGroupAverage + 2,
-        xref: 'paper' as const,
-        yref: 'y' as const,
-        text: `Group Avg: ${evasionGroupAverage}%`,
-        showarrow: false,
-        font: { color: '#6B7280', size: 11, family: 'Inter, sans-serif' },
-        xanchor: 'right' as const
-      },
-      {
-        x: 0.98,
-        y: evasionAttemptsAverage + 0.5,
-        xref: 'paper' as const,
-        yref: 'y2' as const,
-        text: `Avg Attempts: ${evasionAttemptsAverage}`,
-        showarrow: false,
-        font: { color: '#9CA3AF', size: 11, family: 'Inter, sans-serif' },
-        xanchor: 'right' as const
       }
     ],
     margin: { l: 80, r: 100, t: 60, b: 120 },
@@ -299,38 +271,26 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       <CardContent className="space-y-8">
         {/* Slalom Exercise Section */}
         <div className="space-y-4">
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="slalom" className="border border-blue-200 rounded-lg">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <h3 className="text-lg font-bold text-blue-900">SLALOM EXERCISE</h3>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4">
-                <div className="text-blue-800 space-y-3 text-sm leading-relaxed">
-                  <p>
-                    The Slalom exercise may seem basic, but it is the most demanding of all activities. This test creates a 
-                    consistent skill that involves a deep understanding of time/distance and hand/eye coordination. Its 
-                    consistency allows us to measure it precisely to determine driver skill and focus areas; this is the basis 
-                    for everything we train in evasive driving.
-                  </p>
-                  <p>
-                    The Slalom exercise requires that the student maintains a consistent speed above 80% of the car's 
-                    lateral acceleration capability while negotiating through the turns. The students must perform the 
-                    exercise without hitting cones and maintaining a constant speed (a 4 mile an hour variation will 
-                    invalidate the test); this involves learning where to look and anticipate turns while controlling the 
-                    throttle to counter the drag to sustain speed.
-                  </p>
-                  <div className="mt-3 p-3 bg-blue-50 rounded border-l-4 border-blue-400">
-                    <p><strong>Type:</strong> Regular Slalom – 4 Cones (50ft Chord)</p>
-                    <p><strong>Difficulty Level:</strong> Medium / Hard</p>
+          {/* Slalom Description */}
+          {exerciseSections.slalom && (
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="slalom" className="border border-blue-200 rounded-lg">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <h3 className="text-lg font-bold text-blue-900">SLALOM EXERCISE</h3>
                   </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <div className="prose prose-sm prose-blue max-w-none">
+                    <ReactMarkdown>{exerciseSections.slalom}</ReactMarkdown>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
 
+          {/* Slalom Chart */}
           <Plot
             data={slalomData}
             layout={slalomLayout}
@@ -338,46 +298,57 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
             style={{ width: '100%', height: '450px' }}
           />
           
-          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="text-blue-800 text-sm">
-              <span className="font-semibold">Group Average Vehicle Control: {slalomGroupAverage}%</span> | 
-              <span className="font-semibold ml-2">Top Performer: {slalomTopPerformers[0]?.name} ({slalomTopPerformers[0]?.slalom_control}%)</span>
+          {/* Slalom Performance Summary */}
+          <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-blue-900">Slalom Performance Summary</h4>
+                <div className="text-sm text-blue-700">
+                  Group Average: {slalomGroupAverage}% | Avg Attempts: {slalomAttemptsAverage}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {slalomTopPerformers.map((student, index) => (
+                  <div key={student.name} className="bg-white rounded p-3 border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-blue-900">{student.name}</div>
+                        <div className="text-sm text-blue-700">{student.slalom_control}% control, {student.slalom_attempts} attempts</div>
+                      </div>
+                      <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                        {index + 1}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Barricade Evasion Section */}
         <div className="space-y-4">
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="evasion" className="border border-green-200 rounded-lg">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <h3 className="text-lg font-bold text-green-900">BARRICADE EVASION (Lane Change)</h3>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4">
-                <div className="text-green-800 space-y-3 text-sm leading-relaxed">
-                  <p>
-                    Based on the research published by the Society of Automotive Engineers, in this exercise, students 
-                    are pushed to the limits of cognitive reaction times through an electronically operated signal system 
-                    that allows them little room for error. The Barricade requires situational awareness and 
-                    decision-making while using all the skills acquired in the Slalom, adding a psychological factor as the 
-                    speed through the exercise is slightly increased.
-                  </p>
-                  <p>
-                    Just as the Slalom, this exercise requires skill as it is graded at 80% of the car's lateral acceleration 
-                    capability and requires the same speed consistency as stated above.
-                  </p>
-                  <div className="mt-3 p-3 bg-green-50 rounded border-l-4 border-green-400">
-                    <p><strong>Type:</strong> Regular LnCh – .75 Sec Reaction time (100ft Chord)</p>
-                    <p><strong>Difficulty Level:</strong> Medium</p>
+          {/* Evasion Description */}
+          {exerciseSections.evasion && (
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="evasion" className="border border-green-200 rounded-lg">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <h3 className="text-lg font-bold text-green-900">BARRICADE EVASION (Lane Change)</h3>
                   </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <div className="prose prose-sm prose-green max-w-none">
+                    <ReactMarkdown>{exerciseSections.evasion}</ReactMarkdown>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
 
+          {/* Evasion Chart */}
           <Plot
             data={evasionData}
             layout={evasionLayout}
@@ -385,15 +356,36 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
             style={{ width: '100%', height: '450px' }}
           />
           
-          <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-            <div className="text-green-800 text-sm">
-              <span className="font-semibold">Group Average Vehicle Control: {evasionGroupAverage}%</span> | 
-              <span className="font-semibold ml-2">Top Performer: {evasionTopPerformers[0]?.name} ({evasionTopPerformers[0]?.slalom_control}%)</span>
+          {/* Evasion Performance Summary */}
+          <div className="bg-green-50 rounded-lg border border-green-200 p-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-green-900">Barricade Evasion Performance Summary</h4>
+                <div className="text-sm text-green-700">
+                  Group Average: {evasionGroupAverage}% | Avg Attempts: {evasionAttemptsAverage}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {evasionTopPerformers.map((student, index) => (
+                  <div key={student.name} className="bg-white rounded p-3 border border-green-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-green-900">{student.name}</div>
+                        <div className="text-sm text-green-700">{student.evasion_control}% control, {student.evasion_attempts} attempts</div>
+                      </div>
+                      <div className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                        {index + 1}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
         
-        {/* Consolidated Chart Legend */}
+        {/* Chart Legend */}
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
           <h4 className="font-medium text-gray-900 mb-3">Chart Legend & Performance Standards</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -416,9 +408,12 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
           </div>
         </div>
 
-        <div className="prose prose-sm max-w-none border-t pt-4">
-          <ReactMarkdown>{content}</ReactMarkdown>
-        </div>
+        {/* Final Exercise Analysis (if available) */}
+        {exerciseSections.final && (
+          <div className="prose prose-sm max-w-none border-t pt-4">
+            <ReactMarkdown>{exerciseSections.final}</ReactMarkdown>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
