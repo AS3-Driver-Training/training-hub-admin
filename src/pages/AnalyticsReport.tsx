@@ -106,20 +106,21 @@ export default function AnalyticsReport() {
         </p>
       </div>
 
-      {/* Dashboard Header with Key Metrics */}
+      {/* Header with Course Info and Hero Metrics */}
       <AnalyticsDashboardHeader data={analyticsData} />
 
       {/* Executive Summary */}
       <ExecutiveSummary data={analyticsData.anthropic_responses.executive_summary} />
       
+      {/* Information Cards */}
+      <InformationCards data={analyticsData} />
+      
       {/* Performance Distribution */}
       <ModernPerformanceDistribution 
         studentData={analyticsData.student_performance_data}
         content={analyticsData.anthropic_responses.performance_distribution.content}
+        totalStudents={analyticsData.metadata.total_students}
       />
-      
-      {/* Information Cards */}
-      <InformationCards data={analyticsData} />
       
       {/* Exercise Performance Charts */}
       <EnhancedExerciseCharts 
