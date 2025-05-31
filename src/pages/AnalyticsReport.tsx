@@ -112,14 +112,14 @@ export default function AnalyticsReport() {
       {/* Executive Summary */}
       <ExecutiveSummary data={analyticsData.anthropic_responses.executive_summary} />
       
-      {/* Information Cards */}
-      <InformationCards data={analyticsData} />
-      
       {/* Performance Distribution */}
       <ModernPerformanceDistribution 
         studentData={analyticsData.student_performance_data}
         content={analyticsData.anthropic_responses.performance_distribution.content}
       />
+      
+      {/* Information Cards */}
+      <InformationCards data={analyticsData} />
       
       {/* Exercise Performance Charts */}
       <EnhancedExerciseCharts 

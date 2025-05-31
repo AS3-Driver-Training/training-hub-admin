@@ -11,7 +11,7 @@ export function InformationCards({ data }: InformationCardsProps) {
   const vehicles = data.source_data.course_metadata.vehicles;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Student Roster */}
       <Card>
         <CardHeader>
@@ -67,41 +67,6 @@ export function InformationCards({ data }: InformationCardsProps) {
                 </div>
               </div>
             ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Statistics */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Quick Statistics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Avg Slalom Control</span>
-              <span className="font-medium">{data.source_data.group_data.group_average_slalom_vehicle_control}%</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Avg Evasion Control</span>
-              <span className="font-medium">{data.source_data.group_data.group_average_lnch_vehicle_control}%</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Final Exercise Time</span>
-              <span className="font-medium">{data.source_data.group_data.Final_Excersise_Group_Avg_Time}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Final Exercise Performance</span>
-              <span className="font-medium">{data.source_data.group_data.Final_Excersise_Group_Avg_Performance}%</span>
-            </div>
-            <div className="border-t pt-3 mt-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-700">Students ≥85 Score</span>
-                <span className="font-bold text-green-600">
-                  {data.student_performance_data.filter(s => s.overall_score >= 85).length}/{data.metadata.total_students}
-                </span>
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>
