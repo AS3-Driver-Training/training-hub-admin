@@ -52,7 +52,7 @@ export function ExercisePerformanceCharts({ studentData, content }: ExercisePerf
       y: 82,
       xref: 'paper' as const,
       yref: 'y' as const,
-      text: '80% Proficiency Threshold',
+      text: '80% Security Threshold',
       showarrow: false,
       font: { color: '#F59E0B', size: 12 }
     }],
@@ -101,7 +101,7 @@ export function ExercisePerformanceCharts({ studentData, content }: ExercisePerf
       y: 82,
       xref: 'paper' as const,
       yref: 'y' as const,
-      text: '80% Proficiency Threshold',
+      text: '80% Security Threshold',
       showarrow: false,
       font: { color: '#F59E0B', size: 12 }
     }],

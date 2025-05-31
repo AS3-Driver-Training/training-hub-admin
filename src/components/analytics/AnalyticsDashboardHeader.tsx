@@ -15,10 +15,10 @@ export function AnalyticsDashboardHeader({ data }: AnalyticsDashboardHeaderProps
   const totalStudents = data.metadata.total_students;
   const courseDate = new Date(data.metadata.course_date).toLocaleDateString();
   
-  // Calculate correct performance metrics based on updated grading rules
-  const excellentStudents = data.student_performance_data.filter(s => s.overall_score >= 90).length;
-  const needsTrainingStudents = data.student_performance_data.filter(s => s.overall_score < 80).length;
-  const proficientStudents = data.student_performance_data.filter(s => s.overall_score >= 80).length;
+  // Calculate correct performance metrics based on composite scores (not percentages)
+  const studentsAbove90 = data.student_performance_data.filter(s => s.overall_score >= 90).length;
+  const studentsBelow70 = data.student_performance_data.filter(s => s.overall_score < 70).length;
+  const proficientStudents = data.student_performance_data.filter(s => s.overall_score >= 85).length;
   const proficiencyRate = Math.round((proficientStudents / totalStudents) * 100);
   
   // Find best performing student
@@ -58,34 +58,16 @@ export function AnalyticsDashboardHeader({ data }: AnalyticsDashboardHeaderProps
         </Card>
       </div>
       
-      {/* Performance Scale */}
+      {/* Performance Distribution Gauge */}
       <div className="space-y-6">
-        <h3 className="text-xl font-semibold text-center text-gray-900">Performance Scale</h3>
+        <h3 className="text-xl font-semibold text-center text-gray-900">Performance Distribution</h3>
         
-        {/* Segmented Performance Scale */}
+        {/* Color Bar with Markers */}
         <div className="relative max-w-4xl mx-auto">
-          {/* Three-segment performance bar */}
-          <div className="h-16 rounded-lg overflow-hidden shadow-lg flex">
-            {/* Needs Training Zone (0-79%) */}
-            <div className="flex-1 bg-red-500 relative flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">Needs Training</span>
-              <div className="absolute bottom-1 text-white text-xs">0-79%</div>
-            </div>
-            
-            {/* Good Performance Zone (80-89%) */}
-            <div className="flex-1 bg-yellow-500 relative flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">Good Performance</span>
-              <div className="absolute bottom-1 text-white text-xs">80-89%</div>
-            </div>
-            
-            {/* Excellent Zone (90%+) */}
-            <div className="flex-1 bg-green-500 relative flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">Excellent</span>
-              <div className="absolute bottom-1 text-white text-xs">90%+</div>
-            </div>
-            
-            {/* Performance markers overlay */}
-            <div className="absolute inset-0 flex items-center pointer-events-none">
+          {/* Color gradient bar */}
+          <div className="h-16 rounded-lg bg-gradient-to-r from-red-500 via-yellow-500 via-blue-500 to-green-500 relative overflow-hidden shadow-lg">
+            {/* Score markers */}
+            <div className="absolute inset-0 flex items-center">
               {/* Global Average Marker */}
               <div 
                 className="absolute transform -translate-x-1/2 flex flex-col items-center"
@@ -120,25 +102,34 @@ export function AnalyticsDashboardHeader({ data }: AnalyticsDashboardHeaderProps
               </div>
             </div>
           </div>
+          
+          {/* Scale indicators */}
+          <div className="flex justify-between mt-2 text-sm text-gray-600">
+            <span>0</span>
+            <span className="text-red-600 font-medium">&lt;70 (Need Training)</span>
+            <span className="text-blue-600 font-medium">85-89 (Proficient)</span>
+            <span className="text-green-600 font-medium">90+ (Excellent)</span>
+            <span>100</span>
+          </div>
         </div>
         
-        {/* Quick Stats Below the Scale */}
+        {/* Quick Stats Below the Gauge */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-8">
           <div className="text-center p-4 bg-tertiary/10 rounded-lg border border-tertiary/20">
             <div className="text-2xl font-bold text-tertiary">{proficiencyRate}%</div>
             <div className="text-sm text-tertiary font-medium">Proficiency Rate</div>
-            <div className="text-xs text-tertiary/70">{proficientStudents}/{totalStudents} students ≥80</div>
+            <div className="text-xs text-tertiary/70">{proficientStudents}/{totalStudents} students ≥85</div>
           </div>
           
           <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-            <div className="text-2xl font-bold text-green-600">{excellentStudents}</div>
-            <div className="text-sm text-green-700 font-medium">Excellent (90%+)</div>
+            <div className="text-2xl font-bold text-green-600">{studentsAbove90}</div>
+            <div className="text-sm text-green-700 font-medium">Excellent (90+)</div>
             <div className="text-xs text-green-600">High proficiency</div>
           </div>
           
           <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
-            <div className="text-2xl font-bold text-red-600">{needsTrainingStudents}</div>
-            <div className="text-sm text-red-700 font-medium">Needs Training (&lt;80%)</div>
+            <div className="text-2xl font-bold text-red-600">{studentsBelow70}</div>
+            <div className="text-sm text-red-700 font-medium">Need Training (&lt;70)</div>
             <div className="text-xs text-red-600">Additional support needed</div>
           </div>
           

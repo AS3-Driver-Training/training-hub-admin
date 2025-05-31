@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Plot from "react-plotly.js";
 import { AnalyticsData } from "@/types/analytics";
@@ -104,16 +103,16 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       y0: 80,
       y1: 80,
       yref: 'y' as const,
-      line: { color: '#F59E0B', width: 2, dash: 'dash' as const }
+      line: { color: '#FF9F1C', width: 2, dash: 'dash' as const }
     }],
     annotations: [{
       x: 0.02,
       y: 82,
       xref: 'paper' as const,
       yref: 'y' as const,
-      text: '80% Proficiency Threshold',
+      text: '80% Performance Threshold',
       showarrow: false,
-      font: { color: '#F59E0B', size: 12 }
+      font: { color: '#FF9F1C', size: 12 }
     }],
     margin: { l: 80, r: 80, t: 60, b: 120 },
     height: 500,
@@ -188,16 +187,16 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       y0: 80,
       y1: 80,
       yref: 'y' as const,
-      line: { color: '#F59E0B', width: 2, dash: 'dash' as const }
+      line: { color: '#FF9F1C', width: 2, dash: 'dash' as const }
     }],
     annotations: [{
       x: 0.02,
       y: 82,
       xref: 'paper' as const,
       yref: 'y' as const,
-      text: '80% Proficiency Threshold',
+      text: '80% Performance Threshold',
       showarrow: false,
-      font: { color: '#F59E0B', size: 12 }
+      font: { color: '#FF9F1C', size: 12 }
     }],
     margin: { l: 80, r: 80, t: 60, b: 120 },
     height: 500,
@@ -262,19 +261,19 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
       x0: 0,
       x1: 1,
       xref: 'paper' as const,
-      y0: 80,
-      y1: 80,
+      y0: 85,
+      y1: 85,
       yref: 'y' as const,
-      line: { color: '#F59E0B', width: 2, dash: 'dash' as const }
+      line: { color: '#FF9F1C', width: 2, dash: 'dash' as const }
     }],
     annotations: [{
       x: 0.02,
-      y: 82,
+      y: 87,
       xref: 'paper' as const,
       yref: 'y' as const,
-      text: '80% Proficiency Threshold',
+      text: '85 Proficiency Threshold',
       showarrow: false,
-      font: { color: '#F59E0B', size: 12 }
+      font: { color: '#FF9F1C', size: 12 }
     }],
     margin: { l: 80, r: 80, t: 60, b: 120 },
     height: 500,
@@ -399,15 +398,15 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
             <ul className="text-sm text-gray-700 space-y-1">
               <li>• <span className="inline-block w-3 h-3 bg-red-600 rounded-full mr-2"></span>Red dots = Maximum performance achieved</li>
               <li>• <span className="inline-block w-3 h-3 bg-gray-500 mr-2"></span>Grey squares = Attempts until pass</li>
-              <li>• <span className="inline-block w-3 h-0.5 bg-yellow-500 mr-2"></span>Yellow line = 80% proficiency threshold</li>
+              <li>• <span className="inline-block w-3 h-0.5 bg-orange-400 mr-2"></span>Orange line = Performance threshold</li>
             </ul>
           </div>
           <div className="p-4 bg-tertiary/5 rounded-lg border border-tertiary/20">
             <h4 className="font-medium text-tertiary mb-2">Performance Standards</h4>
             <ul className="text-sm text-gray-700 space-y-1">
-              <li>• 90%+ Performance: Excellent driving skills</li>
-              <li>• 80-89% Performance: Good performance with room for improvement</li>
-              <li>• &lt;80% Performance: Additional training needed</li>
+              <li>• 80%+ Performance: Proficient in exercise</li>
+              <li>• Fewer attempts: Faster skill acquisition</li>
+              <li>• Final exercise: Stress response evaluation</li>
             </ul>
           </div>
         </div>
