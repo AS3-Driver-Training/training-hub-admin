@@ -281,9 +281,9 @@ Difficulty Level: Medium`;
         </div>
       </CardHeader>
       <CardContent className="space-y-8">
-        {/* AI-Generated Exercise Breakdown Content - Dynamic Analysis */}
+        {/* Complete AI-Generated Exercise Breakdown Content */}
         <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Exercise Breakdown Analysis</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Exercise Breakdown Analysis</h3>
           <div className="prose prose-sm max-w-none">
             <ReactMarkdown>{exerciseBreakdownContent}</ReactMarkdown>
           </div>
