@@ -16,20 +16,28 @@ export function ModernPerformanceDistribution({ studentData, content }: ModernPe
   const total = studentData.length;
   const [expandedTier, setExpandedTier] = useState<string | null>(null);
 
-  // Get students for each tier
+  // Get students for each tier using the actual tier data from the service
   const getTierStudents = (tierName: string) => {
-    const tierRanges = {
-      'Exceptional (90+)': { min: 90, max: 100 },
-      'Proficient (85-89)': { min: 85, max: 89 },
-      'Developing (70-84)': { min: 70, max: 84 },
-      'At Risk (<70)': { min: 0, max: 69 }
-    };
+    const tier = tiers.find(t => t.name === tierName);
+    if (!tier) return [];
     
-    const range = tierRanges[tierName as keyof typeof tierRanges];
-    if (!range) return [];
+    // Extract the min/max values from the tier definition
+    let min = 0;
+    let max = 100;
+    
+    if (tierName.includes('85+')) {
+      min = 85;
+      max = 100;
+    } else if (tierName.includes('70-84')) {
+      min = 70;
+      max = 84.99;
+    } else if (tierName.includes('<70')) {
+      min = 0;
+      max = 69.99;
+    }
     
     return studentData
-      .filter(student => student.overall_score >= range.min && student.overall_score <= range.max)
+      .filter(student => student.overall_score >= min && student.overall_score <= max)
       .sort((a, b) => b.overall_score - a.overall_score);
   };
 
@@ -50,9 +58,8 @@ export function ModernPerformanceDistribution({ studentData, content }: ModernPe
           {/* Score Range Labels */}
           <div className="flex justify-between text-sm font-medium text-gray-700 mb-2">
             <span className="text-red-600">&lt;70 Need Training</span>
-            <span className="text-yellow-600">70-84 Developing</span>
-            <span className="text-blue-600">85-89 Proficient</span>
-            <span className="text-green-600">90+ Excellent</span>
+            <span className="text-yellow-600">70-84 Good Performance</span>
+            <span className="text-green-600">85+ Exceptional</span>
           </div>
 
           {/* Main Horizontal Stacked Bar */}
@@ -168,23 +175,21 @@ export function ModernPerformanceDistribution({ studentData, content }: ModernPe
               </div>
               <div>
                 <div className="text-gray-600">Ready for Operations (≥85)</div>
-                <div className="font-semibold text-blue-600 text-lg">
-                  {(tiers.find(t => t.name.includes('Exceptional'))?.count || 0) + 
-                   (tiers.find(t => t.name.includes('Proficient'))?.count || 0)} students
+                <div className="font-semibold text-green-600 text-lg">
+                  {tiers.find(t => t.name.includes('Exceptional'))?.count || 0} students
                 </div>
               </div>
               <div>
                 <div className="text-gray-600">Need Additional Training (&lt;70)</div>
                 <div className="font-semibold text-red-600 text-lg">
-                  {tiers.find(t => t.name.includes('At Risk'))?.count || 0} students
+                  {tiers.find(t => t.name.includes('Needs Training'))?.count || 0} students
                 </div>
               </div>
               <div>
                 <div className="text-gray-600">Group Readiness Rate</div>
                 <div className="font-semibold text-tertiary text-lg">
                   {Math.round(((tiers.find(t => t.name.includes('Exceptional'))?.count || 0) + 
-                              (tiers.find(t => t.name.includes('Proficient'))?.count || 0) + 
-                              (tiers.find(t => t.name.includes('Developing'))?.count || 0)) / total * 100)}%
+                              (tiers.find(t => t.name.includes('Good Performance'))?.count || 0)) / total * 100)}%
                 </div>
               </div>
             </div>
