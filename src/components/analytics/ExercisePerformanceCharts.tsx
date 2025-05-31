@@ -20,7 +20,7 @@ export function ExercisePerformanceCharts({ studentData, content }: ExercisePerf
     y: sortedStudents.map(s => s.slalom_control),
     name: 'Vehicle Control %',
     marker: {
-      color: sortedStudents.map(s => s.slalom_control >= 80 ? '#10B981' : '#EF4444')
+      color: sortedStudents.map(s => s.slalom_control >= 70 ? '#10B981' : '#EF4444')
     },
     hovertemplate: '<b>%{x}</b><br>Control: %{y}%<extra></extra>'
   }];
@@ -43,16 +43,16 @@ export function ExercisePerformanceCharts({ studentData, content }: ExercisePerf
       x0: 0,
       x1: 1,
       xref: 'paper' as const,
-      y0: 80,
-      y1: 80,
+      y0: 70,
+      y1: 70,
       line: { color: '#F59E0B', width: 2, dash: 'dash' as const }
     }],
     annotations: [{
       x: 0.02,
-      y: 82,
+      y: 72,
       xref: 'paper' as const,
       yref: 'y' as const,
-      text: '80% Security Threshold',
+      text: '70% Performance Threshold',
       showarrow: false,
       font: { color: '#F59E0B', size: 12 }
     }],
@@ -69,7 +69,7 @@ export function ExercisePerformanceCharts({ studentData, content }: ExercisePerf
     y: sortedStudents.map(s => s.evasion_control),
     name: 'Vehicle Control %',
     marker: {
-      color: sortedStudents.map(s => s.evasion_control >= 80 ? '#10B981' : '#EF4444')
+      color: sortedStudents.map(s => s.evasion_control >= 70 ? '#10B981' : '#EF4444')
     },
     hovertemplate: '<b>%{x}</b><br>Control: %{y}%<extra></extra>'
   }];
@@ -92,16 +92,16 @@ export function ExercisePerformanceCharts({ studentData, content }: ExercisePerf
       x0: 0,
       x1: 1,
       xref: 'paper' as const,
-      y0: 80,
-      y1: 80,
+      y0: 70,
+      y1: 70,
       line: { color: '#F59E0B', width: 2, dash: 'dash' as const }
     }],
     annotations: [{
       x: 0.02,
-      y: 82,
+      y: 72,
       xref: 'paper' as const,
       yref: 'y' as const,
-      text: '80% Security Threshold',
+      text: '70% Performance Threshold',
       showarrow: false,
       font: { color: '#F59E0B', size: 12 }
     }],
