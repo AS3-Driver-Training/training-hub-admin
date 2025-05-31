@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Plot from "react-plotly.js";
@@ -42,6 +41,21 @@ export function EnhancedExerciseCharts({ studentData, exerciseBreakdownContent }
       return a.evasion_attempts - b.evasion_attempts;
     })
     .slice(0, 3);
+
+  // Static exercise descriptions
+  const slalomDescription = `The Slalom exercise may seem basic, but it is the most demanding of all activities. This test creates a consistent skill that involves a deep understanding of time/distance and hand/eye coordination. Its consistency allows us to measure it precisely to determine driver skill and focus areas; this is the basis for everything we train in evasive driving.
+
+The Slalom exercise requires that the student maintains a consistent speed above 80% of the car's lateral acceleration capability while negotiating through the turns. The students must perform the exercise without hitting cones and maintaining a constant speed (a 4 mile an hour variation will invalidate the test); this involves learning where to look and anticipate turns while controlling the throttle to counter the drag to sustain speed.
+
+Type: Regular Slalom – 4 Cones (50ft Chord)
+Difficulty Level: Medium / Hard`;
+
+  const evasionDescription = `Based on the research published by the Society of Automotive Engineers, in this exercise, students are pushed to the limits of cognitive reaction times through an electronically operated signal system that allows them little room for error. The Barricade requires situational awareness and decision-making while using all the skills acquired in the Slalom, adding a psychological factor as the speed through the exercise is slightly increased.
+
+Just as the Slalom, this exercise requires skill as it is graded at 80% of the car's lateral acceleration capability and requires the same speed consistency as stated above.
+
+Type: Regular LnCh – .75 Sec Reaction time (100ft Chord)
+Difficulty Level: Medium`;
 
   // Parse content to extract exercise-specific sections
   const parseExerciseContent = (content: string) => {
@@ -267,7 +281,7 @@ export function EnhancedExerciseCharts({ studentData, exerciseBreakdownContent }
         </div>
       </CardHeader>
       <CardContent className="space-y-8">
-        {/* AI-Generated Exercise Breakdown Content */}
+        {/* AI-Generated Exercise Breakdown Content - Dynamic Analysis */}
         <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Exercise Breakdown Analysis</h3>
           <div className="prose prose-sm max-w-none">
@@ -277,26 +291,24 @@ export function EnhancedExerciseCharts({ studentData, exerciseBreakdownContent }
 
         {/* Slalom Exercise Section */}
         <div className="space-y-4">
-          {/* Slalom Description - Only show if AI content is available */}
-          {exerciseSections.slalom && (
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="slalom" className="border border-blue-200 rounded-lg">
-                <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <h3 className="text-lg font-bold text-blue-900">SLALOM EXERCISE</h3>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
-                  <div className="prose prose-sm prose-blue max-w-none">
-                    <ReactMarkdown>{exerciseSections.slalom}</ReactMarkdown>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          )}
+          {/* Static Slalom Description */}
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="slalom" className="border border-blue-200 rounded-lg">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <h3 className="text-lg font-bold text-blue-900">SLALOM EXERCISE</h3>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <div className="prose prose-sm prose-blue max-w-none">
+                  <div className="whitespace-pre-line text-gray-700">{slalomDescription}</div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
-          {/* Slalom Chart - Always display */}
+          {/* Slalom Chart */}
           <Plot
             data={slalomData}
             layout={slalomLayout}
@@ -304,7 +316,7 @@ export function EnhancedExerciseCharts({ studentData, exerciseBreakdownContent }
             style={{ width: '100%', height: '450px' }}
           />
           
-          {/* Slalom Performance Summary - Always display */}
+          {/* Slalom Performance Summary - Calculated from Data */}
           <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -333,28 +345,26 @@ export function EnhancedExerciseCharts({ studentData, exerciseBreakdownContent }
           </div>
         </div>
 
-        {/* Barricade Evasion Section - Always display */}
+        {/* Barricade Evasion Section */}
         <div className="space-y-4">
-          {/* Evasion Description - Only show if AI content is available */}
-          {exerciseSections.evasion && (
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="evasion" className="border border-green-200 rounded-lg">
-                <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <h3 className="text-lg font-bold text-green-900">BARRICADE EVASION (Lane Change)</h3>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
-                  <div className="prose prose-sm prose-green max-w-none">
-                    <ReactMarkdown>{exerciseSections.evasion}</ReactMarkdown>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          )}
+          {/* Static Evasion Description */}
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="evasion" className="border border-green-200 rounded-lg">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <h3 className="text-lg font-bold text-green-900">BARRICADE EVASION (Lane Change)</h3>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <div className="prose prose-sm prose-green max-w-none">
+                  <div className="whitespace-pre-line text-gray-700">{evasionDescription}</div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
-          {/* Evasion Chart - Always display */}
+          {/* Evasion Chart */}
           <Plot
             data={evasionData}
             layout={evasionLayout}
@@ -362,7 +372,7 @@ export function EnhancedExerciseCharts({ studentData, exerciseBreakdownContent }
             style={{ width: '100%', height: '450px' }}
           />
           
-          {/* Evasion Performance Summary - Always display */}
+          {/* Evasion Performance Summary - Calculated from Data */}
           <div className="bg-green-50 rounded-lg border border-green-200 p-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
