@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { AnalyticsData, PerformanceTier, StressResponse } from "@/types/analytics";
 
@@ -127,9 +126,9 @@ export const getAnalyticsData = async (courseId: string): Promise<AnalyticsData 
 
 export const calculatePerformanceTiers = (studentData: AnalyticsData['student_performance_data']): PerformanceTier[] => {
   const tiers = [
-    { name: 'Exceptional (85+)', min: 85, max: 100, color: '#10B981' },
+    { name: 'Needs Training (<70)', min: 0, max: 69.99, color: '#EF4444' },
     { name: 'Good Performance (70-84)', min: 70, max: 84.99, color: '#F59E0B' },
-    { name: 'Needs Training (<70)', min: 0, max: 69.99, color: '#EF4444' }
+    { name: 'Exceptional (85+)', min: 85, max: 100, color: '#10B981' }
   ];
 
   const total = studentData.length;
