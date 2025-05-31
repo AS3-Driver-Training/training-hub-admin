@@ -7,10 +7,10 @@ import ReactMarkdown from "react-markdown";
 
 interface EnhancedExerciseChartsProps {
   studentData: AnalyticsData['student_performance_data'];
-  content: string;
+  exerciseBreakdownContent: string;
 }
 
-export function EnhancedExerciseCharts({ studentData, content }: EnhancedExerciseChartsProps) {
+export function EnhancedExerciseCharts({ studentData, exerciseBreakdownContent }: EnhancedExerciseChartsProps) {
   // Sort students by overall score for consistent ordering
   const sortedStudents = [...studentData].sort((a, b) => b.overall_score - a.overall_score);
   const studentNames = sortedStudents.map(s => s.name);
@@ -48,16 +48,14 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
     const sections = content.split('###');
     const slalomSection = sections.find(section => section.trim().startsWith('SLALOM EXERCISE'));
     const evasionSection = sections.find(section => section.trim().startsWith('BARRICADE EVASION'));
-    const finalSection = sections.find(section => section.trim().startsWith('FINAL EXERCISE'));
     
     return {
       slalom: slalomSection ? `### ${slalomSection.trim()}` : '',
-      evasion: evasionSection ? `### ${evasionSection.trim()}` : '',
-      final: finalSection ? `### ${finalSection.trim()}` : ''
+      evasion: evasionSection ? `### ${evasionSection.trim()}` : ''
     };
   };
 
-  const exerciseSections = parseExerciseContent(content);
+  const exerciseSections = parseExerciseContent(exerciseBreakdownContent);
 
   // Slalom Exercise Chart Data
   const slalomData: any[] = [
@@ -269,6 +267,14 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
         </div>
       </CardHeader>
       <CardContent className="space-y-8">
+        {/* AI-Generated Exercise Breakdown Content */}
+        <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Exercise Breakdown Analysis</h3>
+          <div className="prose prose-sm max-w-none">
+            <ReactMarkdown>{exerciseBreakdownContent}</ReactMarkdown>
+          </div>
+        </div>
+
         {/* Slalom Exercise Section */}
         <div className="space-y-4">
           {/* Slalom Description */}
@@ -407,13 +413,6 @@ export function EnhancedExerciseCharts({ studentData, content }: EnhancedExercis
             </div>
           </div>
         </div>
-
-        {/* Final Exercise Analysis (if available) */}
-        {exerciseSections.final && (
-          <div className="prose prose-sm max-w-none border-t pt-4">
-            <ReactMarkdown>{exerciseSections.final}</ReactMarkdown>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
