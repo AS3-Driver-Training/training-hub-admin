@@ -277,7 +277,7 @@ export function EnhancedExerciseCharts({ studentData, exerciseBreakdownContent }
 
         {/* Slalom Exercise Section */}
         <div className="space-y-4">
-          {/* Slalom Description */}
+          {/* Slalom Description - Only show if AI content is available */}
           {exerciseSections.slalom && (
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="slalom" className="border border-blue-200 rounded-lg">
@@ -296,7 +296,7 @@ export function EnhancedExerciseCharts({ studentData, exerciseBreakdownContent }
             </Accordion>
           )}
 
-          {/* Slalom Chart */}
+          {/* Slalom Chart - Always display */}
           <Plot
             data={slalomData}
             layout={slalomLayout}
@@ -304,7 +304,7 @@ export function EnhancedExerciseCharts({ studentData, exerciseBreakdownContent }
             style={{ width: '100%', height: '450px' }}
           />
           
-          {/* Slalom Performance Summary */}
+          {/* Slalom Performance Summary - Always display */}
           <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -333,9 +333,9 @@ export function EnhancedExerciseCharts({ studentData, exerciseBreakdownContent }
           </div>
         </div>
 
-        {/* Barricade Evasion Section */}
+        {/* Barricade Evasion Section - Always display */}
         <div className="space-y-4">
-          {/* Evasion Description */}
+          {/* Evasion Description - Only show if AI content is available */}
           {exerciseSections.evasion && (
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="evasion" className="border border-green-200 rounded-lg">
@@ -354,7 +354,7 @@ export function EnhancedExerciseCharts({ studentData, exerciseBreakdownContent }
             </Accordion>
           )}
 
-          {/* Evasion Chart */}
+          {/* Evasion Chart - Always display */}
           <Plot
             data={evasionData}
             layout={evasionLayout}
@@ -362,7 +362,7 @@ export function EnhancedExerciseCharts({ studentData, exerciseBreakdownContent }
             style={{ width: '100%', height: '450px' }}
           />
           
-          {/* Evasion Performance Summary */}
+          {/* Evasion Performance Summary - Always display */}
           <div className="bg-green-50 rounded-lg border border-green-200 p-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
