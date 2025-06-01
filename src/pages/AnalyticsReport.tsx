@@ -1,11 +1,10 @@
 
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Download, Printer, Edit, Users } from "lucide-react";
+import { ArrowLeft, Download, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getAnalyticsData } from "@/services/analyticsService";
-import { AnalyticsDashboardHeader } from "@/components/analytics/AnalyticsDashboardHeader";
 import { ExecutiveSummary } from "@/components/analytics/ExecutiveSummary";
 import { ModernPerformanceDistribution } from "@/components/analytics/ModernPerformanceDistribution";
 import { InformationCards } from "@/components/analytics/InformationCards";
@@ -14,6 +13,7 @@ import { ExerciseAnalysisCharts } from "@/components/analytics/ExerciseAnalysisC
 import { RiskAssessment } from "@/components/analytics/RiskAssessment";
 import { AnalyticsEventDetailsCards } from "@/components/analytics/AnalyticsEventDetailsCards";
 import { AnalyticsAdminActions } from "@/components/analytics/AnalyticsAdminActions";
+import { AnalyticsCourseHeader } from "@/components/analytics/AnalyticsCourseHeader";
 
 export default function AnalyticsReport() {
   const { id } = useParams<{ id: string }>();
@@ -81,7 +81,7 @@ export default function AnalyticsReport() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 print:space-y-6">
+    <div className="max-w-7xl mx-auto px-6 py-8 space-y-6 print:space-y-4">
       {/* Navigation and Actions */}
       <div className="flex items-center justify-between print:hidden">
         <Button variant="ghost" size="sm" onClick={handleBack} className="mr-4">
@@ -108,20 +108,17 @@ export default function AnalyticsReport() {
         </p>
       </div>
 
-      {/* Event Details Cards */}
-      <AnalyticsEventDetailsCards 
-        analyticsData={analyticsData}
-        courseId={id!}
-      />
-
-      {/* Admin Actions (only visible to admins/superadmins) */}
+      {/* Admin Actions (only visible to internal admins/superadmins) */}
       <AnalyticsAdminActions 
         courseId={id!}
         courseName={analyticsData.metadata.course_program}
       />
 
-      {/* Header with Course Info and Hero Metrics */}
-      <AnalyticsDashboardHeader data={analyticsData} />
+      {/* Course Details Header */}
+      <AnalyticsCourseHeader analyticsData={analyticsData} />
+
+      {/* Performance Summary Cards */}
+      <AnalyticsEventDetailsCards analyticsData={analyticsData} />
 
       {/* Executive Summary */}
       <ExecutiveSummary data={analyticsData.anthropic_response.executive_summary} />

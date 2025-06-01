@@ -29,39 +29,37 @@ export function AnalyticsAdminActions({ courseId, courseName }: AnalyticsAdminAc
     },
   });
 
-  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superadmin';
+  const isInternalAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superadmin';
 
-  if (!isAdmin) {
+  if (!isInternalAdmin) {
     return null;
   }
 
   return (
-    <Card className="border shadow-sm print:hidden">
-      <CardContent className="pt-6 px-6 pb-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+    <Card className="border shadow-sm print:hidden mb-6">
+      <CardContent className="px-6 py-4">
+        <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium">Course Management</h3>
-            <p className="text-sm text-muted-foreground">
-              Administrative actions for {courseName}
-            </p>
+            <h3 className="text-sm font-medium text-muted-foreground">Course Management</h3>
+            <p className="text-xs text-muted-foreground">Administrative actions</p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex gap-2">
             <Button 
               onClick={() => navigate(`/events/${courseId}/edit`)}
               variant="outline"
-              className="whitespace-nowrap"
+              size="sm"
             >
-              <Edit className="mr-2 h-4 w-4" />
-              Edit Course Details
+              <Edit className="mr-1 h-3 w-3" />
+              Edit
             </Button>
             
             <Button 
               onClick={() => navigate(`/events/${courseId}/manage`)}
               variant="outline"
-              className="whitespace-nowrap"
+              size="sm"
             >
-              <Users className="mr-2 h-4 w-4" />
-              Manage Students
+              <Users className="mr-1 h-3 w-3" />
+              Manage
             </Button>
           </div>
         </div>
