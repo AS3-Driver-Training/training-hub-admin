@@ -36,18 +36,19 @@ export function AnalyticsAdminActions({ courseId, courseName }: AnalyticsAdminAc
   }
 
   return (
-    <Card className="border shadow-sm print:hidden mb-6">
+    <Card className="border shadow-sm print:hidden mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
       <CardContent className="px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Course Management</h3>
-            <p className="text-xs text-muted-foreground">Administrative actions</p>
+            <h3 className="text-sm font-medium text-orange-800">Course Management</h3>
+            <p className="text-xs text-orange-600">Administrative actions</p>
           </div>
           <div className="flex gap-2">
             <Button 
               onClick={() => navigate(`/events/${courseId}/edit`)}
               variant="outline"
               size="sm"
+              className="border-orange-200 text-orange-700 hover:bg-orange-100"
             >
               <Edit className="mr-1 h-3 w-3" />
               Edit
@@ -57,6 +58,7 @@ export function AnalyticsAdminActions({ courseId, courseName }: AnalyticsAdminAc
               onClick={() => navigate(`/events/${courseId}/manage`)}
               variant="outline"
               size="sm"
+              className="border-orange-200 text-orange-700 hover:bg-orange-100"
             >
               <Users className="mr-1 h-3 w-3" />
               Manage
