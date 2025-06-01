@@ -12,11 +12,9 @@ import { useCourseClosure } from "./course-closure/hooks/useCourseClosure";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { format } from "date-fns";
-import { ArrowRight, Calendar, CheckCircle, Clock, FileText, User, Trophy, Target } from "lucide-react";
+import { ArrowRight, Calendar, CheckCircle, Clock, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useQuery } from "@tanstack/react-query";
-import { getAnalyticsData } from "@/services/analyticsService";
 
 export function CourseAllocations() {
   const navigate = useNavigate();
@@ -44,13 +42,6 @@ export function CourseAllocations() {
   // Check course closure status
   const courseId = id ? parseInt(id) : undefined;
   const { isClosed, isDraft } = useCourseClosure(courseId);
-
-  // Fetch analytics data when course is closed
-  const { data: analyticsData } = useQuery({
-    queryKey: ['analytics', id],
-    queryFn: () => getAnalyticsData(id!),
-    enabled: !!id && isClosed,
-  });
 
   // Loading state
   if (isLoading) {
@@ -82,27 +73,6 @@ export function CourseAllocations() {
       ? "completed" 
       : "scheduled";
 
-  // Extract analytics insights for closed courses
-  const getAnalyticsInsights = () => {
-    if (!analyticsData || !isClosed) return null;
-
-    const clientName = analyticsData.metadata?.course_client || 'Unknown Client';
-    const overallScore = analyticsData.source_data?.group_data?.group_average_overall_score;
-    
-    // Find top performer
-    const topPerformer = analyticsData.student_performance_data?.reduce((top, student) => {
-      return student.overall_score > (top?.overall_score || 0) ? student : top;
-    }, null);
-
-    return {
-      clientName,
-      overallScore: overallScore ? Math.round(overallScore) : null,
-      topPerformer
-    };
-  };
-
-  const analyticsInsights = getAnalyticsInsights();
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       {/* Header with back button */}
@@ -114,6 +84,7 @@ export function CourseAllocations() {
         remainingSeats={remainingSeats}
         maxStudents={maxStudents}
         allocationPercentage={allocationPercentage}
+        courseStatus={courseStatus}
       />
 
       {/* Program Details & Location Details */}
@@ -166,31 +137,9 @@ export function CourseAllocations() {
           {/* Status information */}
           {courseStatus === "closed" && (
             <Alert className="mt-4 bg-blue-50 border-blue-200 text-blue-800">
-              <CheckCircle className="h-4 w-4 text-blue-600" />
+              <CheckCircle className="h-4 w-4 text-blue-600 mr-2" />
               <AlertDescription className="text-sm">
-                <div className="space-y-2">
-                  <div className="font-medium">This course has been successfully closed.</div>
-                  {analyticsInsights && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-blue-600" />
-                        <span className="font-medium">{analyticsInsights.clientName}</span>
-                      </div>
-                      {analyticsInsights.overallScore && (
-                        <div className="flex items-center gap-2">
-                          <Target className="h-4 w-4 text-blue-600" />
-                          <span>Group Average: <span className="font-medium">{analyticsInsights.overallScore}%</span></span>
-                        </div>
-                      )}
-                      {analyticsInsights.topPerformer && (
-                        <div className="flex items-center gap-2">
-                          <Trophy className="h-4 w-4 text-blue-600" />
-                          <span>Top: <span className="font-medium">{analyticsInsights.topPerformer.name} ({Math.round(analyticsInsights.topPerformer.overall_score)}%)</span></span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                This course has been successfully closed.
               </AlertDescription>
             </Alert>
           )}

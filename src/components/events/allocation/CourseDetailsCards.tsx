@@ -10,13 +10,15 @@ interface CourseDetailsCardsProps {
   remainingSeats: number;
   maxStudents: number;
   allocationPercentage: number;
+  courseStatus: string;
 }
 
 export function CourseDetailsCards({ 
   courseInstance, 
   remainingSeats, 
   maxStudents, 
-  allocationPercentage 
+  allocationPercentage,
+  courseStatus
 }: CourseDetailsCardsProps) {
   // Calculate course duration properly
   const calculateDuration = () => {
@@ -38,14 +40,42 @@ export function CourseDetailsCards({
 
   const durationDays = calculateDuration();
 
+  // Get badge styling based on status
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "closed":
+        return { variant: "success" as const, text: "Closed" };
+      case "completed":
+        return { variant: "warning" as const, text: "Completed" };
+      case "scheduled":
+        return { variant: "default" as const, text: "Scheduled" };
+      default:
+        return { variant: "default" as const, text: "Scheduled" };
+    }
+  };
+
+  const statusBadge = getStatusBadge(courseStatus);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       {/* Status Card */}
       <Card className="border shadow-sm">
         <CardContent className="pt-6 px-6 pb-6">
           <h3 className="text-sm font-medium text-muted-foreground mb-2">Status</h3>
-          <p className="text-xl font-semibold mb-4">Current event status</p>
-          <Badge className="bg-rose-600 hover:bg-rose-700 text-white font-medium">Scheduled</Badge>
+          <div className="space-y-2">
+            <p className="text-xl font-semibold">Current event status</p>
+            <Badge 
+              variant={statusBadge.variant}
+              className="font-medium"
+            >
+              {statusBadge.text}
+            </Badge>
+            {courseInstance?.host_client && (
+              <p className="text-sm text-muted-foreground mt-2">
+                Client: <span className="font-medium">{courseInstance.host_client.name}</span>
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 
