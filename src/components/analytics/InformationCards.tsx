@@ -18,7 +18,7 @@ export function InformationCards({ data }: InformationCardsProps) {
           <CardTitle className="text-lg">Student Roster</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3 max-h-80 overflow-y-auto">
+          <div className="space-y-3">
             {students.map((student, index) => (
               <div key={student.name} className="flex items-center justify-between p-2 rounded-lg bg-gray-50">
                 <div className="flex items-center space-x-3">
