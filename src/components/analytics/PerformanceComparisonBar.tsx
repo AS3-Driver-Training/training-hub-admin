@@ -26,21 +26,24 @@ export function PerformanceComparisonBar({ analyticsData }: PerformanceCompariso
       score: globalAverage,
       position: getPosition(globalAverage),
       color: "bg-orange-500",
-      textColor: "text-orange-700"
+      textColor: "text-orange-700",
+      labelOffset: "top-6" // First level
     },
     {
       label: "Group Average",
       score: groupAverage,
       position: getPosition(groupAverage),
       color: "bg-blue-500",
-      textColor: "text-blue-700"
+      textColor: "text-blue-700",
+      labelOffset: "top-16" // Second level
     },
     {
       label: "Top Student",
       score: topScore,
       position: getPosition(topScore),
       color: "bg-emerald-500",
-      textColor: "text-emerald-700"
+      textColor: "text-emerald-700",
+      labelOffset: "top-26" // Third level
     }
   ];
 
@@ -68,7 +71,7 @@ export function PerformanceComparisonBar({ analyticsData }: PerformanceCompariso
                 <div className={`w-4 h-4 rounded-full ${marker.color} border-2 border-white shadow-lg`}></div>
                 
                 {/* Score label */}
-                <div className="absolute top-6 transform -translate-x-1/2 text-center min-w-max">
+                <div className={`absolute ${marker.labelOffset} transform -translate-x-1/2 text-center min-w-max`}>
                   <div className={`text-sm font-semibold ${marker.textColor}`}>
                     {marker.score}
                   </div>
@@ -81,7 +84,7 @@ export function PerformanceComparisonBar({ analyticsData }: PerformanceCompariso
           </div>
           
           {/* Scale indicators */}
-          <div className="flex justify-between mt-16 text-xs text-gray-500">
+          <div className="flex justify-between mt-32 text-xs text-gray-500">
             <span>0</span>
             <span>25</span>
             <span>50</span>
