@@ -158,6 +158,7 @@ export type Database = {
       }
       course_closures: {
         Row: {
+          analytics_data: Json | null
           closed_at: string
           closed_by: string
           closure_data: Json | null
@@ -171,6 +172,7 @@ export type Database = {
           zipfile_url: string | null
         }
         Insert: {
+          analytics_data?: Json | null
           closed_at?: string
           closed_by: string
           closure_data?: Json | null
@@ -184,6 +186,7 @@ export type Database = {
           zipfile_url?: string | null
         }
         Update: {
+          analytics_data?: Json | null
           closed_at?: string
           closed_by?: string
           closure_data?: Json | null

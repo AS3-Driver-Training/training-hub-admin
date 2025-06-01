@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Download, Printer } from "lucide-react";
@@ -9,7 +10,7 @@ import { ExecutiveSummary } from "@/components/analytics/ExecutiveSummary";
 import { ModernPerformanceDistribution } from "@/components/analytics/ModernPerformanceDistribution";
 import { InformationCards } from "@/components/analytics/InformationCards";
 import { StressPerformanceChart } from "@/components/analytics/StressPerformanceChart";
-import { EnhancedExerciseCharts } from "@/components/analytics/EnhancedExerciseCharts";
+import { ExerciseAnalysisCharts } from "@/components/analytics/ExerciseAnalysisCharts";
 import { RiskAssessment } from "@/components/analytics/RiskAssessment";
 
 export default function AnalyticsReport() {
@@ -69,7 +70,7 @@ export default function AnalyticsReport() {
         <Card>
           <CardContent className="p-8">
             <div className="text-center text-destructive">
-              Error loading analytics data. Please try again.
+              No analytics data available for this course. Please ensure the course has been processed for analytics.
             </div>
           </CardContent>
         </Card>
@@ -109,7 +110,7 @@ export default function AnalyticsReport() {
       <AnalyticsDashboardHeader data={analyticsData} />
 
       {/* Executive Summary */}
-      <ExecutiveSummary data={analyticsData.anthropic_responses.executive_summary} />
+      <ExecutiveSummary data={analyticsData.anthropic_response.executive_summary} />
       
       {/* Information Cards */}
       <InformationCards data={analyticsData} />
@@ -117,25 +118,25 @@ export default function AnalyticsReport() {
       {/* Performance Distribution */}
       <ModernPerformanceDistribution 
         studentData={analyticsData.student_performance_data}
-        content={analyticsData.anthropic_responses.performance_distribution.content}
+        content={analyticsData.anthropic_response.performance_distribution.content}
         totalStudents={analyticsData.metadata.total_students}
       />
       
       {/* Exercise Performance Charts */}
-      <EnhancedExerciseCharts 
+      <ExerciseAnalysisCharts 
         studentData={analyticsData.student_performance_data}
-        exerciseBreakdownContent={analyticsData.anthropic_responses.exercise_breakdown.content}
+        exerciseData={analyticsData.anthropic_response.exercise_breakdown}
       />
       
       {/* Stress Performance Analysis */}
       <StressPerformanceChart 
         studentData={analyticsData.student_performance_data}
-        content={analyticsData.anthropic_responses.stress_performance_analysis.content}
+        content={analyticsData.anthropic_response.stress_performance_analysis.content}
       />
       
       {/* Risk Assessment */}
       <RiskAssessment 
-        content={analyticsData.anthropic_responses.risk_assessment_recommendations.content}
+        content={analyticsData.anthropic_response.risk_assessment_recommendations.content}
       />
     </div>
   );

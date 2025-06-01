@@ -41,7 +41,7 @@ export interface AnalyticsData {
       group_average_overall_score: number;
     };
   };
-  anthropic_responses: {
+  anthropic_response: {
     executive_summary: {
       title: string;
       content: string;
@@ -61,10 +61,24 @@ export interface AnalyticsData {
       has_error: boolean;
     };
     exercise_breakdown: {
-      title: string;
-      content: string;
-      generated_at: string;
-      has_error: boolean;
+      slalom: {
+        title: string;
+        content: string;
+        generated_at: string;
+        has_error: boolean;
+      };
+      barricade_evasion: {
+        title: string;
+        content: string;
+        generated_at: string;
+        has_error: boolean;
+      };
+      final_multidisciplinary_exercise: {
+        title: string;
+        content: string;
+        generated_at: string;
+        has_error: boolean;
+      };
     };
     risk_assessment_recommendations: {
       title: string;
