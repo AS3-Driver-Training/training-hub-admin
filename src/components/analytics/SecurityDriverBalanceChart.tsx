@@ -24,37 +24,29 @@ This exercise tests the integration of all training components and serves as the
 Type: Comprehensive Assessment
 Difficulty Level: Hard`;
 
-  if (validStudents.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-primary">Security Driver Balance Analysis</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center text-muted-foreground py-8">
-            No final exercise data available for Security Driver Balance analysis
-          </div>
-        </CardContent>
-      </Card>
-    );
+  // Calculate chart data only if we have valid students
+  let chartData = [];
+  let finalResultAverage = 0;
+  let finalExerciseTopPerformers = [];
+
+  if (validStudents.length > 0) {
+    // Calculate average of slalom and lane change (evasion) for each student, with defaults for missing data
+    chartData = validStudents.map(student => ({
+      x: (student.slalom_control + student.evasion_control) / 2,
+      y: student.final_result || 0,
+      text: student.name,
+      penalties: student.penalties || 0,
+      reverseTime: student.reverse_time || 0,
+    }));
+
+    // Calculate final exercise statistics
+    finalResultAverage = Math.round(validStudents.reduce((sum, s) => sum + (s.final_result || 0), 0) / validStudents.length);
+
+    // Get top 3 performers for final exercise
+    finalExerciseTopPerformers = [...validStudents]
+      .sort((a, b) => (b.final_result || 0) - (a.final_result || 0))
+      .slice(0, 3);
   }
-
-  // Calculate average of slalom and lane change (evasion) for each student, with defaults for missing data
-  const chartData = validStudents.map(student => ({
-    x: (student.slalom_control + student.evasion_control) / 2,
-    y: student.final_result || 0,
-    text: student.name,
-    penalties: student.penalties || 0,
-    reverseTime: student.reverse_time || 0,
-  }));
-
-  // Calculate final exercise statistics
-  const finalResultAverage = Math.round(validStudents.reduce((sum, s) => sum + (s.final_result || 0), 0) / validStudents.length);
-
-  // Get top 3 performers for final exercise
-  const finalExerciseTopPerformers = [...validStudents]
-    .sort((a, b) => (b.final_result || 0) - (a.final_result || 0))
-    .slice(0, 3);
 
   // Create the scatter plot data
   const plotData = [{
@@ -169,7 +161,7 @@ Difficulty Level: Hard`;
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Final Multidisciplinary Exercise Description */}
+        {/* Final Multidisciplinary Exercise Description - Always visible */}
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="final" className="border border-purple-200 rounded-lg">
             <AccordionTrigger className="px-4 py-3 hover:no-underline">
@@ -186,7 +178,7 @@ Difficulty Level: Hard`;
           </AccordionItem>
         </Accordion>
 
-        {/* AI Analysis for Final Exercise */}
+        {/* AI Analysis for Final Exercise - Always visible if data exists */}
         {exerciseData.final_multidisciplinary_exercise && (
           <div className="bg-purple-50 rounded-lg border border-purple-200 p-4">
             <h4 className="font-semibold text-purple-900 mb-3">AI Analysis: {exerciseData.final_multidisciplinary_exercise.title}</h4>
@@ -196,63 +188,75 @@ Difficulty Level: Hard`;
           </div>
         )}
 
-        {/* Security Driver Balance Chart */}
-        <Plot
-          data={plotData}
-          layout={layout}
-          config={config}
-          style={{ width: '100%', height: '500px' }}
-        />
+        {/* Security Driver Balance Chart - Only show if we have data */}
+        {validStudents.length > 0 ? (
+          <>
+            <Plot
+              data={plotData}
+              layout={layout}
+              config={config}
+              style={{ width: '100%', height: '500px' }}
+            />
 
-        {/* Final Exercise Performance Summary */}
-        <div className="bg-purple-50 rounded-lg border border-purple-200 p-4">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-purple-900">Final Exercise Performance Summary</h4>
-              <div className="text-sm text-purple-700">
-                Group Average: {finalResultAverage} | Students Completed: {validStudents.length}
+            {/* Final Exercise Performance Summary - Only show if we have data */}
+            <div className="bg-purple-50 rounded-lg border border-purple-200 p-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-purple-900">Final Exercise Performance Summary</h4>
+                  <div className="text-sm text-purple-700">
+                    Group Average: {finalResultAverage} | Students Completed: {validStudents.length}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {finalExerciseTopPerformers.map((student, index) => (
+                    <div key={student.name} className="bg-white rounded p-3 border border-purple-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-purple-900">{student.name}</div>
+                          <div className="text-sm text-purple-700">Score: {student.final_result}</div>
+                        </div>
+                        <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                          {index + 1}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {finalExerciseTopPerformers.map((student, index) => (
-                <div key={student.name} className="bg-white rounded p-3 border border-purple-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium text-purple-900">{student.name}</div>
-                      <div className="text-sm text-purple-700">Score: {student.final_result}</div>
-                    </div>
-                    <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                      {index + 1}
-                    </div>
-                  </div>
+            {/* Chart Legend and explanation - Only show if we have data */}
+            <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
+              <h4 className="font-medium text-blue-900 mb-3">Chart Guide</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h5 className="text-sm font-medium text-blue-700 mb-2">Axes</h5>
+                  <ul className="text-sm text-blue-600 space-y-1">
+                    <li>• X-axis: Average of Slalom and Lane Change control</li>
+                    <li>• Y-axis: Final exercise result score</li>
+                  </ul>
                 </div>
-              ))}
+                <div>
+                  <h5 className="text-sm font-medium text-blue-700 mb-2">Visual Elements</h5>
+                  <ul className="text-sm text-blue-600 space-y-1">
+                    <li>• Color: Number of penalties (green=low, red=high)</li>
+                    <li>• Size: Time invested in reverse maneuvers</li>
+                    <li>• Blue zone: Security Driver Balance range</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="bg-gray-50 rounded-lg border border-gray-200 p-6 text-center">
+            <div className="text-gray-600">
+              No final exercise data available for Security Driver Balance chart visualization.
+              <br />
+              <span className="text-sm text-gray-500">The exercise description and analysis above provide valuable information about this assessment.</span>
             </div>
           </div>
-        </div>
-        
-        {/* Chart Legend and explanation */}
-        <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
-          <h4 className="font-medium text-blue-900 mb-3">Chart Guide</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h5 className="text-sm font-medium text-blue-700 mb-2">Axes</h5>
-              <ul className="text-sm text-blue-600 space-y-1">
-                <li>• X-axis: Average of Slalom and Lane Change control</li>
-                <li>• Y-axis: Final exercise result score</li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="text-sm font-medium text-blue-700 mb-2">Visual Elements</h5>
-              <ul className="text-sm text-blue-600 space-y-1">
-                <li>• Color: Number of penalties (green=low, red=high)</li>
-                <li>• Size: Time invested in reverse maneuvers</li>
-                <li>• Blue zone: Security Driver Balance range</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );
