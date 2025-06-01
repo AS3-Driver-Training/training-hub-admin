@@ -27,7 +27,7 @@ export function PerformanceComparisonBar({ analyticsData }: PerformanceCompariso
       position: getPosition(globalAverage),
       color: "bg-orange-500",
       textColor: "text-orange-700",
-      labelOffset: "top-6" // First level
+      labelOffset: "-top-12" // Above the bar
     },
     {
       label: "Group Average",
@@ -35,7 +35,7 @@ export function PerformanceComparisonBar({ analyticsData }: PerformanceCompariso
       position: getPosition(groupAverage),
       color: "bg-blue-500",
       textColor: "text-blue-700",
-      labelOffset: "top-16" // Second level
+      labelOffset: "top-6" // Below the bar, first level
     },
     {
       label: "Top Student",
@@ -43,7 +43,7 @@ export function PerformanceComparisonBar({ analyticsData }: PerformanceCompariso
       position: getPosition(topScore),
       color: "bg-emerald-500",
       textColor: "text-emerald-700",
-      labelOffset: "top-26" // Third level
+      labelOffset: "top-16" // Below the bar, second level
     }
   ];
 
@@ -53,7 +53,7 @@ export function PerformanceComparisonBar({ analyticsData }: PerformanceCompariso
         <CardTitle className="text-lg">Performance Comparison</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="relative">
+        <div className="relative pt-16 pb-4">
           {/* Gradient Bar */}
           <div className="h-8 w-full rounded-lg bg-gradient-to-r from-red-400 via-yellow-400 via-blue-400 to-emerald-400 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-red-500/80 via-yellow-500/80 via-blue-500/80 to-emerald-500/80"></div>
@@ -84,7 +84,7 @@ export function PerformanceComparisonBar({ analyticsData }: PerformanceCompariso
           </div>
           
           {/* Scale indicators */}
-          <div className="flex justify-between mt-32 text-xs text-gray-500">
+          <div className="flex justify-between mt-20 text-xs text-gray-500">
             <span>0</span>
             <span>25</span>
             <span>50</span>
