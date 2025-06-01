@@ -14,6 +14,7 @@ import { RiskAssessment } from "@/components/analytics/RiskAssessment";
 import { AnalyticsEventDetailsCards } from "@/components/analytics/AnalyticsEventDetailsCards";
 import { AnalyticsAdminActions } from "@/components/analytics/AnalyticsAdminActions";
 import { AnalyticsCourseHeader } from "@/components/analytics/AnalyticsCourseHeader";
+import { PerformanceComparisonBar } from "@/components/analytics/PerformanceComparisonBar";
 
 export default function AnalyticsReport() {
   const { id } = useParams<{ id: string }>();
@@ -119,6 +120,9 @@ export default function AnalyticsReport() {
 
       {/* Performance Summary Cards */}
       <AnalyticsEventDetailsCards analyticsData={analyticsData} />
+
+      {/* Performance Comparison Bar */}
+      <PerformanceComparisonBar analyticsData={analyticsData} />
 
       {/* Executive Summary */}
       <ExecutiveSummary data={analyticsData.anthropic_response.executive_summary} />
