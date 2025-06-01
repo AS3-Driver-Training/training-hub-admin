@@ -49,11 +49,7 @@ export function SecurityDriverBalanceChart({ studentData }: SecurityDriverBalanc
     marker: {
       size: chartData.map(d => Math.max(8, Math.min(30, 8 + d.reverseTime * 2))), // Size based on reverse time
       color: chartData.map(d => d.penalties),
-      colorscale: [
-        [0, '#10B981'], // Green for no penalties
-        [0.5, '#F59E0B'], // Orange for medium penalties
-        [1, '#EF4444'] // Red for high penalties
-      ],
+      colorscale: 'RdYlGn_r' as const, // Red-Yellow-Green reversed colorscale
       colorbar: {
         title: 'Penalties',
         titleside: 'right',
@@ -126,8 +122,7 @@ export function SecurityDriverBalanceChart({ studentData }: SecurityDriverBalanc
         font: { 
           color: '#3B82F6', 
           size: 14, 
-          family: 'Inter, sans-serif',
-          weight: 'bold' as const
+          family: 'Inter, sans-serif'
         },
         bgcolor: 'rgba(255, 255, 255, 0.8)',
         bordercolor: '#3B82F6',
