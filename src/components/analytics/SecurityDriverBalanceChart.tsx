@@ -51,7 +51,9 @@ export function SecurityDriverBalanceChart({ studentData }: SecurityDriverBalanc
       color: chartData.map(d => d.penalties),
       colorscale: 'RdYlGn_r' as const, // Red-Yellow-Green reversed colorscale
       colorbar: {
-        title: 'Penalties',
+        title: {
+          text: 'Penalties'
+        },
         titleside: 'right',
         thickness: 15,
         len: 0.7
