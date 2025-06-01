@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Download, Printer } from "lucide-react";
@@ -147,6 +146,7 @@ export default function AnalyticsReport() {
       {/* Security Driver Balance Chart */}
       <SecurityDriverBalanceChart 
         studentData={analyticsData.student_performance_data}
+        exerciseData={analyticsData.anthropic_response.exercise_breakdown}
       />
       
       {/* Stress Performance Analysis */}

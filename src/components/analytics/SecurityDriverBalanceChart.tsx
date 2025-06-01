@@ -1,19 +1,28 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Plot from "react-plotly.js";
 import { AnalyticsData } from "@/types/analytics";
+import ReactMarkdown from "react-markdown";
 
 interface SecurityDriverBalanceChartProps {
   studentData: AnalyticsData['student_performance_data'];
+  exerciseData: AnalyticsData['anthropic_response']['exercise_breakdown'];
 }
 
-export function SecurityDriverBalanceChart({ studentData }: SecurityDriverBalanceChartProps) {
-  // Filter students who have the required data
+export function SecurityDriverBalanceChart({ studentData, exerciseData }: SecurityDriverBalanceChartProps) {
+  // More lenient filtering - only require final_result, provide defaults for missing data
   const validStudents = studentData.filter(student => 
-    student.final_result !== undefined && 
-    student.slalom_control !== undefined && 
-    student.evasion_control !== undefined
+    student.final_result !== undefined
   );
+
+  // Final Exercise description
+  const finalExerciseDescription = `The Final Multidisciplinary Exercise combines all previously learned skills into a comprehensive assessment. Students must demonstrate mastery of vehicle control, decision-making under pressure, and situational awareness in a complex scenario that simulates real-world driving challenges.
+
+This exercise tests the integration of all training components and serves as the ultimate measure of a student's readiness to apply defensive driving techniques in actual situations. Performance here indicates overall program success and skill retention.
+
+Type: Comprehensive Assessment
+Difficulty Level: Hard`;
 
   if (validStudents.length === 0) {
     return (
@@ -23,14 +32,14 @@ export function SecurityDriverBalanceChart({ studentData }: SecurityDriverBalanc
         </CardHeader>
         <CardContent>
           <div className="text-center text-muted-foreground py-8">
-            No data available for Security Driver Balance analysis
+            No final exercise data available for Security Driver Balance analysis
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  // Calculate average of slalom and lane change (evasion) for each student
+  // Calculate average of slalom and lane change (evasion) for each student, with defaults for missing data
   const chartData = validStudents.map(student => ({
     x: (student.slalom_control + student.evasion_control) / 2,
     y: student.final_result || 0,
@@ -38,6 +47,14 @@ export function SecurityDriverBalanceChart({ studentData }: SecurityDriverBalanc
     penalties: student.penalties || 0,
     reverseTime: student.reverse_time || 0,
   }));
+
+  // Calculate final exercise statistics
+  const finalResultAverage = Math.round(validStudents.reduce((sum, s) => sum + (s.final_result || 0), 0) / validStudents.length);
+
+  // Get top 3 performers for final exercise
+  const finalExerciseTopPerformers = [...validStudents]
+    .sort((a, b) => (b.final_result || 0) - (a.final_result || 0))
+    .slice(0, 3);
 
   // Create the scatter plot data
   const plotData = [{
@@ -151,15 +168,71 @@ export function SecurityDriverBalanceChart({ studentData }: SecurityDriverBalanc
           Relationship between control proficiency and final performance. The Security Driver Balance zone (highlighted) represents optimal performance characteristics.
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
+        {/* Final Multidisciplinary Exercise Description */}
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="final" className="border border-purple-200 rounded-lg">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                <h3 className="text-lg font-bold text-purple-900">FINAL MULTIDISCIPLINARY EXERCISE</h3>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="prose prose-sm prose-purple max-w-none">
+                <div className="whitespace-pre-line text-gray-700">{finalExerciseDescription}</div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        {/* AI Analysis for Final Exercise */}
+        {exerciseData.final_multidisciplinary_exercise && (
+          <div className="bg-purple-50 rounded-lg border border-purple-200 p-4">
+            <h4 className="font-semibold text-purple-900 mb-3">AI Analysis: {exerciseData.final_multidisciplinary_exercise.title}</h4>
+            <div className="prose prose-sm max-w-none">
+              <ReactMarkdown>{exerciseData.final_multidisciplinary_exercise.content}</ReactMarkdown>
+            </div>
+          </div>
+        )}
+
+        {/* Security Driver Balance Chart */}
         <Plot
           data={plotData}
           layout={layout}
           config={config}
           style={{ width: '100%', height: '500px' }}
         />
+
+        {/* Final Exercise Performance Summary */}
+        <div className="bg-purple-50 rounded-lg border border-purple-200 p-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold text-purple-900">Final Exercise Performance Summary</h4>
+              <div className="text-sm text-purple-700">
+                Group Average: {finalResultAverage} | Students Completed: {validStudents.length}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {finalExerciseTopPerformers.map((student, index) => (
+                <div key={student.name} className="bg-white rounded p-3 border border-purple-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-purple-900">{student.name}</div>
+                      <div className="text-sm text-purple-700">Score: {student.final_result}</div>
+                    </div>
+                    <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                      {index + 1}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
         
-        {/* Legend and explanation */}
+        {/* Chart Legend and explanation */}
         <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
           <h4 className="font-medium text-blue-900 mb-3">Chart Guide</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
