@@ -69,34 +69,34 @@ Difficulty Level: Medium`;
 
     return [
       {
-        type: 'scatter',
-        mode: 'markers',
+        type: 'scatter' as const,
+        mode: 'markers' as const,
         x: studentNames,
         y: controlData,
         marker: {
           size: 14,
           color: '#DC2626',
-          symbol: 'circle',
+          symbol: 'circle' as const,
           line: { color: '#FFFFFF', width: 2 }
         },
         name: 'Max Performance %',
         hovertemplate: '<b>%{x}</b><br>Max Performance: %{y}%<extra></extra>',
-        yaxis: 'y'
+        yaxis: 'y' as const
       },
       {
-        type: 'scatter',
-        mode: 'markers',
+        type: 'scatter' as const,
+        mode: 'markers' as const,
         x: studentNames,
         y: attemptsData,
         marker: {
           size: 12,
           color: '#6B7280',
-          symbol: 'square',
+          symbol: 'square' as const,
           line: { color: '#FFFFFF', width: 1 }
         },
         name: 'Attempts Until Pass',
         hovertemplate: '<b>%{x}</b><br>Attempts: %{y}<extra></extra>',
-        yaxis: 'y2'
+        yaxis: 'y2' as const
       }
     ];
   };

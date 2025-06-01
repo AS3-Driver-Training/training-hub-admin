@@ -24,7 +24,7 @@ export const getAnalyticsData = async (courseId: string): Promise<AnalyticsData 
     }
     
     console.log('Successfully loaded analytics data from database');
-    return data.analytics_data as AnalyticsData;
+    return data.analytics_data as unknown as AnalyticsData;
   } catch (error) {
     console.error('Analytics service error:', error);
     return null;
