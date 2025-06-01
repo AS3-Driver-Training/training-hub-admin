@@ -96,6 +96,9 @@ export interface AnalyticsData {
     evasion_attempts: number;
     low_stress_score: number;
     high_stress_score: number;
+    final_result?: number;
+    penalties?: number;
+    reverse_time?: number;
   }>;
   endpoint_ready: boolean;
   processing_status: string;

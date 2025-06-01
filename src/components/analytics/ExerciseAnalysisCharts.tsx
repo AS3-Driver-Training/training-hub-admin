@@ -23,6 +23,11 @@ export function ExerciseAnalysisCharts({ studentData, exerciseData }: ExerciseAn
   const slalomAttemptsAverage = Math.round(sortedStudents.reduce((sum, s) => sum + s.slalom_attempts, 0) / sortedStudents.length);
   const evasionAttemptsAverage = Math.round(sortedStudents.reduce((sum, s) => sum + s.evasion_attempts, 0) / sortedStudents.length);
 
+  // Calculate final exercise statistics
+  const studentsWithFinalResults = sortedStudents.filter(s => s.final_result !== undefined);
+  const finalResultAverage = studentsWithFinalResults.length > 0 ? 
+    Math.round(studentsWithFinalResults.reduce((sum, s) => sum + (s.final_result || 0), 0) / studentsWithFinalResults.length) : 0;
+
   // Get top 3 performers for each exercise
   const slalomTopPerformers = [...sortedStudents]
     .sort((a, b) => {
@@ -42,6 +47,11 @@ export function ExerciseAnalysisCharts({ studentData, exerciseData }: ExerciseAn
     })
     .slice(0, 3);
 
+  const finalExerciseTopPerformers = studentsWithFinalResults.length > 0 ? 
+    [...studentsWithFinalResults]
+      .sort((a, b) => (b.final_result || 0) - (a.final_result || 0))
+      .slice(0, 3) : [];
+
   // Static exercise descriptions
   const slalomDescription = `The Slalom exercise may seem basic, but it is the most demanding of all activities. This test creates a consistent skill that involves a deep understanding of time/distance and hand/eye coordination. Its consistency allows us to measure it precisely to determine driver skill and focus areas; this is the basis for everything we train in evasive driving.
 
@@ -56,6 +66,13 @@ Just as the Slalom, this exercise requires skill as it is graded at 80% of the c
 
 Type: Regular LnCh – .75 Sec Reaction time (100ft Chord)
 Difficulty Level: Medium`;
+
+  const finalExerciseDescription = `The Final Multidisciplinary Exercise combines all previously learned skills into a comprehensive assessment. Students must demonstrate mastery of vehicle control, decision-making under pressure, and situational awareness in a complex scenario that simulates real-world driving challenges.
+
+This exercise tests the integration of all training components and serves as the ultimate measure of a student's readiness to apply defensive driving techniques in actual situations. Performance here indicates overall program success and skill retention.
+
+Type: Comprehensive Assessment
+Difficulty Level: Hard`;
 
   // Chart configuration
   const createChartData = (exercise: 'slalom' | 'evasion') => {
@@ -305,15 +322,65 @@ Difficulty Level: Medium`;
           </div>
         </div>
 
-        {/* Final Exercise Analysis */}
-        {exerciseData.final_multidisciplinary_exercise && (
-          <div className="bg-purple-50 rounded-lg border border-purple-200 p-4">
-            <h4 className="font-semibold text-purple-900 mb-3">AI Analysis: {exerciseData.final_multidisciplinary_exercise.title}</h4>
-            <div className="prose prose-sm max-w-none">
-              <ReactMarkdown>{exerciseData.final_multidisciplinary_exercise.content}</ReactMarkdown>
+        {/* Final Multidisciplinary Exercise Section */}
+        <div className="space-y-4">
+          {/* Static Final Exercise Description */}
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="final" className="border border-purple-200 rounded-lg">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                  <h3 className="text-lg font-bold text-purple-900">FINAL MULTIDISCIPLINARY EXERCISE</h3>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <div className="prose prose-sm prose-purple max-w-none">
+                  <div className="whitespace-pre-line text-gray-700">{finalExerciseDescription}</div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
+          {/* AI Analysis for Final Exercise */}
+          {exerciseData.final_multidisciplinary_exercise && (
+            <div className="bg-purple-50 rounded-lg border border-purple-200 p-4">
+              <h4 className="font-semibold text-purple-900 mb-3">AI Analysis: {exerciseData.final_multidisciplinary_exercise.title}</h4>
+              <div className="prose prose-sm max-w-none">
+                <ReactMarkdown>{exerciseData.final_multidisciplinary_exercise.content}</ReactMarkdown>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Final Exercise Performance Summary */}
+          {studentsWithFinalResults.length > 0 && (
+            <div className="bg-purple-50 rounded-lg border border-purple-200 p-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-purple-900">Final Exercise Performance Summary</h4>
+                  <div className="text-sm text-purple-700">
+                    Group Average: {finalResultAverage} | Students Completed: {studentsWithFinalResults.length}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {finalExerciseTopPerformers.map((student, index) => (
+                    <div key={student.name} className="bg-white rounded p-3 border border-purple-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-purple-900">{student.name}</div>
+                          <div className="text-sm text-purple-700">Score: {student.final_result}</div>
+                        </div>
+                        <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                          {index + 1}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
         
         {/* Chart Legend */}
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">

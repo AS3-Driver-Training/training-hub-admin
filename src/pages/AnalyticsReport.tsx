@@ -15,6 +15,7 @@ import { AnalyticsEventDetailsCards } from "@/components/analytics/AnalyticsEven
 import { AnalyticsAdminActions } from "@/components/analytics/AnalyticsAdminActions";
 import { AnalyticsCourseHeader } from "@/components/analytics/AnalyticsCourseHeader";
 import { PerformanceComparisonBar } from "@/components/analytics/PerformanceComparisonBar";
+import { SecurityDriverBalanceChart } from "@/components/analytics/SecurityDriverBalanceChart";
 
 export default function AnalyticsReport() {
   const { id } = useParams<{ id: string }>();
@@ -141,6 +142,11 @@ export default function AnalyticsReport() {
       <ExerciseAnalysisCharts 
         studentData={analyticsData.student_performance_data}
         exerciseData={analyticsData.anthropic_response.exercise_breakdown}
+      />
+      
+      {/* Security Driver Balance Chart */}
+      <SecurityDriverBalanceChart 
+        studentData={analyticsData.student_performance_data}
       />
       
       {/* Stress Performance Analysis */}
