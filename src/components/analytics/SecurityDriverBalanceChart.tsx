@@ -11,10 +11,25 @@ interface SecurityDriverBalanceChartProps {
 }
 
 export function SecurityDriverBalanceChart({ studentData, exerciseData }: SecurityDriverBalanceChartProps) {
-  // More lenient filtering - only require final_result, provide defaults for missing data
-  const validStudents = studentData.filter(student => 
-    student.final_result !== undefined
-  );
+  // Filter students with final exercise data - use multiple fallback approaches
+  const validStudents = studentData.filter(student => {
+    // Check for final_result (new format)
+    if (student.final_result !== undefined && student.final_result > 0) return true;
+    
+    // Check for final_ex_score (composite score)
+    if (student.final_ex_score !== undefined && student.final_ex_score > 0) return true;
+    
+    // Check for high_stress_score (legacy fallback)
+    if (student.high_stress_score !== undefined && student.high_stress_score > 0) return true;
+    
+    // Check for final_exercise_details (raw data)
+    if (student.final_exercise_details && student.final_exercise_details.length > 0) return true;
+    
+    return false;
+  });
+
+  console.log('SecurityDriverBalance: validStudents count:', validStudents.length);
+  console.log('SecurityDriverBalance: sample student data:', validStudents[0]);
 
   // Final Exercise description
   const finalExerciseDescription = `The Final Multidisciplinary Exercise combines all previously learned skills into a comprehensive assessment. Students must demonstrate mastery of vehicle control, decision-making under pressure, and situational awareness in a complex scenario that simulates real-world driving challenges.
@@ -30,33 +45,60 @@ Difficulty Level: Hard`;
   let finalExerciseTopPerformers = [];
 
   if (validStudents.length > 0) {
-    // Calculate average of slalom and lane change (evasion) for each student, with defaults for missing data
-    chartData = validStudents.map(student => ({
-      x: (student.slalom_control + student.evasion_control) / 2,
-      y: student.final_result || 0,
-      text: student.name,
-      penalties: student.penalties || 0,
-      reverseTime: student.reverse_time || 0,
-    }));
+    // Calculate average of slalom and lane change (evasion) for each student
+    chartData = validStudents.map(student => {
+      // Use the correct field mappings based on available data
+      const slalomControl = student.slalom_max || student.slalom_control || 0;
+      const evasionControl = student.lane_change_max || student.evasion_control || 0;
+      const avgControl = (slalomControl + evasionControl) / 2;
+      
+      // Use multiple fallbacks for final result
+      const finalResult = student.final_result || 
+                         student.final_ex_score || 
+                         student.high_stress_score || 
+                         0;
+      
+      // Calculate penalties from final exercise details or use direct field
+      const penalties = student.penalties || 
+                       (student.final_exercise_details ? 
+                        student.final_exercise_details.reduce((sum, attempt) => sum + attempt.cones + attempt.gates, 0) / student.final_exercise_details.length : 0);
+      
+      // Calculate reverse time from final exercise details or use direct field
+      const reverseTime = student.reverse_time || 
+                         (student.final_exercise_details ? 
+                          student.final_exercise_details.reduce((sum, attempt) => sum + attempt.rev_slalom_seconds, 0) / student.final_exercise_details.length : 0);
+
+      return {
+        x: avgControl,
+        y: finalResult,
+        text: student.name,
+        penalties: Math.round(penalties),
+        reverseTime: Math.round(reverseTime),
+      };
+    });
 
     // Calculate final exercise statistics
-    finalResultAverage = Math.round(validStudents.reduce((sum, s) => sum + (s.final_result || 0), 0) / validStudents.length);
+    finalResultAverage = Math.round(chartData.reduce((sum, d) => sum + d.y, 0) / chartData.length);
 
     // Get top 3 performers for final exercise
     finalExerciseTopPerformers = [...validStudents]
-      .sort((a, b) => (b.final_result || 0) - (a.final_result || 0))
+      .sort((a, b) => {
+        const aScore = a.final_result || a.final_ex_score || a.high_stress_score || 0;
+        const bScore = b.final_result || b.final_ex_score || b.high_stress_score || 0;
+        return bScore - aScore;
+      })
       .slice(0, 3);
   }
 
   // Create the scatter plot data
-  const plotData = [{
+  const plotData = chartData.length > 0 ? [{
     type: 'scatter' as const,
     mode: 'markers' as const,
     x: chartData.map(d => d.x),
     y: chartData.map(d => d.y),
     text: chartData.map(d => d.text),
     marker: {
-      size: chartData.map(d => Math.max(8, Math.min(30, 8 + d.reverseTime * 2))), // Size based on reverse time
+      size: chartData.map(d => Math.max(8, Math.min(30, 8 + d.reverseTime * 0.5))), // Size based on reverse time
       color: chartData.map(d => d.penalties),
       colorscale: 'RdYlGn_r' as const, // Red-Yellow-Green reversed colorscale
       colorbar: {
@@ -79,7 +121,7 @@ Difficulty Level: Hard`;
                    'Penalties: %{marker.color}<br>' +
                    'Reverse Time: %{marker.size}<extra></extra>',
     name: 'Students'
-  }];
+  }] : [];
 
   const layout = {
     title: {
@@ -209,19 +251,22 @@ Difficulty Level: Hard`;
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {finalExerciseTopPerformers.map((student, index) => (
-                    <div key={student.name} className="bg-white rounded p-3 border border-purple-200">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium text-purple-900">{student.name}</div>
-                          <div className="text-sm text-purple-700">Score: {student.final_result}</div>
-                        </div>
-                        <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                          {index + 1}
+                  {finalExerciseTopPerformers.map((student, index) => {
+                    const finalScore = student.final_result || student.final_ex_score || student.high_stress_score || 0;
+                    return (
+                      <div key={student.name} className="bg-white rounded p-3 border border-purple-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium text-purple-900">{student.name}</div>
+                            <div className="text-sm text-purple-700">Score: {Math.round(finalScore)}</div>
+                          </div>
+                          <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                            {index + 1}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>

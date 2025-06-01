@@ -1,6 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { AnalyticsData, PerformanceTier, StressResponse } from "@/types/analytics";
+import { validateAndTransformAnalyticsData } from "./dataTransformationService";
 
 export const getAnalyticsData = async (courseId: string): Promise<AnalyticsData | null> => {
   try {
@@ -23,8 +23,13 @@ export const getAnalyticsData = async (courseId: string): Promise<AnalyticsData 
       return null;
     }
     
-    console.log('Successfully loaded analytics data from database');
-    return data.analytics_data as unknown as AnalyticsData;
+    console.log('Raw analytics data from database:', data.analytics_data);
+    
+    // Transform and validate the data
+    const transformedData = validateAndTransformAnalyticsData(data.analytics_data);
+    
+    console.log('Transformed analytics data:', transformedData);
+    return transformedData as unknown as AnalyticsData;
   } catch (error) {
     console.error('Analytics service error:', error);
     return null;

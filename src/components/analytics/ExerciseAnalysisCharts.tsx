@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Plot from "react-plotly.js";
@@ -15,30 +14,52 @@ export function ExerciseAnalysisCharts({ studentData, exerciseData }: ExerciseAn
   const sortedStudents = [...studentData].sort((a, b) => b.overall_score - a.overall_score);
   const studentNames = sortedStudents.map(s => s.name);
 
-  // Calculate performance statistics
-  const slalomGroupAverage = Math.round(sortedStudents.reduce((sum, s) => sum + s.slalom_control, 0) / sortedStudents.length);
-  const evasionGroupAverage = Math.round(sortedStudents.reduce((sum, s) => sum + s.evasion_control, 0) / sortedStudents.length);
+  // Calculate performance statistics using correct field mappings
+  const slalomGroupAverage = Math.round(sortedStudents.reduce((sum, s) => {
+    const slalomControl = s.slalom_max || s.slalom_control || 0;
+    return sum + slalomControl;
+  }, 0) / sortedStudents.length);
   
-  // Calculate attempts averages
-  const slalomAttemptsAverage = Math.round(sortedStudents.reduce((sum, s) => sum + s.slalom_attempts, 0) / sortedStudents.length);
-  const evasionAttemptsAverage = Math.round(sortedStudents.reduce((sum, s) => sum + s.evasion_attempts, 0) / sortedStudents.length);
+  const evasionGroupAverage = Math.round(sortedStudents.reduce((sum, s) => {
+    const evasionControl = s.lane_change_max || s.evasion_control || 0;
+    return sum + evasionControl;
+  }, 0) / sortedStudents.length);
+  
+  // Calculate attempts averages using correct field mappings
+  const slalomAttemptsAverage = Math.round(sortedStudents.reduce((sum, s) => {
+    const attempts = s.s_runs_until_pass || s.slalom_attempts || 0;
+    return sum + attempts;
+  }, 0) / sortedStudents.length);
+  
+  const evasionAttemptsAverage = Math.round(sortedStudents.reduce((sum, s) => {
+    const attempts = s.lc_runs_until_pass || s.evasion_attempts || 0;
+    return sum + attempts;
+  }, 0) / sortedStudents.length);
 
-  // Get top 3 performers for each exercise
+  // Get top 3 performers for each exercise using correct field mappings
   const slalomTopPerformers = [...sortedStudents]
     .sort((a, b) => {
-      if (a.slalom_control !== b.slalom_control) {
-        return b.slalom_control - a.slalom_control;
+      const aControl = a.slalom_max || a.slalom_control || 0;
+      const bControl = b.slalom_max || b.slalom_control || 0;
+      if (aControl !== bControl) {
+        return bControl - aControl;
       }
-      return a.slalom_attempts - b.slalom_attempts;
+      const aAttempts = a.s_runs_until_pass || a.slalom_attempts || 0;
+      const bAttempts = b.s_runs_until_pass || b.slalom_attempts || 0;
+      return aAttempts - bAttempts;
     })
     .slice(0, 3);
 
   const evasionTopPerformers = [...sortedStudents]
     .sort((a, b) => {
-      if (a.evasion_control !== b.evasion_control) {
-        return b.evasion_control - a.evasion_control;
+      const aControl = a.lane_change_max || a.evasion_control || 0;
+      const bControl = b.lane_change_max || b.evasion_control || 0;
+      if (aControl !== bControl) {
+        return bControl - aControl;
       }
-      return a.evasion_attempts - b.evasion_attempts;
+      const aAttempts = a.lc_runs_until_pass || a.evasion_attempts || 0;
+      const bAttempts = b.lc_runs_until_pass || b.evasion_attempts || 0;
+      return aAttempts - bAttempts;
     })
     .slice(0, 3);
 
@@ -60,12 +81,12 @@ Difficulty Level: Medium`;
   // Chart configuration
   const createChartData = (exercise: 'slalom' | 'evasion') => {
     const controlData = exercise === 'slalom' ? 
-      sortedStudents.map(s => s.slalom_control) : 
-      sortedStudents.map(s => s.evasion_control);
+      sortedStudents.map(s => s.slalom_max || s.slalom_control || 0) : 
+      sortedStudents.map(s => s.lane_change_max || s.evasion_control || 0);
     
     const attemptsData = exercise === 'slalom' ? 
-      sortedStudents.map(s => s.slalom_attempts) : 
-      sortedStudents.map(s => s.evasion_attempts);
+      sortedStudents.map(s => s.s_runs_until_pass || s.slalom_attempts || 0) : 
+      sortedStudents.map(s => s.lc_runs_until_pass || s.evasion_attempts || 0);
 
     return [
       {
@@ -205,7 +226,7 @@ Difficulty Level: Medium`;
           {/* Slalom Chart */}
           <Plot
             data={createChartData('slalom')}
-            layout={createChartLayout('Slalom Exercise Performance', Math.max(...sortedStudents.map(s => s.slalom_attempts)))}
+            layout={createChartLayout('Slalom Exercise Performance', Math.max(...sortedStudents.map(s => s.s_runs_until_pass || s.slalom_attempts || 0)))}
             config={config}
             style={{ width: '100%', height: '450px' }}
           />
@@ -221,19 +242,23 @@ Difficulty Level: Medium`;
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {slalomTopPerformers.map((student, index) => (
-                  <div key={student.name} className="bg-white rounded p-3 border border-blue-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-blue-900">{student.name}</div>
-                        <div className="text-sm text-blue-700">{student.slalom_control}% control, {student.slalom_attempts} attempts</div>
-                      </div>
-                      <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                        {index + 1}
+                {slalomTopPerformers.map((student, index) => {
+                  const control = student.slalom_max || student.slalom_control || 0;
+                  const attempts = student.s_runs_until_pass || student.slalom_attempts || 0;
+                  return (
+                    <div key={student.name} className="bg-white rounded p-3 border border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-blue-900">{student.name}</div>
+                          <div className="text-sm text-blue-700">{control}% control, {attempts} attempts</div>
+                        </div>
+                        <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                          {index + 1}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -271,7 +296,7 @@ Difficulty Level: Medium`;
           {/* Evasion Chart */}
           <Plot
             data={createChartData('evasion')}
-            layout={createChartLayout('Barricade Evasion Exercise Performance', Math.max(...sortedStudents.map(s => s.evasion_attempts)))}
+            layout={createChartLayout('Barricade Evasion Exercise Performance', Math.max(...sortedStudents.map(s => s.lc_runs_until_pass || s.evasion_attempts || 0)))}
             config={config}
             style={{ width: '100%', height: '450px' }}
           />
@@ -287,19 +312,23 @@ Difficulty Level: Medium`;
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {evasionTopPerformers.map((student, index) => (
-                  <div key={student.name} className="bg-white rounded p-3 border border-green-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-green-900">{student.name}</div>
-                        <div className="text-sm text-green-700">{student.evasion_control}% control, {student.evasion_attempts} attempts</div>
-                      </div>
-                      <div className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                        {index + 1}
+                {evasionTopPerformers.map((student, index) => {
+                  const control = student.lane_change_max || student.evasion_control || 0;
+                  const attempts = student.lc_runs_until_pass || student.evasion_attempts || 0;
+                  return (
+                    <div key={student.name} className="bg-white rounded p-3 border border-green-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-green-900">{student.name}</div>
+                          <div className="text-sm text-green-700">{control}% control, {attempts} attempts</div>
+                        </div>
+                        <div className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                          {index + 1}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

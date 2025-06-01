@@ -1,4 +1,3 @@
-
 export interface AnalyticsData {
   report_id: string;
   metadata: {
@@ -87,21 +86,78 @@ export interface AnalyticsData {
       has_error: boolean;
     };
   };
-  student_performance_data: Array<{
-    name: string;
-    overall_score: number;
-    slalom_control: number;
-    slalom_attempts: number;
-    evasion_control: number;
-    evasion_attempts: number;
-    low_stress_score: number;
-    high_stress_score: number;
-    final_result?: number;
-    penalties?: number;
-    reverse_time?: number;
-  }>;
+  student_performance_data: Array<StudentPerformanceData>;
   endpoint_ready: boolean;
   processing_status: string;
+}
+
+export interface StudentPerformanceData {
+  // Legacy fields (keeping for backward compatibility)
+  name: string;
+  overall_score: number;
+  slalom_control: number;
+  slalom_attempts: number;
+  evasion_control: number;
+  evasion_attempts: number;
+  low_stress_score: number;
+  high_stress_score: number;
+  
+  // Enhanced fields from your JSON data
+  program?: string;
+  date?: string;
+  vehicle?: string;
+  company?: string;
+  comments?: string;
+  
+  // Primary composite scores
+  slalom_score?: number;
+  lnch_score?: number;
+  reverse_score?: number;
+  final_ex_score?: number;
+  
+  // Slalom exercise raw data
+  s_no_runs?: number;
+  s_practice_runs?: number;
+  s_passed?: number;
+  s_runs_until_pass?: number;
+  prcnt_s_pass?: number;
+  slalom_max?: number;
+  s_avg_vehicle_prcnt?: number;
+  s_avg_exercise_prcnt?: number;
+  
+  // Lane change exercise raw data
+  lc_no_runs?: number;
+  lc_practice_runs?: number;
+  lc_passed?: number;
+  lc_runs_until_pass?: number;
+  prcnt_lc_pass?: number;
+  lane_change_max?: number;
+  lc_avg_vehicle_prcnt?: number;
+  lc_avg_exercise_prcnt?: number;
+  
+  // Final exercise derived data
+  final_result?: number;
+  penalties?: number;
+  reverse_time?: number;
+  
+  // Final exercise detailed attempts
+  final_exercise_details?: Array<FinalExerciseAttempt>;
+}
+
+export interface FinalExerciseAttempt {
+  car_id: number;
+  stress: 'Low' | 'High';
+  rev_slalom: string;
+  rev_pc: number;
+  slalom: number;
+  lnch: number;
+  cones: number;
+  gates: number;
+  f_time: string;
+  final_result: number;
+  f_time_seconds: number;
+  rev_slalom_seconds: number;
+  exercise_id: number;
 }
 
 export interface PerformanceTier {
