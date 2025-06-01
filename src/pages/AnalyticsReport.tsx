@@ -1,7 +1,7 @@
 
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Download, Printer } from "lucide-react";
+import { ArrowLeft, Download, Printer, Edit, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getAnalyticsData } from "@/services/analyticsService";
@@ -12,6 +12,8 @@ import { InformationCards } from "@/components/analytics/InformationCards";
 import { StressPerformanceChart } from "@/components/analytics/StressPerformanceChart";
 import { ExerciseAnalysisCharts } from "@/components/analytics/ExerciseAnalysisCharts";
 import { RiskAssessment } from "@/components/analytics/RiskAssessment";
+import { AnalyticsEventDetailsCards } from "@/components/analytics/AnalyticsEventDetailsCards";
+import { AnalyticsAdminActions } from "@/components/analytics/AnalyticsAdminActions";
 
 export default function AnalyticsReport() {
   const { id } = useParams<{ id: string }>();
@@ -24,7 +26,7 @@ export default function AnalyticsReport() {
   });
 
   const handleBack = () => {
-    navigate(`/events/${id}/close`);
+    navigate('/events');
   };
 
   const handleExport = () => {
@@ -43,7 +45,7 @@ export default function AnalyticsReport() {
           <div className="flex items-center">
             <Button variant="ghost" size="sm" onClick={handleBack} className="mr-4">
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back
+              Back to Events
             </Button>
             <h1 className="text-3xl font-bold">Analytics Report</h1>
           </div>
@@ -63,7 +65,7 @@ export default function AnalyticsReport() {
         <div className="flex items-center">
           <Button variant="ghost" size="sm" onClick={handleBack} className="mr-4">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
+            Back to Events
           </Button>
           <h1 className="text-3xl font-bold">Analytics Report</h1>
         </div>
@@ -84,7 +86,7 @@ export default function AnalyticsReport() {
       <div className="flex items-center justify-between print:hidden">
         <Button variant="ghost" size="sm" onClick={handleBack} className="mr-4">
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back
+          Back to Events
         </Button>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExport}>
@@ -105,6 +107,18 @@ export default function AnalyticsReport() {
           Analytics Report - {analyticsData.metadata.course_date} | {analyticsData.metadata.course_client}
         </p>
       </div>
+
+      {/* Event Details Cards */}
+      <AnalyticsEventDetailsCards 
+        analyticsData={analyticsData}
+        courseId={id!}
+      />
+
+      {/* Admin Actions (only visible to admins/superadmins) */}
+      <AnalyticsAdminActions 
+        courseId={id!}
+        courseName={analyticsData.metadata.course_program}
+      />
 
       {/* Header with Course Info and Hero Metrics */}
       <AnalyticsDashboardHeader data={analyticsData} />
