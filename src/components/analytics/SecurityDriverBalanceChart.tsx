@@ -187,7 +187,9 @@ Difficulty Level: Hard`;
   }
 
   const layout = {
-    title: '',
+    title: {
+      text: ''
+    },
     xaxis: {
       title: {
         text: '% of control',
@@ -290,7 +292,7 @@ Difficulty Level: Hard`;
   const config = {
     displayModeBar: true,
     displaylogo: false,
-    modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+    modeBarButtonsToRemove: ['pan2d' as const, 'lasso2d' as const, 'select2d' as const],
     responsive: true
   };
 
