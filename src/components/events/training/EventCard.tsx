@@ -1,3 +1,4 @@
+
 import { TrainingEvent } from "@/types/events";
 import { format } from "date-fns";
 import { MapPin, Clock, Users, ArrowRight, MoreVertical, Edit, Trash2, Globe, Building2, Eye, FileText } from "lucide-react";
@@ -73,9 +74,17 @@ export function EventCard({ event, onDelete }: EventCardProps) {
   // Enhanced status handling - if event is completed by date and has a closure record
   const enhancedStatus = closureStatus ? "closed" : event.status;
   
+  // Smart navigation based on event status
   const handleViewDetails = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/events/${event.id}`);
+    
+    // For completed/closed events, go directly to analytics if available
+    if (enhancedStatus === "closed") {
+      navigate(`/events/${event.id}/analytics`);
+    } else {
+      // For scheduled or other events, go to details/management page
+      navigate(`/events/${event.id}`);
+    }
   };
   
   const handleEditEvent = () => {
@@ -193,7 +202,7 @@ export function EventCard({ event, onDelete }: EventCardProps) {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={handleViewDetails}>
                       <Eye className="mr-2 h-4 w-4" />
-                      View Details
+                      {enhancedStatus === "closed" ? "View Analytics" : "View Details"}
                     </DropdownMenuItem>
                     
                     {enhancedStatus === "scheduled" && (

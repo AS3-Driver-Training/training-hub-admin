@@ -2,10 +2,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { EventListView } from "@/components/events/training/EventListView";
+import { StreamlinedEventFilters } from "@/components/events/training/StreamlinedEventFilters";
+import { useEventFilters } from "@/components/events/training/hooks/useEventFilters";
 import { TrainingEvent } from "@/types/events";
 import { queryKeys } from "@/lib/queryKeys";
 
@@ -34,8 +35,6 @@ interface CourseInstanceWithAllocation {
 }
 
 export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
-  const [eventFilter, setEventFilter] = useState<"upcoming" | "past">("upcoming");
-
   const { data: events, isLoading, error, refetch } = useQuery({
     queryKey: queryKeys.clientEvents(clientId),
     queryFn: async () => {
@@ -173,29 +172,25 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
     },
   });
 
-  // Filter events by upcoming/past
-  const filteredEvents = events?.filter(event => {
-    const now = new Date();
-    const eventDate = new Date(event.startDate);
-    
-    if (eventFilter === "upcoming") {
-      return eventDate >= now || event.status === 'scheduled';
-    } else {
-      return eventDate < now && event.status === 'completed';
-    }
-  }) || [];
-
-  const upcomingEvents = filteredEvents.filter(event => {
-    const now = new Date();
-    const eventDate = new Date(event.startDate);
-    return eventDate >= now || event.status === 'scheduled';
-  });
-
-  const pastEvents = filteredEvents.filter(event => {
-    const now = new Date();
-    const eventDate = new Date(event.startDate);
-    return eventDate < now && event.status === 'completed';
-  });
+  // Use the same event filters hook as the main Training Events page
+  const {
+    searchQuery,
+    setSearchQuery,
+    statusFilter,
+    setStatusFilter,
+    dateFilter,
+    setDateFilter,
+    countryFilter,
+    setCountryFilter,
+    regionFilter,
+    setRegionFilter,
+    enrollmentTypeFilter,
+    setEnrollmentTypeFilter,
+    filteredEvents,
+    upcomingEvents,
+    pastEvents,
+    handleClearFilters
+  } = useEventFilters(events || []);
 
   // Handle event deletion/updates
   const handleEventDeleted = () => {
@@ -239,32 +234,32 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs value={eventFilter} onValueChange={(value) => setEventFilter(value as "upcoming" | "past")}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="upcoming">Upcoming Events ({upcomingEvents.length})</TabsTrigger>
-              <TabsTrigger value="past">Past Events ({pastEvents.length})</TabsTrigger>
-            </TabsList>
+          <div className="space-y-4">
+            {/* Add comprehensive filters */}
+            <StreamlinedEventFilters 
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              dateFilter={dateFilter}
+              setDateFilter={setDateFilter}
+              countryFilter={countryFilter}
+              setCountryFilter={setCountryFilter}
+              regionFilter={regionFilter}
+              setRegionFilter={setRegionFilter}
+              enrollmentTypeFilter={enrollmentTypeFilter}
+              setEnrollmentTypeFilter={setEnrollmentTypeFilter}
+              onClearFilters={handleClearFilters}
+              events={events || []}
+            />
 
-            <TabsContent value="upcoming">
-              {eventFilter === "upcoming" ? (
-                <EventListView 
-                  upcomingEvents={upcomingEvents}
-                  pastEvents={[]}
-                  onEventDeleted={handleEventDeleted}
-                />
-              ) : null}
-            </TabsContent>
-
-            <TabsContent value="past">
-              {eventFilter === "past" ? (
-                <EventListView 
-                  upcomingEvents={[]}
-                  pastEvents={pastEvents}
-                  onEventDeleted={handleEventDeleted}
-                />
-              ) : null}
-            </TabsContent>
-          </Tabs>
+            {/* Event list with filtered data */}
+            <EventListView 
+              upcomingEvents={upcomingEvents}
+              pastEvents={pastEvents}
+              onEventDeleted={handleEventDeleted}
+            />
+          </div>
         </CardContent>
       </Card>
     </div>
