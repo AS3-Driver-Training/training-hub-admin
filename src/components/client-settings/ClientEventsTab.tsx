@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,7 +61,7 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
               address,
               country
             ),
-            session_attendees!left (
+            session_attendees (
               id
             )
           `)
@@ -101,7 +102,7 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
                 address,
                 country
               ),
-              session_attendees!left (
+              session_attendees (
                 id,
                 student:student_id (
                   team_id,
