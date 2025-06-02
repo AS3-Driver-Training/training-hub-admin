@@ -1,10 +1,11 @@
+
 export interface AnalyticsData {
   report_id: string;
   metadata: {
     generated_at: string;
     course_program: string;
     course_date: string;
-    course_client: string;
+    course_client: string; // This should now come from course_instances.host_client_id relationship
     total_students: number;
     api_model: string;
   };

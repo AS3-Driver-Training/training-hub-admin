@@ -28,7 +28,6 @@ export function AnalyticsCourseHeader({ analyticsData }: AnalyticsCourseHeaderPr
                 <Calendar className="h-4 w-4" />
                 <span>{courseDate}</span>
               </div>
-              {/* Add location when available in the data */}
             </div>
           </div>
           <div>

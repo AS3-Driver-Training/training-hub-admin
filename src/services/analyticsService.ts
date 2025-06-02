@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { AnalyticsData, PerformanceTier, StressResponse } from "@/types/analytics";
 import { validateAndTransformAnalyticsData } from "./dataTransformationService";
@@ -6,10 +7,22 @@ export const getAnalyticsData = async (courseId: string): Promise<AnalyticsData 
   try {
     console.log('Fetching analytics data for course:', courseId);
     
-    // Fetch from course_closures table
+    // Fetch from course_closures table with course instance and client data
     const { data, error } = await supabase
       .from('course_closures')
-      .select('analytics_data')
+      .select(`
+        analytics_data,
+        course_instance:course_instance_id (
+          id,
+          start_date,
+          program:program_id (
+            name
+          ),
+          host_client:host_client_id (
+            name
+          )
+        )
+      `)
       .eq('course_instance_id', parseInt(courseId))
       .single();
     
@@ -24,11 +37,22 @@ export const getAnalyticsData = async (courseId: string): Promise<AnalyticsData 
     }
     
     console.log('Raw analytics data from database:', data.analytics_data);
+    console.log('Course instance data:', data.course_instance);
     
     // Transform and validate the data
     const transformedData = validateAndTransformAnalyticsData(data.analytics_data);
     
-    console.log('Transformed analytics data:', transformedData);
+    // Override the client name with the correct one from the database relationship
+    if (data.course_instance?.host_client?.name) {
+      transformedData.metadata.course_client = data.course_instance.host_client.name;
+    }
+    
+    // Also ensure the program name is correct from the database
+    if (data.course_instance?.program?.name) {
+      transformedData.metadata.course_program = data.course_instance.program.name;
+    }
+    
+    console.log('Transformed analytics data with correct client:', transformedData);
     return transformedData as unknown as AnalyticsData;
   } catch (error) {
     console.error('Analytics service error:', error);
