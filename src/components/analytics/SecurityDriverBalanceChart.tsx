@@ -111,7 +111,7 @@ Difficulty Level: Hard`;
       mode: 'markers+text' as const,
       type: 'scatter' as const,
       marker: {
-        size: chartData.map(d => d.reverseTimePercent * 10),
+        size: chartData.map(d => Math.max(8, Math.min(30, d.reverseTimePercent * 1.5))),
         color: chartData.map(d => d.penalties),
         colorscale: [
           [0, '#0d0887'],
