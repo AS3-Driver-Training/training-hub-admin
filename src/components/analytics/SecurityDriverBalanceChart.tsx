@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Plot from "react-plotly.js";
@@ -103,7 +102,7 @@ Difficulty Level: Hard`;
   // Create the scatter plot data
   const plotData = chartData.length > 0 ? [{
     type: 'scatter' as const,
-    mode: 'markers+text' as const,
+    mode: 'text+markers' as const,
     x: chartData.map(d => d.x),
     y: chartData.map(d => d.y),
     text: chartData.map(d => d.text),
@@ -113,7 +112,7 @@ Difficulty Level: Hard`;
       color: '#000000'
     },
     marker: {
-      size: chartData.map(d => Math.max(100, d.reverseTimePercent * 100)), // Size based on reverse time percentage
+      size: chartData.map(d => Math.max(8, Math.min(30, d.reverseTimePercent * 0.8))),
       color: chartData.map(d => d.penalties),
       colorscale: 'Turbo' as const,
       colorbar: {
@@ -121,7 +120,7 @@ Difficulty Level: Hard`;
           text: 'Penalties',
           font: { color: '#374151', family: 'Inter, sans-serif' }
         },
-        titleside: 'right',
+        titleside: 'right' as const,
         thickness: 15,
         len: 0.7
       },
@@ -177,7 +176,7 @@ Difficulty Level: Hard`;
         x1: 90,
         y0: 80,
         y1: 98,
-        fillcolor: 'rgba(245, 245, 245, 0.8)', // whitesmoke
+        fillcolor: 'rgba(245, 245, 245, 0.8)',
         line: {
           color: 'darkred',
           width: 2,
@@ -230,7 +229,7 @@ Difficulty Level: Hard`;
         bordercolor: 'gray',
         borderwidth: 1
       },
-      // Greater Control/Skill label
+      // Greater Control/Skill label with arrow
       {
         x: 88,
         y: 72.5,
@@ -248,7 +247,7 @@ Difficulty Level: Hard`;
           family: 'Inter, sans-serif'
         }
       },
-      // Faster Driver label
+      // Faster Driver label with arrow
       {
         x: 35,
         y: 99,
