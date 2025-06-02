@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Plot from "react-plotly.js";
@@ -42,8 +43,6 @@ Difficulty Level: Hard`;
   let chartData = [];
   let finalResultAverage = 0;
   let finalExerciseTopPerformers = [];
-  let xRange = [30, 90];
-  let yRange = [70, 100];
 
   if (validStudents.length > 0) {
     // Calculate chart data matching your React reference format
@@ -62,6 +61,8 @@ Difficulty Level: Hard`;
       // Calculate penalties from final exercise details or use direct field
       let penalties = 0;
       if (student.final_exercise_details && student.final_exercise_details.length > 0) {
+        // Calculate penalties like your reference: 1 + (cones * c_penalty + gates * g_penalty)
+        // Assuming c_penalty = g_penalty = 1 for simplicity
         const avgCones = student.final_exercise_details.reduce((sum, attempt) => sum + attempt.cones, 0) / student.final_exercise_details.length;
         const avgGates = student.final_exercise_details.reduce((sum, attempt) => sum + attempt.gates, 0) / student.final_exercise_details.length;
         penalties = 1 + (avgCones + avgGates);
@@ -86,40 +87,6 @@ Difficulty Level: Hard`;
       };
     });
 
-    // Calculate dynamic axis ranges based on actual data
-    const xValues = chartData.map(d => d.x);
-    const yValues = chartData.map(d => d.y);
-    
-    const xMin = Math.min(...xValues);
-    const xMax = Math.max(...xValues);
-    const yMin = Math.min(...yValues);
-    const yMax = Math.max(...yValues);
-    
-    // Add padding (10% buffer) and ensure minimum range
-    const xPadding = Math.max((xMax - xMin) * 0.1, 5);
-    const yPadding = Math.max((yMax - yMin) * 0.1, 5);
-    
-    xRange = [
-      Math.max(0, xMin - xPadding),
-      Math.min(100, xMax + xPadding)
-    ];
-    
-    yRange = [
-      Math.max(0, yMin - yPadding),
-      Math.min(100, yMax + yPadding)
-    ];
-    
-    // Ensure minimum range for readability
-    if (xRange[1] - xRange[0] < 15) {
-      const center = (xRange[0] + xRange[1]) / 2;
-      xRange = [Math.max(0, center - 7.5), Math.min(100, center + 7.5)];
-    }
-    
-    if (yRange[1] - yRange[0] < 15) {
-      const center = (yRange[0] + yRange[1]) / 2;
-      yRange = [Math.max(0, center - 7.5), Math.min(100, center + 7.5)];
-    }
-
     // Calculate final exercise statistics
     finalResultAverage = Math.round(chartData.reduce((sum, d) => sum + d.y, 0) / chartData.length);
 
@@ -133,29 +100,18 @@ Difficulty Level: Hard`;
       .slice(0, 3);
   }
 
-  // Calculate positions for arrows based on dynamic ranges
-  const xArrowStart = xRange[0] + (xRange[1] - xRange[0]) * 0.15;
-  const yArrowStart = yRange[0] + (yRange[1] - yRange[0]) * 0.15;
-  const xArrowEnd = xRange[1] - (xRange[1] - xRange[0]) * 0.05;
-  const yArrowEnd = yRange[1] - (yRange[1] - yRange[0]) * 0.05;
-
   // Create the plot data following your React reference exactly
   let plotData = [];
   
   if (chartData.length > 0) {
-    // Main scatter plot trace with improved bubble sizing
+    // Main scatter plot trace
     const scatterTrace = {
       x: chartData.map(d => d.x),
       y: chartData.map(d => d.y),
       mode: 'markers+text' as const,
       type: 'scatter' as const,
       marker: {
-        size: chartData.map(d => {
-          // Better bubble scaling: base size + scaled component with constraints
-          const baseSize = 8;
-          const scaledSize = Math.sqrt(d.reverseTimePercent) * 2;
-          return Math.min(Math.max(baseSize + scaledSize, 8), 25);
-        }),
+        size: chartData.map(d => d.reverseTimePercent * 10),
         color: chartData.map(d => d.penalties),
         colorscale: [
           [0, '#0d0887'],
@@ -197,10 +153,10 @@ Difficulty Level: Hard`;
       showlegend: false
     };
 
-    // Vertical arrow trace (dynamic positioning)
+    // Vertical arrow trace
     const verticalArrowTrace = {
-      x: [xArrowStart, xArrowStart],
-      y: [yArrowStart, yArrowEnd],
+      x: [35, 35],
+      y: [72, 97],
       mode: 'lines' as const,
       type: 'scatter' as const,
       line: {
@@ -212,10 +168,10 @@ Difficulty Level: Hard`;
       hoverinfo: 'skip' as const
     };
 
-    // Horizontal arrow trace (dynamic positioning)
+    // Horizontal arrow trace
     const horizontalArrowTrace = {
-      x: [xArrowStart, xArrowEnd],
-      y: [yArrowStart, yArrowStart],
+      x: [35, 85],
+      y: [72, 72],
       mode: 'lines' as const,
       type: 'scatter' as const,
       line: {
@@ -239,7 +195,7 @@ Difficulty Level: Hard`;
         text: '% of control',
         font: { size: 14 }
       },
-      range: xRange,
+      range: [30, 90],
       showgrid: true,
       gridcolor: 'rgba(0,0,0,0.1)',
       zeroline: false
@@ -249,7 +205,7 @@ Difficulty Level: Hard`;
         text: '% of the exercise',
         font: { size: 14 }
       },
-      range: yRange,
+      range: [70, 100],
       showgrid: true,
       gridcolor: 'rgba(0,0,0,0.1)',
       zeroline: false
@@ -265,10 +221,10 @@ Difficulty Level: Hard`;
       b: 80
     },
     annotations: [
-      // Vertical arrow head and label (dynamic positioning)
+      // Vertical arrow head and label
       {
-        x: xArrowStart,
-        y: yArrowEnd,
+        x: 35,
+        y: 97,
         text: '▲',
         showarrow: false,
         font: { size: 16, color: 'gray' },
@@ -276,18 +232,18 @@ Difficulty Level: Hard`;
         yanchor: 'bottom' as const
       },
       {
-        x: xArrowStart,
-        y: yArrowEnd + (yRange[1] - yRange[0]) * 0.03,
+        x: 35,
+        y: 99,
         text: 'Faster Driver',
         showarrow: false,
         font: { size: 14, color: 'gray' },
         xanchor: 'center' as const,
         yanchor: 'top' as const
       },
-      // Horizontal arrow head and label (fixed positioning to prevent overlap)
+      // Horizontal arrow head and label
       {
-        x: xArrowEnd,
-        y: yArrowStart,
+        x: 85,
+        y: 72,
         text: '▶',
         showarrow: false,
         font: { size: 16, color: 'gray' },
@@ -295,18 +251,18 @@ Difficulty Level: Hard`;
         yanchor: 'middle' as const
       },
       {
-        x: xArrowEnd + 3,
-        y: yArrowStart + 8,
+        x: 89,
+        y: 74.5,
         text: 'Greater Control/Skill',
         showarrow: false,
         font: { size: 14, color: 'gray' },
-        xanchor: 'left' as const,
-        yanchor: 'bottom' as const
+        xanchor: 'right' as const,
+        yanchor: 'top' as const
       },
-      // Security Driver Balance rectangle label (fixed positioning)
+      // Balance rectangle label
       {
         x: 80,
-        y: 94,
+        y: 90,
         text: 'Security Driver<br>Balance',
         showarrow: false,
         font: { size: 18, color: 'gray' },
@@ -315,7 +271,7 @@ Difficulty Level: Hard`;
       }
     ],
     shapes: [
-      // Security Driver Balance rectangle (FIXED coordinates)
+      // Balance rectangle
       {
         type: 'rect' as const,
         x0: 70,
