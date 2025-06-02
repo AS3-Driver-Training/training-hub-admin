@@ -45,7 +45,7 @@ Difficulty Level: Hard`;
   let finalExerciseTopPerformers = [];
 
   if (validStudents.length > 0) {
-    // Calculate average of slalom and lane change (evasion) for each student
+    // Calculate chart data matching the matplotlib format
     chartData = validStudents.map(student => {
       // Use the correct field mappings based on available data
       const slalomControl = student.slalom_max || student.slalom_control || 0;
@@ -59,21 +59,31 @@ Difficulty Level: Hard`;
                          0;
       
       // Calculate penalties from final exercise details or use direct field
-      const penalties = student.penalties || 
-                       (student.final_exercise_details ? 
-                        student.final_exercise_details.reduce((sum, attempt) => sum + attempt.cones + attempt.gates, 0) / student.final_exercise_details.length : 0);
+      let penalties = 0;
+      if (student.final_exercise_details && student.final_exercise_details.length > 0) {
+        // Calculate penalties like matplotlib: 1 + (cones * c_penalty + gates * g_penalty)
+        // Assuming c_penalty = g_penalty = 1 for simplicity
+        const avgCones = student.final_exercise_details.reduce((sum, attempt) => sum + attempt.cones, 0) / student.final_exercise_details.length;
+        const avgGates = student.final_exercise_details.reduce((sum, attempt) => sum + attempt.gates, 0) / student.final_exercise_details.length;
+        penalties = 1 + (avgCones + avgGates);
+      } else {
+        penalties = student.penalties || 1;
+      }
       
-      // Calculate reverse time from final exercise details or use direct field
-      const reverseTime = student.reverse_time || 
-                         (student.final_exercise_details ? 
-                          student.final_exercise_details.reduce((sum, attempt) => sum + attempt.rev_slalom_seconds, 0) / student.final_exercise_details.length : 0);
+      // Calculate reverse time percentage from final exercise details or use direct field
+      let reverseTimePercent = 0;
+      if (student.final_exercise_details && student.final_exercise_details.length > 0) {
+        reverseTimePercent = student.final_exercise_details.reduce((sum, attempt) => sum + attempt.rev_pc, 0) / student.final_exercise_details.length;
+      } else {
+        reverseTimePercent = student.reverse_time || 20; // Default fallback
+      }
 
       return {
         x: avgControl,
         y: finalResult,
         text: student.name,
-        penalties: Math.round(penalties),
-        reverseTime: Math.round(reverseTime),
+        penalties: penalties,
+        reverseTimePercent: reverseTimePercent,
       };
     });
 
@@ -93,17 +103,23 @@ Difficulty Level: Hard`;
   // Create the scatter plot data
   const plotData = chartData.length > 0 ? [{
     type: 'scatter' as const,
-    mode: 'markers' as const,
+    mode: 'markers+text' as const,
     x: chartData.map(d => d.x),
     y: chartData.map(d => d.y),
     text: chartData.map(d => d.text),
+    textposition: 'top right' as const,
+    textfont: {
+      size: 12,
+      color: '#000000'
+    },
     marker: {
-      size: chartData.map(d => Math.max(8, Math.min(30, 8 + d.reverseTime * 0.5))), // Size based on reverse time
+      size: chartData.map(d => Math.max(100, d.reverseTimePercent * 100)), // Size based on reverse time percentage
       color: chartData.map(d => d.penalties),
-      colorscale: 'RdYlGn_r' as const, // Red-Yellow-Green reversed colorscale
+      colorscale: 'Turbo' as const,
       colorbar: {
         title: {
-          text: 'Penalties'
+          text: 'Penalties',
+          font: { color: '#374151', family: 'Inter, sans-serif' }
         },
         titleside: 'right',
         thickness: 15,
@@ -113,13 +129,16 @@ Difficulty Level: Hard`;
         color: '#FFFFFF',
         width: 2
       },
-      opacity: 0.8
+      opacity: 0.8,
+      cmin: 1,
+      cmax: Math.max(5, Math.max(...chartData.map(d => d.penalties)))
     },
     hovertemplate: '<b>%{text}</b><br>' +
-                   'Avg Control: %{x:.1f}%<br>' +
-                   'Final Result: %{y:.1f}<br>' +
-                   'Penalties: %{marker.color}<br>' +
-                   'Reverse Time: %{marker.size}<extra></extra>',
+                   'Control: %{x:.1f}%<br>' +
+                   'Final Result: %{y:.1f}%<br>' +
+                   'Penalties: %{marker.color:.1f}<br>' +
+                   'Reverse Time %: %{customdata:.1f}<extra></extra>',
+    customdata: chartData.map(d => d.reverseTimePercent),
     name: 'Students'
   }] : [];
 
@@ -130,10 +149,10 @@ Difficulty Level: Hard`;
     },
     xaxis: {
       title: { 
-        text: 'Average Control (Slalom + Lane Change) %', 
+        text: '% of control', 
         font: { color: '#374151', family: 'Inter, sans-serif' } 
       },
-      range: [60, 100],
+      range: [40, 90],
       showgrid: true,
       gridcolor: '#f8fafc',
       gridwidth: 1,
@@ -141,25 +160,54 @@ Difficulty Level: Hard`;
     },
     yaxis: {
       title: { 
-        text: 'Final Result Score', 
+        text: '% of the exercise', 
         font: { color: '#374151', family: 'Inter, sans-serif' } 
       },
-      range: [70, 110],
+      range: [70, 100],
       showgrid: true,
       gridcolor: '#f8fafc',
       gridwidth: 1,
       tickfont: { family: 'Inter, sans-serif' }
     },
     shapes: [
+      // Security Driver Balance Rectangle
       {
         type: 'rect' as const,
         x0: 70,
         x1: 90,
         y0: 80,
-        y1: 100,
-        fillcolor: 'rgba(59, 130, 246, 0.1)',
+        y1: 98,
+        fillcolor: 'rgba(245, 245, 245, 0.8)', // whitesmoke
         line: {
-          color: 'rgba(59, 130, 246, 0.4)',
+          color: 'darkred',
+          width: 2,
+          dash: 'dot' as const
+        },
+        layer: 'below' as const
+      },
+      // Skill Arrow (horizontal)
+      {
+        type: 'line' as const,
+        x0: 35,
+        x1: 85,
+        y0: 72,
+        y1: 72,
+        line: {
+          color: 'gray',
+          width: 2,
+          dash: 'dash' as const
+        },
+        layer: 'below' as const
+      },
+      // Control Arrow (vertical)
+      {
+        type: 'line' as const,
+        x0: 35,
+        x1: 35,
+        y0: 72,
+        y1: 97,
+        line: {
+          color: 'gray',
           width: 2,
           dash: 'dash' as const
         },
@@ -167,22 +215,59 @@ Difficulty Level: Hard`;
       }
     ],
     annotations: [
+      // Security Driver Balance label
       {
         x: 80,
-        y: 90,
-        text: 'Security Driver<br>Balance Zone',
+        y: 89,
+        text: 'Security Driver<br>Balance',
         showarrow: false,
         font: { 
-          color: '#3B82F6', 
-          size: 14, 
+          color: 'gray', 
+          size: 16, 
           family: 'Inter, sans-serif'
         },
         bgcolor: 'rgba(255, 255, 255, 0.8)',
-        bordercolor: '#3B82F6',
+        bordercolor: 'gray',
         borderwidth: 1
+      },
+      // Greater Control/Skill label
+      {
+        x: 88,
+        y: 72.5,
+        text: 'Greater Control/Skill',
+        showarrow: true,
+        arrowhead: 2,
+        arrowsize: 1,
+        arrowwidth: 2,
+        arrowcolor: 'gray',
+        ax: -20,
+        ay: 0,
+        font: { 
+          color: 'gray', 
+          size: 12, 
+          family: 'Inter, sans-serif'
+        }
+      },
+      // Faster Driver label
+      {
+        x: 35,
+        y: 99,
+        text: 'Faster Driver',
+        showarrow: true,
+        arrowhead: 2,
+        arrowsize: 1,
+        arrowwidth: 2,
+        arrowcolor: 'gray',
+        ax: 0,
+        ay: -20,
+        font: { 
+          color: 'gray', 
+          size: 12, 
+          family: 'Inter, sans-serif'
+        }
       }
     ],
-    margin: { l: 80, r: 100, t: 60, b: 80 },
+    margin: { l: 80, r: 120, t: 60, b: 80 },
     height: 500,
     plot_bgcolor: 'white',
     paper_bgcolor: 'white',
@@ -285,9 +370,9 @@ Difficulty Level: Hard`;
                 <div>
                   <h5 className="text-sm font-medium text-blue-700 mb-2">Visual Elements</h5>
                   <ul className="text-sm text-blue-600 space-y-1">
-                    <li>• Color: Number of penalties (green=low, red=high)</li>
-                    <li>• Size: Time invested in reverse maneuvers</li>
-                    <li>• Blue zone: Security Driver Balance range</li>
+                    <li>• Color: Number of penalties (blue=low, red=high)</li>
+                    <li>• Size: Percentage of time in reverse maneuvers</li>
+                    <li>• Red dotted zone: Security Driver Balance range</li>
                   </ul>
                 </div>
               </div>
