@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Plot from "react-plotly.js";
@@ -44,7 +45,7 @@ Difficulty Level: Hard`;
   let finalExerciseTopPerformers = [];
 
   if (validStudents.length > 0) {
-    // Calculate chart data matching the matplotlib format
+    // Calculate chart data matching your React reference format
     chartData = validStudents.map(student => {
       // Use the correct field mappings based on available data
       const slalomControl = student.slalom_max || student.slalom_control || 0;
@@ -60,7 +61,7 @@ Difficulty Level: Hard`;
       // Calculate penalties from final exercise details or use direct field
       let penalties = 0;
       if (student.final_exercise_details && student.final_exercise_details.length > 0) {
-        // Calculate penalties like matplotlib: 1 + (cones * c_penalty + gates * g_penalty)
+        // Calculate penalties like your reference: 1 + (cones * c_penalty + gates * g_penalty)
         // Assuming c_penalty = g_penalty = 1 for simplicity
         const avgCones = student.final_exercise_details.reduce((sum, attempt) => sum + attempt.cones, 0) / student.final_exercise_details.length;
         const avgGates = student.final_exercise_details.reduce((sum, attempt) => sum + attempt.gates, 0) / student.final_exercise_details.length;
@@ -99,232 +100,197 @@ Difficulty Level: Hard`;
       .slice(0, 3);
   }
 
-  // Create the scatter plot data with corrected TypeScript-compatible mode
-  const plotData = chartData.length > 0 ? [{
-    type: 'scatter' as const,
-    mode: 'text+markers' as const,
-    x: chartData.map(d => d.x),
-    y: chartData.map(d => d.y),
-    text: chartData.map(d => d.text),
-    textposition: 'middle center' as const,
-    textfont: {
-      size: 10,
-      color: '#1f2937',
-      family: 'Inter, sans-serif'
-    },
-    marker: {
-      size: chartData.map(d => Math.max(12, Math.min(25, d.reverseTimePercent * 0.8))),
-      color: chartData.map(d => d.penalties),
-      colorscale: 'Turbo' as const,
-      colorbar: {
-        title: {
-          text: 'Penalties',
-          font: { color: '#374151', family: 'Inter, sans-serif', size: 12 }
+  // Create the plot data following your React reference exactly
+  let plotData = [];
+  
+  if (chartData.length > 0) {
+    // Main scatter plot trace
+    const scatterTrace = {
+      x: chartData.map(d => d.x),
+      y: chartData.map(d => d.y),
+      mode: 'markers+text' as const,
+      type: 'scatter' as const,
+      marker: {
+        size: chartData.map(d => d.reverseTimePercent * 10),
+        color: chartData.map(d => d.penalties),
+        colorscale: [
+          [0, '#0d0887'],
+          [0.1111111111111111, '#46039f'],
+          [0.2222222222222222, '#7201a8'],
+          [0.3333333333333333, '#9c179e'],
+          [0.4444444444444444, '#bd3786'],
+          [0.5555555555555556, '#d8576b'],
+          [0.6666666666666666, '#ed7953'],
+          [0.7777777777777778, '#fb9f3a'],
+          [0.8888888888888888, '#fdca26'],
+          [1.0, '#f0f921']
+        ] as [number, string][],
+        showscale: true,
+        colorbar: {
+          title: {
+            text: 'Penalties',
+            side: 'right' as const
+          },
+          titleside: 'right' as const,
+          x: 1.02
         },
-        titleside: 'right' as const,
-        thickness: 20,
-        len: 0.6,
-        x: 1.02
+        line: {
+          width: 1,
+          color: 'rgba(0,0,0,0.3)'
+        }
       },
+      text: chartData.map(d => d.text),
+      textposition: 'top right' as const,
+      textfont: {
+        size: 12,
+        color: 'black'
+      },
+      hovertemplate: 
+        '<b>%{text}</b><br>' +
+        '% Control: %{x}<br>' +
+        '% Exercise: %{y}<br>' +
+        '<extra></extra>',
+      showlegend: false
+    };
+
+    // Vertical arrow trace
+    const verticalArrowTrace = {
+      x: [35, 35],
+      y: [72, 97],
+      mode: 'lines' as const,
+      type: 'scatter' as const,
       line: {
-        color: '#FFFFFF',
-        width: 2
+        color: 'gray',
+        width: 2,
+        dash: 'dash' as const
       },
-      opacity: 0.85,
-      cmin: 1,
-      cmax: Math.max(4, Math.max(...chartData.map(d => d.penalties)))
-    },
-    hovertemplate: '<b>%{text}</b><br>' +
-                   'Control: %{x:.1f}%<br>' +
-                   'Final Result: %{y:.1f}%<br>' +
-                   'Penalties: %{marker.color:.1f}<br>' +
-                   'Reverse Time %: %{customdata:.1f}<extra></extra>',
-    customdata: chartData.map(d => d.reverseTimePercent),
-    name: 'Students'
-  }] : [];
+      showlegend: false,
+      hoverinfo: 'skip' as const
+    };
+
+    // Horizontal arrow trace
+    const horizontalArrowTrace = {
+      x: [35, 85],
+      y: [72, 72],
+      mode: 'lines' as const,
+      type: 'scatter' as const,
+      line: {
+        color: 'gray',
+        width: 2,
+        dash: 'dash' as const
+      },
+      showlegend: false,
+      hoverinfo: 'skip' as const
+    };
+
+    plotData = [scatterTrace, verticalArrowTrace, horizontalArrowTrace];
+  }
 
   const layout = {
-    title: {
-      text: 'Security Driver Balance Analysis',
-      font: { size: 20, color: '#1f2937', family: 'Inter, sans-serif' },
-      x: 0.5,
-      y: 0.95
-    },
+    title: '',
     xaxis: {
-      title: { 
-        text: '% of control', 
-        font: { color: '#374151', family: 'Inter, sans-serif', size: 14 } 
+      title: {
+        text: '% of control',
+        font: { size: 14 }
       },
-      range: [30, 95],
+      range: [30, 90],
       showgrid: true,
-      gridcolor: '#e5e7eb',
-      gridwidth: 1,
-      tickfont: { family: 'Inter, sans-serif', size: 11 },
+      gridcolor: 'rgba(0,0,0,0.1)',
       zeroline: false
     },
     yaxis: {
-      title: { 
-        text: '% of the exercise', 
-        font: { color: '#374151', family: 'Inter, sans-serif', size: 14 } 
+      title: {
+        text: '% of the exercise',
+        font: { size: 14 }
       },
-      range: [65, 100],
+      range: [70, 100],
       showgrid: true,
-      gridcolor: '#e5e7eb',
-      gridwidth: 1,
-      tickfont: { family: 'Inter, sans-serif', size: 11 },
+      gridcolor: 'rgba(0,0,0,0.1)',
       zeroline: false
     },
-    shapes: [
-      // Security Driver Balance Rectangle
-      {
-        type: 'rect' as const,
-        x0: 70,
-        x1: 90,
-        y0: 80,
-        y1: 98,
-        fillcolor: 'rgba(99, 102, 241, 0.12)',
-        line: {
-          color: '#6366f1',
-          width: 3,
-          dash: 'dot' as const
-        },
-        layer: 'below' as const
-      },
-      // Horizontal arrow for Greater Control/Skill
-      {
-        type: 'line' as const,
-        x0: 35,
-        x1: 82,
-        y0: 72,
-        y1: 72,
-        line: {
-          color: '#6b7280',
-          width: 3
-        }
-      },
-      // Arrow head for horizontal arrow (left line)
-      {
-        type: 'line' as const,
-        x0: 79,
-        x1: 82,
-        y0: 70,
-        y1: 72,
-        line: {
-          color: '#6b7280',
-          width: 3
-        }
-      },
-      // Arrow head for horizontal arrow (right line)
-      {
-        type: 'line' as const,
-        x0: 79,
-        x1: 82,
-        y0: 74,
-        y1: 72,
-        line: {
-          color: '#6b7280',
-          width: 3
-        }
-      },
-      // Vertical arrow for Faster Driver
-      {
-        type: 'line' as const,
-        x0: 35,
-        x1: 35,
-        y0: 72,
-        y1: 94,
-        line: {
-          color: '#6b7280',
-          width: 3
-        }
-      },
-      // Arrow head for vertical arrow (top line)
-      {
-        type: 'line' as const,
-        x0: 33,
-        x1: 35,
-        y0: 91,
-        y1: 94,
-        line: {
-          color: '#6b7280',
-          width: 3
-        }
-      },
-      // Arrow head for vertical arrow (bottom line)
-      {
-        type: 'line' as const,
-        x0: 37,
-        x1: 35,
-        y0: 91,
-        y1: 94,
-        line: {
-          color: '#6b7280',
-          width: 3
-        }
-      }
-    ],
+    plot_bgcolor: 'white',
+    paper_bgcolor: 'white',
+    width: 800,
+    height: 400,
+    margin: {
+      l: 80,
+      r: 120,
+      t: 50,
+      b: 80
+    },
     annotations: [
-      // Security Driver Balance label
-      {
-        x: 80,
-        y: 89,
-        text: 'Security Driver<br>Balance',
-        showarrow: false,
-        font: { 
-          color: '#1f2937', 
-          size: 13, 
-          family: 'Inter, sans-serif'
-        },
-        bgcolor: 'rgba(255, 255, 255, 0.95)',
-        bordercolor: '#6366f1',
-        borderwidth: 2,
-        borderpad: 8
-      },
-      // Greater Control/Skill label
-      {
-        x: 86,
-        y: 72.5,
-        text: 'Greater Control/Skill',
-        showarrow: false,
-        font: { 
-          color: '#374151', 
-          size: 12, 
-          family: 'Inter, sans-serif'
-        },
-        bgcolor: 'rgba(255, 255, 255, 0.95)',
-        bordercolor: '#d1d5db',
-        borderwidth: 1,
-        borderpad: 6,
-        xanchor: 'right' as const
-      },
-      // Faster Driver label
+      // Vertical arrow head and label
       {
         x: 35,
         y: 97,
+        text: '▲',
+        showarrow: false,
+        font: { size: 16, color: 'gray' },
+        xanchor: 'center' as const,
+        yanchor: 'bottom' as const
+      },
+      {
+        x: 35,
+        y: 99,
         text: 'Faster Driver',
         showarrow: false,
-        font: { 
-          color: '#374151', 
-          size: 12, 
-          family: 'Inter, sans-serif'
-        },
-        bgcolor: 'rgba(255, 255, 255, 0.95)',
-        bordercolor: '#d1d5db',
-        borderwidth: 1,
-        borderpad: 6,
-        xanchor: 'center' as const
+        font: { size: 14, color: 'gray' },
+        xanchor: 'center' as const,
+        yanchor: 'top' as const
+      },
+      // Horizontal arrow head and label
+      {
+        x: 85,
+        y: 72,
+        text: '▶',
+        showarrow: false,
+        font: { size: 16, color: 'gray' },
+        xanchor: 'left' as const,
+        yanchor: 'middle' as const
+      },
+      {
+        x: 89,
+        y: 74.5,
+        text: 'Greater Control/Skill',
+        showarrow: false,
+        font: { size: 14, color: 'gray' },
+        xanchor: 'right' as const,
+        yanchor: 'top' as const
+      },
+      // Balance rectangle label
+      {
+        x: 80,
+        y: 90,
+        text: 'Security Driver<br>Balance',
+        showarrow: false,
+        font: { size: 18, color: 'gray' },
+        xanchor: 'center' as const,
+        yanchor: 'bottom' as const
       }
     ],
-    margin: { l: 80, r: 130, t: 80, b: 80 },
-    height: 580,
-    plot_bgcolor: 'white',
-    paper_bgcolor: 'white',
-    font: { family: 'Inter, sans-serif' },
-    showlegend: false
+    shapes: [
+      // Balance rectangle
+      {
+        type: 'rect' as const,
+        x0: 70,
+        y0: 80,
+        x1: 90,
+        y1: 98,
+        line: {
+          color: 'darkred',
+          width: 2,
+          dash: 'dot' as const
+        },
+        fillcolor: 'rgba(245, 245, 245, 0.8)',
+        layer: 'below' as const
+      }
+    ]
   };
 
   const config = {
-    displayModeBar: false,
+    displayModeBar: true,
+    displaylogo: false,
+    modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
     responsive: true
   };
 
@@ -371,7 +337,7 @@ Difficulty Level: Hard`;
               data={plotData}
               layout={layout}
               config={config}
-              style={{ width: '100%', height: '580px' }}
+              style={{ width: '100%', height: '400px' }}
             />
 
             {/* Final Exercise Performance Summary - Only show if we have data */}
@@ -421,7 +387,7 @@ Difficulty Level: Hard`;
                   <ul className="text-sm text-blue-600 space-y-1">
                     <li>• Color: Number of penalties (purple=low, yellow=high)</li>
                     <li>• Size: Percentage of time in reverse maneuvers</li>
-                    <li>• Blue dotted zone: Security Driver Balance range</li>
+                    <li>• Red dotted zone: Security Driver Balance range</li>
                   </ul>
                 </div>
               </div>
