@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Plot from "react-plotly.js";
@@ -109,29 +108,29 @@ Difficulty Level: Hard`;
     text: chartData.map(d => d.text),
     textposition: 'middle center' as const,
     textfont: {
-      size: 9,
-      color: '#000000',
+      size: 10,
+      color: '#1f2937',
       family: 'Inter, sans-serif'
     },
     marker: {
-      size: chartData.map(d => Math.max(8, Math.min(20, d.reverseTimePercent * 0.5))),
+      size: chartData.map(d => Math.max(12, Math.min(25, d.reverseTimePercent * 0.8))),
       color: chartData.map(d => d.penalties),
-      colorscale: 'Viridis' as const,
+      colorscale: 'Turbo' as const,
       colorbar: {
         title: {
           text: 'Penalties',
           font: { color: '#374151', family: 'Inter, sans-serif', size: 12 }
         },
         titleside: 'right' as const,
-        thickness: 15,
-        len: 0.5,
+        thickness: 20,
+        len: 0.6,
         x: 1.02
       },
       line: {
         color: '#FFFFFF',
-        width: 1
+        width: 2
       },
-      opacity: 0.8,
+      opacity: 0.85,
       cmin: 1,
       cmax: Math.max(4, Math.max(...chartData.map(d => d.penalties)))
     },
@@ -147,46 +146,46 @@ Difficulty Level: Hard`;
   const layout = {
     title: {
       text: 'Security Driver Balance Analysis',
-      font: { size: 18, color: '#1f2937', family: 'Inter, sans-serif', weight: 600 },
+      font: { size: 20, color: '#1f2937', family: 'Inter, sans-serif' },
       x: 0.5,
       y: 0.95
     },
     xaxis: {
       title: { 
         text: '% of control', 
-        font: { color: '#374151', family: 'Inter, sans-serif', size: 13 } 
+        font: { color: '#374151', family: 'Inter, sans-serif', size: 14 } 
       },
       range: [30, 95],
       showgrid: true,
-      gridcolor: '#f3f4f6',
+      gridcolor: '#e5e7eb',
       gridwidth: 1,
-      tickfont: { family: 'Inter, sans-serif', size: 10 },
+      tickfont: { family: 'Inter, sans-serif', size: 11 },
       zeroline: false
     },
     yaxis: {
       title: { 
         text: '% of the exercise', 
-        font: { color: '#374151', family: 'Inter, sans-serif', size: 13 } 
+        font: { color: '#374151', family: 'Inter, sans-serif', size: 14 } 
       },
       range: [65, 100],
       showgrid: true,
-      gridcolor: '#f3f4f6',
+      gridcolor: '#e5e7eb',
       gridwidth: 1,
-      tickfont: { family: 'Inter, sans-serif', size: 10 },
+      tickfont: { family: 'Inter, sans-serif', size: 11 },
       zeroline: false
     },
     shapes: [
-      // Security Driver Balance Rectangle with proper dotted border
+      // Security Driver Balance Rectangle
       {
         type: 'rect' as const,
         x0: 70,
         x1: 90,
         y0: 80,
         y1: 98,
-        fillcolor: 'rgba(99, 102, 241, 0.1)',
+        fillcolor: 'rgba(99, 102, 241, 0.12)',
         line: {
           color: '#6366f1',
-          width: 2,
+          width: 3,
           dash: 'dot' as const
         },
         layer: 'below' as const
@@ -195,35 +194,36 @@ Difficulty Level: Hard`;
       {
         type: 'line' as const,
         x0: 35,
-        x1: 85,
+        x1: 82,
         y0: 72,
         y1: 72,
         line: {
           color: '#6b7280',
-          width: 2
+          width: 3
         }
       },
-      // Arrow head for horizontal arrow
+      // Arrow head for horizontal arrow (left line)
       {
         type: 'line' as const,
-        x0: 82,
-        x1: 85,
+        x0: 79,
+        x1: 82,
         y0: 70,
         y1: 72,
         line: {
           color: '#6b7280',
-          width: 2
+          width: 3
         }
       },
+      // Arrow head for horizontal arrow (right line)
       {
         type: 'line' as const,
-        x0: 82,
-        x1: 85,
+        x0: 79,
+        x1: 82,
         y0: 74,
         y1: 72,
         line: {
           color: '#6b7280',
-          width: 2
+          width: 3
         }
       },
       // Vertical arrow for Faster Driver
@@ -232,38 +232,39 @@ Difficulty Level: Hard`;
         x0: 35,
         x1: 35,
         y0: 72,
-        y1: 97,
+        y1: 94,
         line: {
           color: '#6b7280',
-          width: 2
+          width: 3
         }
       },
-      // Arrow head for vertical arrow
+      // Arrow head for vertical arrow (top line)
       {
         type: 'line' as const,
         x0: 33,
         x1: 35,
-        y0: 94,
-        y1: 97,
+        y0: 91,
+        y1: 94,
         line: {
           color: '#6b7280',
-          width: 2
+          width: 3
         }
       },
+      // Arrow head for vertical arrow (bottom line)
       {
         type: 'line' as const,
         x0: 37,
         x1: 35,
-        y0: 94,
-        y1: 97,
+        y0: 91,
+        y1: 94,
         line: {
           color: '#6b7280',
-          width: 2
+          width: 3
         }
       }
     ],
     annotations: [
-      // Security Driver Balance label with improved styling
+      // Security Driver Balance label
       {
         x: 80,
         y: 89,
@@ -271,54 +272,51 @@ Difficulty Level: Hard`;
         showarrow: false,
         font: { 
           color: '#1f2937', 
-          size: 12, 
-          family: 'Inter, sans-serif',
-          weight: 600
+          size: 13, 
+          family: 'Inter, sans-serif'
         },
         bgcolor: 'rgba(255, 255, 255, 0.95)',
         bordercolor: '#6366f1',
         borderwidth: 2,
-        borderpad: 6
+        borderpad: 8
       },
       // Greater Control/Skill label
       {
-        x: 89,
+        x: 86,
         y: 72.5,
         text: 'Greater Control/Skill',
         showarrow: false,
         font: { 
           color: '#374151', 
-          size: 11, 
-          family: 'Inter, sans-serif',
-          weight: 500
+          size: 12, 
+          family: 'Inter, sans-serif'
         },
-        bgcolor: 'rgba(255, 255, 255, 0.9)',
+        bgcolor: 'rgba(255, 255, 255, 0.95)',
         bordercolor: '#d1d5db',
         borderwidth: 1,
-        borderpad: 4,
-        xanchor: 'right'
+        borderpad: 6,
+        xanchor: 'right' as const
       },
       // Faster Driver label
       {
         x: 35,
-        y: 99,
+        y: 97,
         text: 'Faster Driver',
         showarrow: false,
         font: { 
           color: '#374151', 
-          size: 11, 
-          family: 'Inter, sans-serif',
-          weight: 500
+          size: 12, 
+          family: 'Inter, sans-serif'
         },
-        bgcolor: 'rgba(255, 255, 255, 0.9)',
+        bgcolor: 'rgba(255, 255, 255, 0.95)',
         bordercolor: '#d1d5db',
         borderwidth: 1,
-        borderpad: 4,
-        xanchor: 'center'
+        borderpad: 6,
+        xanchor: 'center' as const
       }
     ],
-    margin: { l: 70, r: 120, t: 70, b: 70 },
-    height: 520,
+    margin: { l: 80, r: 130, t: 80, b: 80 },
+    height: 580,
     plot_bgcolor: 'white',
     paper_bgcolor: 'white',
     font: { family: 'Inter, sans-serif' },
@@ -373,7 +371,7 @@ Difficulty Level: Hard`;
               data={plotData}
               layout={layout}
               config={config}
-              style={{ width: '100%', height: '500px' }}
+              style={{ width: '100%', height: '580px' }}
             />
 
             {/* Final Exercise Performance Summary - Only show if we have data */}
