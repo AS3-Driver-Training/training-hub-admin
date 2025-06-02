@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Plot from "react-plotly.js";
@@ -102,33 +103,35 @@ Difficulty Level: Hard`;
   // Create the scatter plot data
   const plotData = chartData.length > 0 ? [{
     type: 'scatter' as const,
-    mode: 'text+markers' as const,
+    mode: 'markers+text' as const,
     x: chartData.map(d => d.x),
     y: chartData.map(d => d.y),
     text: chartData.map(d => d.text),
-    textposition: 'top right' as const,
+    textposition: 'middle center' as const,
     textfont: {
-      size: 12,
-      color: '#000000'
+      size: 10,
+      color: '#000000',
+      family: 'Inter, sans-serif'
     },
     marker: {
-      size: chartData.map(d => Math.max(8, Math.min(30, d.reverseTimePercent * 0.8))),
+      size: chartData.map(d => Math.max(10, Math.min(25, d.reverseTimePercent * 0.6))),
       color: chartData.map(d => d.penalties),
       colorscale: 'Turbo' as const,
       colorbar: {
         title: {
           text: 'Penalties',
-          font: { color: '#374151', family: 'Inter, sans-serif' }
+          font: { color: '#374151', family: 'Inter, sans-serif', size: 12 }
         },
         titleside: 'right' as const,
-        thickness: 15,
-        len: 0.7
+        thickness: 20,
+        len: 0.6,
+        x: 1.02
       },
       line: {
         color: '#FFFFFF',
-        width: 2
+        width: 1.5
       },
-      opacity: 0.8,
+      opacity: 0.85,
       cmin: 1,
       cmax: Math.max(5, Math.max(...chartData.map(d => d.penalties)))
     },
@@ -144,29 +147,33 @@ Difficulty Level: Hard`;
   const layout = {
     title: {
       text: 'Security Driver Balance Analysis',
-      font: { size: 18, color: '#1f2937', family: 'Inter, sans-serif' }
+      font: { size: 20, color: '#1f2937', family: 'Inter, sans-serif', weight: 600 },
+      x: 0.5,
+      y: 0.95
     },
     xaxis: {
       title: { 
         text: '% of control', 
-        font: { color: '#374151', family: 'Inter, sans-serif' } 
+        font: { color: '#374151', family: 'Inter, sans-serif', size: 14 } 
       },
       range: [40, 90],
       showgrid: true,
-      gridcolor: '#f8fafc',
+      gridcolor: '#e5e7eb',
       gridwidth: 1,
-      tickfont: { family: 'Inter, sans-serif' }
+      tickfont: { family: 'Inter, sans-serif', size: 11 },
+      zeroline: false
     },
     yaxis: {
       title: { 
         text: '% of the exercise', 
-        font: { color: '#374151', family: 'Inter, sans-serif' } 
+        font: { color: '#374151', family: 'Inter, sans-serif', size: 14 } 
       },
       range: [70, 100],
       showgrid: true,
-      gridcolor: '#f8fafc',
+      gridcolor: '#e5e7eb',
       gridwidth: 1,
-      tickfont: { family: 'Inter, sans-serif' }
+      tickfont: { family: 'Inter, sans-serif', size: 11 },
+      zeroline: false
     },
     shapes: [
       // Security Driver Balance Rectangle
@@ -176,39 +183,11 @@ Difficulty Level: Hard`;
         x1: 90,
         y0: 80,
         y1: 98,
-        fillcolor: 'rgba(245, 245, 245, 0.8)',
+        fillcolor: 'rgba(220, 220, 220, 0.3)',
         line: {
-          color: 'darkred',
+          color: '#dc2626',
           width: 2,
           dash: 'dot' as const
-        },
-        layer: 'below' as const
-      },
-      // Skill Arrow (horizontal)
-      {
-        type: 'line' as const,
-        x0: 35,
-        x1: 85,
-        y0: 72,
-        y1: 72,
-        line: {
-          color: 'gray',
-          width: 2,
-          dash: 'dash' as const
-        },
-        layer: 'below' as const
-      },
-      // Control Arrow (vertical)
-      {
-        type: 'line' as const,
-        x0: 35,
-        x1: 35,
-        y0: 72,
-        y1: 97,
-        line: {
-          color: 'gray',
-          width: 2,
-          dash: 'dash' as const
         },
         layer: 'below' as const
       }
@@ -221,56 +200,81 @@ Difficulty Level: Hard`;
         text: 'Security Driver<br>Balance',
         showarrow: false,
         font: { 
-          color: 'gray', 
-          size: 16, 
+          color: '#374151', 
+          size: 14, 
+          family: 'Inter, sans-serif',
+          weight: 600
+        },
+        bgcolor: 'rgba(255, 255, 255, 0.9)',
+        bordercolor: '#9ca3af',
+        borderwidth: 1,
+        borderpad: 4
+      },
+      // Horizontal arrow for Greater Control/Skill
+      {
+        x: 85,
+        y: 72,
+        text: '',
+        showarrow: true,
+        arrowhead: 2,
+        arrowsize: 1.5,
+        arrowwidth: 2,
+        arrowcolor: '#6b7280',
+        ax: -40,
+        ay: 0
+      },
+      // Greater Control/Skill label
+      {
+        x: 85,
+        y: 73.5,
+        text: 'Greater Control/Skill',
+        showarrow: false,
+        font: { 
+          color: '#6b7280', 
+          size: 12, 
           family: 'Inter, sans-serif'
         },
         bgcolor: 'rgba(255, 255, 255, 0.8)',
-        bordercolor: 'gray',
-        borderwidth: 1
+        bordercolor: '#d1d5db',
+        borderwidth: 1,
+        borderpad: 2
       },
-      // Greater Control/Skill label with arrow
+      // Vertical arrow for Faster Driver
       {
-        x: 88,
-        y: 72.5,
-        text: 'Greater Control/Skill',
+        x: 42,
+        y: 95,
+        text: '',
         showarrow: true,
         arrowhead: 2,
-        arrowsize: 1,
+        arrowsize: 1.5,
         arrowwidth: 2,
-        arrowcolor: 'gray',
-        ax: -20,
-        ay: 0,
-        font: { 
-          color: 'gray', 
-          size: 12, 
-          family: 'Inter, sans-serif'
-        }
-      },
-      // Faster Driver label with arrow
-      {
-        x: 35,
-        y: 99,
-        text: 'Faster Driver',
-        showarrow: true,
-        arrowhead: 2,
-        arrowsize: 1,
-        arrowwidth: 2,
-        arrowcolor: 'gray',
+        arrowcolor: '#6b7280',
         ax: 0,
-        ay: -20,
+        ay: -20
+      },
+      // Faster Driver label
+      {
+        x: 42,
+        y: 97,
+        text: 'Faster Driver',
+        showarrow: false,
         font: { 
-          color: 'gray', 
+          color: '#6b7280', 
           size: 12, 
           family: 'Inter, sans-serif'
-        }
+        },
+        bgcolor: 'rgba(255, 255, 255, 0.8)',
+        bordercolor: '#d1d5db',
+        borderwidth: 1,
+        borderpad: 2
       }
     ],
-    margin: { l: 80, r: 120, t: 60, b: 80 },
-    height: 500,
+    margin: { l: 80, r: 140, t: 80, b: 80 },
+    height: 550,
     plot_bgcolor: 'white',
     paper_bgcolor: 'white',
-    font: { family: 'Inter, sans-serif' }
+    font: { family: 'Inter, sans-serif' },
+    showlegend: false
   };
 
   const config = {
