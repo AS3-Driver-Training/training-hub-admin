@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Plot from "react-plotly.js";
@@ -108,10 +107,10 @@ Difficulty Level: Hard`;
     const scatterTrace = {
       x: chartData.map(d => d.x),
       y: chartData.map(d => d.y),
-      mode: 'markers+text' as const,
+      mode: 'markers' as const,
       type: 'scatter' as const,
       marker: {
-        size: chartData.map(d => Math.max(8, Math.min(30, d.reverseTimePercent * 1.5))),
+        size: chartData.map(d => Math.max(6, Math.min(15, d.reverseTimePercent * 0.5))),
         color: chartData.map(d => d.penalties),
         colorscale: [
           [0, '#0d0887'],
@@ -125,26 +124,13 @@ Difficulty Level: Hard`;
           [0.8888888888888888, '#fdca26'],
           [1.0, '#f0f921']
         ] as [number, string][],
-        showscale: true,
-        colorbar: {
-          title: {
-            text: 'Penalties',
-            side: 'right' as const
-          },
-          titleside: 'right' as const,
-          x: 1.02
-        },
+        showscale: false,
         line: {
           width: 1,
           color: 'rgba(0,0,0,0.3)'
         }
       },
       text: chartData.map(d => d.text),
-      textposition: 'top right' as const,
-      textfont: {
-        size: 12,
-        color: 'black'
-      },
       hovertemplate: 
         '<b>%{text}</b><br>' +
         '% Control: %{x}<br>' +
@@ -387,7 +373,7 @@ Difficulty Level: Hard`;
                 <div>
                   <h5 className="text-sm font-medium text-blue-700 mb-2">Visual Elements</h5>
                   <ul className="text-sm text-blue-600 space-y-1">
-                    <li>• Color: Number of penalties (purple=low, yellow=high)</li>
+                    <li>• Color: Number of penalties (hover to see details)</li>
                     <li>• Size: Percentage of time in reverse maneuvers</li>
                     <li>• Red dotted zone: Security Driver Balance range</li>
                   </ul>
