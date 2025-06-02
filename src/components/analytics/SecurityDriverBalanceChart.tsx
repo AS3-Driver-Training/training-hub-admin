@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Plot from "react-plotly.js";
@@ -134,9 +133,7 @@ Difficulty Level: Hard`;
       .slice(0, 3);
   }
 
-  // Calculate positions for arrows and rectangle based on dynamic ranges
-  const xMid = (xRange[0] + xRange[1]) / 2;
-  const yMid = (yRange[0] + yRange[1]) / 2;
+  // Calculate positions for arrows based on dynamic ranges
   const xArrowStart = xRange[0] + (xRange[1] - xRange[0]) * 0.15;
   const yArrowStart = yRange[0] + (yRange[1] - yRange[0]) * 0.15;
   const xArrowEnd = xRange[1] - (xRange[1] - xRange[0]) * 0.05;
@@ -233,12 +230,6 @@ Difficulty Level: Hard`;
     plotData = [scatterTrace, verticalArrowTrace, horizontalArrowTrace];
   }
 
-  // Dynamic Security Driver Balance rectangle positioning
-  const balanceRectX0 = Math.max(xRange[0], xRange[1] - (xRange[1] - xRange[0]) * 0.3);
-  const balanceRectX1 = xRange[1] - (xRange[1] - xRange[0]) * 0.05;
-  const balanceRectY0 = Math.max(yRange[0], yRange[1] - (yRange[1] - yRange[0]) * 0.3);
-  const balanceRectY1 = yRange[1] - (yRange[1] - yRange[0]) * 0.05;
-
   const layout = {
     title: {
       text: ''
@@ -293,7 +284,7 @@ Difficulty Level: Hard`;
         xanchor: 'center' as const,
         yanchor: 'top' as const
       },
-      // Horizontal arrow head and label (dynamic positioning)
+      // Horizontal arrow head and label (fixed positioning to prevent overlap)
       {
         x: xArrowEnd,
         y: yArrowStart,
@@ -304,18 +295,18 @@ Difficulty Level: Hard`;
         yanchor: 'middle' as const
       },
       {
-        x: xArrowEnd + (xRange[1] - xRange[0]) * 0.02,
-        y: yArrowStart + (yRange[1] - yRange[0]) * 0.05,
+        x: xArrowEnd + 3,
+        y: yArrowStart + 8,
         text: 'Greater Control/Skill',
         showarrow: false,
         font: { size: 14, color: 'gray' },
-        xanchor: 'right' as const,
-        yanchor: 'top' as const
+        xanchor: 'left' as const,
+        yanchor: 'bottom' as const
       },
-      // Balance rectangle label (dynamic positioning)
+      // Security Driver Balance rectangle label (fixed positioning)
       {
-        x: (balanceRectX0 + balanceRectX1) / 2,
-        y: balanceRectY1 - (yRange[1] - yRange[0]) * 0.05,
+        x: 80,
+        y: 94,
         text: 'Security Driver<br>Balance',
         showarrow: false,
         font: { size: 18, color: 'gray' },
@@ -324,13 +315,13 @@ Difficulty Level: Hard`;
       }
     ],
     shapes: [
-      // Balance rectangle (dynamic positioning)
+      // Security Driver Balance rectangle (FIXED coordinates)
       {
         type: 'rect' as const,
-        x0: balanceRectX0,
-        y0: balanceRectY0,
-        x1: balanceRectX1,
-        y1: balanceRectY1,
+        x0: 70,
+        y0: 80,
+        x1: 90,
+        y1: 98,
         line: {
           color: 'darkred',
           width: 2,
