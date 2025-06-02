@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,9 +59,6 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
               region,
               address,
               country
-            ),
-            session_attendees (
-              id
             )
           `)
           .eq('host_client_id', clientId)
@@ -75,13 +71,27 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
 
         console.log('Private courses found:', privateCourses);
 
-        // Transform private courses to include actual student count
-        const privateCoursesWithCount = privateCourses?.map(course => ({
-          ...course,
-          actual_students: course.session_attendees?.length || 0
-        })) || [];
+        // Query 2: Get student counts for private courses
+        const privateCoursesWithCount = await Promise.all(
+          (privateCourses || []).map(async (course) => {
+            const { data: attendees, error: attendeesError } = await supabase
+              .from('session_attendees')
+              .select('id')
+              .eq('course_instance_id', course.id);
 
-        // Query 2: Get open enrollment courses where this client has allocations
+            if (attendeesError) {
+              console.error('Error fetching attendees for course:', course.id, attendeesError);
+              return { ...course, actual_students: 0 };
+            }
+
+            return {
+              ...course,
+              actual_students: attendees?.length || 0
+            };
+          })
+        );
+
+        // Query 3: Get open enrollment courses where this client has allocations
         const { data: allocations, error: allocationsError } = await supabase
           .from('course_allocations')
           .select(`
@@ -101,18 +111,6 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
                 region,
                 address,
                 country
-              ),
-              session_attendees (
-                id,
-                student:student_id (
-                  team_id,
-                  teams:team_id (
-                    group_id,
-                    groups:group_id (
-                      client_id
-                    )
-                  )
-                )
               )
             )
           `)
@@ -125,21 +123,49 @@ export function ClientEventsTab({ clientId }: ClientEventsTabProps) {
 
         console.log('Allocations found:', allocations);
 
-        // Transform allocations data to include seats_allocated and actual student count for this client
-        const openEnrollmentCourses: CourseInstanceWithAllocation[] = allocations
-          ?.filter(alloc => alloc.course_instance?.is_open_enrollment)
-          .map(alloc => {
-            // Count students from this specific client
-            const clientStudents = alloc.course_instance?.session_attendees?.filter(attendee => 
-              attendee.student?.teams?.groups?.client_id === clientId
-            ) || [];
-            
-            return {
-              ...alloc.course_instance!,
-              seats_allocated: alloc.seats_allocated,
-              actual_students: clientStudents.length
-            };
-          }) || [];
+        // Query 4: Get student counts for open enrollment courses with client filtering
+        const openEnrollmentCourses: CourseInstanceWithAllocation[] = await Promise.all(
+          (allocations || [])
+            .filter(alloc => alloc.course_instance?.is_open_enrollment)
+            .map(async (alloc) => {
+              // Get all attendees for this course
+              const { data: allAttendees, error: attendeesError } = await supabase
+                .from('session_attendees')
+                .select(`
+                  id,
+                  student:student_id (
+                    team_id,
+                    teams:team_id (
+                      group_id,
+                      groups:group_id (
+                        client_id
+                      )
+                    )
+                  )
+                `)
+                .eq('course_instance_id', alloc.course_instance!.id);
+
+              if (attendeesError) {
+                console.error('Error fetching attendees for open enrollment course:', alloc.course_instance!.id, attendeesError);
+                return {
+                  ...alloc.course_instance!,
+                  seats_allocated: alloc.seats_allocated,
+                  actual_students: 0
+                };
+              }
+
+              // Count students from this specific client
+              const clientStudents = allAttendees?.filter(attendee => 
+                attendee.student?.teams?.groups?.client_id === clientId
+              ) || [];
+              
+              return {
+                ...alloc.course_instance!,
+                seats_allocated: alloc.seats_allocated,
+                actual_students: clientStudents.length
+              };
+            })
+        );
 
         console.log('Open enrollment courses with allocations:', openEnrollmentCourses);
 
