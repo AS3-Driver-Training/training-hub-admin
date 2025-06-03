@@ -1,4 +1,3 @@
-
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,11 +12,13 @@ import { ClientGroupsTab } from "@/components/client-settings/ClientGroupsTab";
 import { ClientEventsTab } from "@/components/client-settings/ClientEventsTab";
 import { ClientStudentsTab } from "@/components/client-settings/ClientStudentsTab";
 import { toast } from "sonner";
+import { useProfile } from "@/hooks/useProfile";
 
 export default function ClientSettings() {
   const { clientId } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("users");
+  const { impersonation } = useProfile();
 
   const { data: client, isLoading, error } = useQuery({
     queryKey: ['client', clientId],
@@ -52,18 +53,28 @@ export default function ClientSettings() {
 
   const handleImpersonateClient = async () => {
     try {
-      // Store current session info for later restoration
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        localStorage.setItem('previousRole', 'staff');
-        localStorage.setItem('previousUserId', session.user.id);
-      }
+      if (!impersonation) return;
+      
+      // Get current user's actual role before impersonation
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-      // Navigate to client dashboard with impersonation flag
-      navigate(`/client/${clientId}/dashboard?impersonate=true`);
-      toast.success('Switched to client view');
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile) return;
+
+      // Start impersonation
+      impersonation.startImpersonation(clientId!, profile.role);
+      
+      // Navigate to main dashboard where they'll see client view
+      navigate('/');
+      toast.success('Now viewing as client admin');
     } catch (error) {
-      console.error('Error impersonating client:', error);
+      console.error('Error starting impersonation:', error);
       toast.error('Failed to switch to client view');
     }
   };

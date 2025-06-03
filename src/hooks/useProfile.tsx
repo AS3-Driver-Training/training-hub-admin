@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AppRole } from "@/components/settings/types";
+import { useImpersonation } from "./useImpersonation";
 
 export function useProfile() {
   const [userName, setUserName] = useState("User");
@@ -10,6 +11,7 @@ export function useProfile() {
   const [userTitle, setUserTitle] = useState("");
   const [userStatus, setUserStatus] = useState("active");
   const [isLoading, setIsLoading] = useState(true);
+  const impersonation = useImpersonation();
 
   useEffect(() => {
     const getProfile = async () => {
@@ -44,7 +46,13 @@ export function useProfile() {
         if (profile) {
           const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
           setUserName(fullName || 'User');
-          setUserRole(profile.role as AppRole);
+          
+          // Use impersonated role if impersonating, otherwise use actual role
+          const effectiveRole = impersonation.isImpersonating 
+            ? impersonation.impersonatedRole 
+            : profile.role;
+          
+          setUserRole(effectiveRole as AppRole);
           setUserTitle(profile.title || '');
           setUserStatus(profile.status);
         }
@@ -67,7 +75,14 @@ export function useProfile() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [impersonation.isImpersonating, impersonation.impersonatedRole]);
 
-  return { userName, userRole, userTitle, userStatus, isLoading };
+  return { 
+    userName, 
+    userRole, 
+    userTitle, 
+    userStatus, 
+    isLoading,
+    impersonation
+  };
 }

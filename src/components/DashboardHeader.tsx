@@ -1,6 +1,6 @@
 
 import { Button } from "./ui/button";
-import { Menu, LogOut, User, Settings, UserPlus } from "lucide-react";
+import { Menu, LogOut, User, Settings, UserPlus, ArrowLeft } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -10,15 +10,30 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 interface DashboardHeaderProps {
   userName: string;
   userRole: string;
   onLogout: () => Promise<void>;
+  impersonation?: {
+    isImpersonating: boolean;
+    originalRole: string | null;
+    impersonatedClientId: string | null;
+    exitImpersonation: () => void;
+  };
 }
 
-export function DashboardHeader({ userName, userRole, onLogout }: DashboardHeaderProps) {
+export function DashboardHeader({ userName, userRole, onLogout, impersonation }: DashboardHeaderProps) {
+  const navigate = useNavigate();
+
+  const handleExitImpersonation = () => {
+    if (impersonation?.exitImpersonation) {
+      impersonation.exitImpersonation();
+      navigate('/clients');
+    }
+  };
+
   return (
     <div className="border-b w-full fixed top-0 left-0 right-0 bg-background z-50">
       <div className="flex h-20 items-center px-8 gap-4 max-w-[1400px] mx-auto">
@@ -33,6 +48,22 @@ export function DashboardHeader({ userName, userRole, onLogout }: DashboardHeade
           className="h-16"
         />
         <div className="ml-auto flex items-center space-x-4">
+          {impersonation?.isImpersonating && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-yellow-100 border border-yellow-300 rounded-md">
+              <span className="text-sm text-yellow-800 font-medium">
+                Viewing as Client Admin
+              </span>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleExitImpersonation}
+                className="text-yellow-800 hover:text-yellow-900"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Exit
+              </Button>
+            </div>
+          )}
           <span className="text-sm font-medium text-[#C10230]">
             {userRole}
           </span>
@@ -51,7 +82,7 @@ export function DashboardHeader({ userName, userRole, onLogout }: DashboardHeade
                   <span>Profile Settings</span>
                 </Link>
               </DropdownMenuItem>
-              {["superadmin", "admin", "staff"].includes(userRole) && (
+              {!impersonation?.isImpersonating && ["superadmin", "admin", "staff"].includes(userRole) && (
                 <DropdownMenuItem asChild>
                   <Link to="/settings" className="w-full flex items-center">
                     <Settings className="mr-2 h-4 w-4" />
@@ -59,7 +90,7 @@ export function DashboardHeader({ userName, userRole, onLogout }: DashboardHeade
                   </Link>
                 </DropdownMenuItem>
               )}
-              {userRole === "superadmin" && (
+              {!impersonation?.isImpersonating && userRole === "superadmin" && (
                 <DropdownMenuItem asChild>
                   <Link to="/manual-activate-user" className="w-full flex items-center">
                     <UserPlus className="mr-2 h-4 w-4" />

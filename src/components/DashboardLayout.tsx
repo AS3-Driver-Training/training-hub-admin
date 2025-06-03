@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const { userName, userRole, isLoading } = useProfile();
+  const { userName, userRole, isLoading, impersonation } = useProfile();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   // Check authentication status
@@ -86,6 +86,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           userName={userName} 
           userRole={userRole} 
           onLogout={handleLogout}
+          impersonation={impersonation}
         />
         <div className="flex pt-20 fixed inset-0">
           <DashboardSidebar userRole={userRole} />
