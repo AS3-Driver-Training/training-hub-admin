@@ -1,3 +1,4 @@
+
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +13,6 @@ import { ClientGroupsTab } from "@/components/client-settings/ClientGroupsTab";
 import { ClientEventsTab } from "@/components/client-settings/ClientEventsTab";
 import { ClientStudentsTab } from "@/components/client-settings/ClientStudentsTab";
 import { toast } from "sonner";
-import { ManualUserActivation } from "@/components/admin/ManualUserActivation";
 
 export default function ClientSettings() {
   const { clientId } = useParams();
@@ -120,9 +120,6 @@ export default function ClientSettings() {
             View as Client
           </Button>
         </div>
-
-        {/* Add Manual User Activation for admins */}
-        <ManualUserActivation />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
