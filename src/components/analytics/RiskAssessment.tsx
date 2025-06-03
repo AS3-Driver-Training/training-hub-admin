@@ -5,10 +5,15 @@ import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 
 interface RiskAssessmentProps {
-  content: string;
+  data: {
+    title: string;
+    content: string;
+    generated_at: string;
+    has_error: boolean;
+  };
 }
 
-export function RiskAssessment({ content }: RiskAssessmentProps) {
+export function RiskAssessment({ data }: RiskAssessmentProps) {
   return (
     <Card>
       <CardHeader>
@@ -33,7 +38,7 @@ export function RiskAssessment({ content }: RiskAssessmentProps) {
               pre: ({ children }) => <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto mb-4">{children}</pre>
             }}
           >
-            {content}
+            {data.content}
           </ReactMarkdown>
         </div>
       </CardContent>

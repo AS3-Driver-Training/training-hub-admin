@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Download, Printer } from "lucide-react";
@@ -153,12 +152,12 @@ export default function AnalyticsReport() {
       {/* Stress Performance Analysis */}
       <StressPerformanceChart 
         studentData={analyticsData.student_performance_data}
-        content={analyticsData.anthropic_response.stress_performance_analysis.content}
+        data={analyticsData.anthropic_response.stress_performance_analysis}
       />
       
       {/* Risk Assessment */}
       <RiskAssessment 
-        content={analyticsData.anthropic_response.risk_assessment_recommendations.content}
+        data={analyticsData.anthropic_response.risk_assessment_recommendations}
       />
     </div>
   );

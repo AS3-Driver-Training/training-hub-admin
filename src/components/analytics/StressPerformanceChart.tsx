@@ -9,10 +9,15 @@ import remarkGfm from "remark-gfm";
 
 interface StressPerformanceChartProps {
   studentData: AnalyticsData['student_performance_data'];
-  content: string;
+  data: {
+    title: string;
+    content: string;
+    generated_at: string;
+    has_error: boolean;
+  };
 }
 
-export function StressPerformanceChart({ studentData, content }: StressPerformanceChartProps) {
+export function StressPerformanceChart({ studentData, data }: StressPerformanceChartProps) {
   const scatterData = studentData.map(student => {
     const stressResponse = getStressResponseCategory(student.low_stress_score, student.high_stress_score);
     return {
@@ -137,7 +142,7 @@ export function StressPerformanceChart({ studentData, content }: StressPerforman
               pre: ({ children }) => <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto mb-4">{children}</pre>
             }}
           >
-            {content}
+            {data.content}
           </ReactMarkdown>
         </div>
       </CardContent>
