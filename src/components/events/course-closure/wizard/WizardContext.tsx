@@ -60,11 +60,11 @@ export const WizardProvider: React.FC<WizardProviderProps> = ({ children, course
     },
     vehicles: [],
     course_layout: {
-      slalom: { chord: 100, mo: 15 },
-      lane_change: { chord: 120, mo: 20 },
+      slalom: { chord: 50, mo: 3.625 },
+      lane_change: { chord: 100, mo: 13.64 },
       final_exercise: {
-        ideal_time_sec: 70,
-        cone_penalty_sec: 3,
+        ideal_time_sec: 72,
+        cone_penalty_sec: 2,
         door_penalty_sec: 5,
         slalom: { chord: 100, mo: 15 },
         lane_change: { chord: 120, mo: 20 }
