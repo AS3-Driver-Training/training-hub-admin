@@ -16,6 +16,7 @@ export function ExerciseAnalysisCharts({ studentData, exerciseData }: ExerciseAn
   // Process AI analysis content
   const processedSlalomContent = useProcessedMarkdown(exerciseData.slalom?.content || '');
   const processedBarricadeContent = useProcessedMarkdown(exerciseData.barricade_evasion?.content || '');
+  const processedFinalExerciseContent = useProcessedMarkdown(exerciseData.final_multidisciplinary_exercise?.content || '');
 
   // Sort students by overall score for consistent ordering
   const sortedStudents = [...studentData].sort((a, b) => b.overall_score - a.overall_score);
