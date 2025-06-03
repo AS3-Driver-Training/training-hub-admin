@@ -15,6 +15,7 @@ import Invitation from "@/pages/Invitation";
 import ResetPassword from "@/pages/ResetPassword";
 import Students from "@/pages/Students";
 import HowWeMeasurePerformance from "@/pages/HowWeMeasurePerformance";
+import ManualUserActivation from "@/pages/ManualUserActivation";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
         <Route path="/students/*" element={<Students />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/manual-activate-user" element={<ManualUserActivation />} />
         <Route path="/performance-guide" element={<HowWeMeasurePerformance />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -1,6 +1,6 @@
 
 import { Button } from "./ui/button";
-import { Menu, LogOut, User, Settings } from "lucide-react";
+import { Menu, LogOut, User, Settings, UserPlus } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -59,6 +59,14 @@ export function DashboardHeader({ userName, userRole, onLogout }: DashboardHeade
                   </Link>
                 </DropdownMenuItem>
               )}
+              {userRole === "superadmin" && (
+                <DropdownMenuItem asChild>
+                  <Link to="/manual-activate-user" className="w-full flex items-center">
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    <span>Manually Activate User</span>
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
@@ -71,4 +79,3 @@ export function DashboardHeader({ userName, userRole, onLogout }: DashboardHeade
     </div>
   );
 }
-
