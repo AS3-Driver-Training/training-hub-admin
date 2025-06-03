@@ -300,12 +300,6 @@ export function ModernPerformanceDistribution({ studentData, data, totalStudents
 
           {/* Content with debug info */}
           <div className="border-t pt-4">
-            {/* Debug content display */}
-            <div className="bg-yellow-50 p-2 rounded text-xs text-gray-600 border mb-4">
-              <strong>Debug Info:</strong> Content includes headers: {data.content.includes('###') ? 'Yes' : 'No'}, 
-              Bold text: {data.content.includes('**') ? 'Yes' : 'No'}
-            </div>
-            
             <ReactMarkdown 
               remarkPlugins={[remarkBreaks, remarkGfm]}
               components={markdownComponents}

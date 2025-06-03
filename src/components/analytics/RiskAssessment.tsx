@@ -14,12 +14,6 @@ interface RiskAssessmentProps {
 }
 
 export function RiskAssessment({ data }: RiskAssessmentProps) {
-  // Debug logging
-  console.log('RiskAssessment - Raw content:', data.content);
-  console.log('RiskAssessment - Content length:', data.content.length);
-  console.log('RiskAssessment - Has ### headers:', data.content.includes('###'));
-  console.log('RiskAssessment - Has ** bold:', data.content.includes('**'));
-
   // Enhanced markdown components with debug logging and !important styles
   const markdownComponents = {
     p: ({ children, ...props }: any) => {
@@ -61,12 +55,6 @@ export function RiskAssessment({ data }: RiskAssessmentProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Debug content display */}
-          <div className="bg-yellow-50 p-2 rounded text-xs text-gray-600 border">
-            <strong>Debug Info:</strong> Content includes headers: {data.content.includes('###') ? 'Yes' : 'No'}, 
-            Bold text: {data.content.includes('**') ? 'Yes' : 'No'}
-          </div>
-          
           <ReactMarkdown 
             remarkPlugins={[remarkBreaks, remarkGfm]}
             components={markdownComponents}
