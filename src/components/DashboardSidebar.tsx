@@ -19,12 +19,14 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Link } from "react-router-dom";
+import { useProfile } from "@/hooks/useProfile";
 
 interface MenuItem {
   title: string;
   icon: any;
   path: string;
   roles?: string[];
+  hideWhenImpersonating?: boolean;
 }
 
 const menuItems: MenuItem[] = [
@@ -38,6 +40,7 @@ const menuItems: MenuItem[] = [
     icon: Users,
     path: "/clients",
     roles: ["superadmin"],
+    hideWhenImpersonating: true,
   },
   {
     title: "Training Events",
@@ -59,16 +62,30 @@ const menuItems: MenuItem[] = [
     icon: Building,
     path: "/venues",
   },
-  {
-    title: "Settings",
-    icon: Settings,
-    path: "/settings",
-  },
 ];
 
 export function DashboardSidebar({ userRole }: { userRole: string }) {
+  const { impersonation } = useProfile();
+
+  // Determine which settings menu item to show
+  const isInternalUser = ["superadmin", "admin", "staff"].includes(userRole);
+  const showInternalSettings = isInternalUser && !impersonation.isImpersonating;
+  const showOrganizationSettings = !isInternalUser || impersonation.isImpersonating;
+
   const filteredMenuItems = menuItems.filter(
-    item => !item.roles || item.roles.includes(userRole)
+    item => {
+      // Check role-based access
+      if (item.roles && !item.roles.includes(userRole)) {
+        return false;
+      }
+      
+      // Hide certain items when impersonating
+      if (item.hideWhenImpersonating && impersonation.isImpersonating) {
+        return false;
+      }
+      
+      return true;
+    }
   );
 
   return (
@@ -88,6 +105,29 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              
+              {/* Conditional Settings Menu */}
+              {showInternalSettings && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/settings">
+                      <Settings className="h-4 w-4 text-primary" />
+                      <span>Settings</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              
+              {showOrganizationSettings && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/organization-settings">
+                      <Settings className="h-4 w-4 text-primary" />
+                      <span>Organization Settings</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

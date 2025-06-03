@@ -16,6 +16,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import Students from "@/pages/Students";
 import HowWeMeasurePerformance from "@/pages/HowWeMeasurePerformance";
 import ManualUserActivation from "@/pages/ManualUserActivation";
+import ClientOrganizationSettings from "@/pages/ClientOrganizationSettings";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
         <Route path="/venues" element={<Venues />} />
         <Route path="/students/*" element={<Students />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/organization-settings" element={<ClientOrganizationSettings />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/manual-activate-user" element={<ManualUserActivation />} />
         <Route path="/performance-guide" element={<HowWeMeasurePerformance />} />

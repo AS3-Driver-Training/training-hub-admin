@@ -34,6 +34,10 @@ export function DashboardHeader({ userName, userRole, onLogout, impersonation }:
     }
   };
 
+  // Determine if user should see internal settings
+  const isInternalUser = ["superadmin", "admin", "staff"].includes(userRole);
+  const showInternalSettings = isInternalUser && !impersonation?.isImpersonating;
+
   return (
     <div className="border-b w-full fixed top-0 left-0 right-0 bg-background z-50">
       <div className="flex h-20 items-center px-8 gap-4 max-w-[1400px] mx-auto">
@@ -82,7 +86,7 @@ export function DashboardHeader({ userName, userRole, onLogout, impersonation }:
                   <span>Profile Settings</span>
                 </Link>
               </DropdownMenuItem>
-              {!impersonation?.isImpersonating && ["superadmin", "admin", "staff"].includes(userRole) && (
+              {showInternalSettings && (
                 <DropdownMenuItem asChild>
                   <Link to="/settings" className="w-full flex items-center">
                     <Settings className="mr-2 h-4 w-4" />
@@ -90,7 +94,7 @@ export function DashboardHeader({ userName, userRole, onLogout, impersonation }:
                   </Link>
                 </DropdownMenuItem>
               )}
-              {!impersonation?.isImpersonating && userRole === "superadmin" && (
+              {userRole === "superadmin" && !impersonation?.isImpersonating && (
                 <DropdownMenuItem asChild>
                   <Link to="/manual-activate-user" className="w-full flex items-center">
                     <UserPlus className="mr-2 h-4 w-4" />
