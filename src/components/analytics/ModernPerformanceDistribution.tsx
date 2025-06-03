@@ -6,6 +6,7 @@ import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import { useProcessedMarkdown } from "@/hooks/useProcessedMarkdown";
 
 interface ModernPerformanceDistributionProps {
   studentData: AnalyticsData['student_performance_data'];
@@ -19,6 +20,7 @@ interface ModernPerformanceDistributionProps {
 }
 
 export function ModernPerformanceDistribution({ studentData, data, totalStudents }: ModernPerformanceDistributionProps) {
+  const processedContent = useProcessedMarkdown(data.content);
   const tiers = calculatePerformanceTiers(studentData);
   const total = studentData.length;
   const [expandedTier, setExpandedTier] = useState<string | null>(null);
@@ -306,7 +308,7 @@ export function ModernPerformanceDistribution({ studentData, data, totalStudents
               skipHtml={false}
               allowedElements={undefined}
             >
-              {data.content}
+              {processedContent}
             </ReactMarkdown>
           </div>
         </div>

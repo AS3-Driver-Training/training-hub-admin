@@ -5,6 +5,7 @@ import { AnalyticsData } from "@/types/analytics";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
+import { useProcessedMarkdown } from "@/hooks/useProcessedMarkdown";
 
 interface StressPerformanceChartProps {
   studentData: AnalyticsData['student_performance_data'];
@@ -17,6 +18,8 @@ interface StressPerformanceChartProps {
 }
 
 export function StressPerformanceChart({ studentData, data }: StressPerformanceChartProps) {
+  const processedContent = useProcessedMarkdown(data.content);
+
   const scatterData = studentData.map(student => {
     const stressResponse = getStressResponseCategory(student.low_stress_score, student.high_stress_score);
     return {
@@ -169,7 +172,7 @@ export function StressPerformanceChart({ studentData, data }: StressPerformanceC
             skipHtml={false}
             allowedElements={undefined}
           >
-            {data.content}
+            {processedContent}
           </ReactMarkdown>
         </div>
       </CardContent>

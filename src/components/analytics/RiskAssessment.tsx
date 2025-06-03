@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
+import { useProcessedMarkdown } from "@/hooks/useProcessedMarkdown";
 
 interface RiskAssessmentProps {
   data: {
@@ -14,6 +15,8 @@ interface RiskAssessmentProps {
 }
 
 export function RiskAssessment({ data }: RiskAssessmentProps) {
+  const processedContent = useProcessedMarkdown(data.content);
+
   // Enhanced markdown components with debug logging and !important styles
   const markdownComponents = {
     p: ({ children, ...props }: any) => {
@@ -61,7 +64,7 @@ export function RiskAssessment({ data }: RiskAssessmentProps) {
             skipHtml={false}
             allowedElements={undefined}
           >
-            {data.content}
+            {processedContent}
           </ReactMarkdown>
         </div>
       </CardContent>

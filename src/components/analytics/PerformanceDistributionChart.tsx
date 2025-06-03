@@ -6,6 +6,7 @@ import { AnalyticsData } from "@/types/analytics";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
+import { useProcessedMarkdown } from "@/hooks/useProcessedMarkdown";
 
 interface PerformanceDistributionChartProps {
   studentData: AnalyticsData['student_performance_data'];
@@ -18,6 +19,7 @@ interface PerformanceDistributionChartProps {
 }
 
 export function PerformanceDistributionChart({ studentData, data }: PerformanceDistributionChartProps) {
+  const processedContent = useProcessedMarkdown(data.content);
   const tiers = calculatePerformanceTiers(studentData);
 
   const chartData = [{
@@ -90,7 +92,7 @@ export function PerformanceDistributionChart({ studentData, data }: PerformanceD
               pre: ({ children }) => <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto mb-4">{children}</pre>
             }}
           >
-            {data.content}
+            {processedContent}
           </ReactMarkdown>
         </div>
       </CardContent>

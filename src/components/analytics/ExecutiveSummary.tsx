@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
+import { useProcessedMarkdown } from "@/hooks/useProcessedMarkdown";
 
 interface ExecutiveSummaryProps {
   data: {
@@ -14,6 +15,8 @@ interface ExecutiveSummaryProps {
 }
 
 export function ExecutiveSummary({ data }: ExecutiveSummaryProps) {
+  const processedContent = useProcessedMarkdown(data.content);
+
   // Enhanced markdown components with debug logging
   const markdownComponents = {
     p: ({ children, ...props }: any) => {
@@ -63,7 +66,7 @@ export function ExecutiveSummary({ data }: ExecutiveSummaryProps) {
             skipHtml={false}
             allowedElements={undefined}
           >
-            {data.content}
+            {processedContent}
           </ReactMarkdown>
         </div>
       </CardContent>
