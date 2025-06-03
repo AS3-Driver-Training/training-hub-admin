@@ -133,7 +133,7 @@ export default function AnalyticsReport() {
       {/* Performance Distribution */}
       <ModernPerformanceDistribution 
         studentData={analyticsData.student_performance_data}
-        content={analyticsData.anthropic_response.performance_distribution.content}
+        data={analyticsData.anthropic_response.performance_distribution}
         totalStudents={analyticsData.metadata.total_students}
       />
       

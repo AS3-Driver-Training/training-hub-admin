@@ -9,13 +9,18 @@ import remarkGfm from "remark-gfm";
 
 interface PerformanceDistributionChartProps {
   studentData: AnalyticsData['student_performance_data'];
-  content: string;
+  data: {
+    title: string;
+    content: string;
+    generated_at: string;
+    has_error: boolean;
+  };
 }
 
-export function PerformanceDistributionChart({ studentData, content }: PerformanceDistributionChartProps) {
+export function PerformanceDistributionChart({ studentData, data }: PerformanceDistributionChartProps) {
   const tiers = calculatePerformanceTiers(studentData);
 
-  const data = [{
+  const chartData = [{
     type: 'bar' as const,
     orientation: 'h' as const,
     x: tiers.map(tier => tier.count),
@@ -61,7 +66,7 @@ export function PerformanceDistributionChart({ studentData, content }: Performan
       <CardContent>
         <div className="mb-6">
           <Plot
-            data={data}
+            data={chartData}
             layout={layout}
             config={config}
             style={{ width: '100%', height: '400px' }}
@@ -85,7 +90,7 @@ export function PerformanceDistributionChart({ studentData, content }: Performan
               pre: ({ children }) => <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto mb-4">{children}</pre>
             }}
           >
-            {content}
+            {data.content}
           </ReactMarkdown>
         </div>
       </CardContent>
