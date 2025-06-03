@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Plot from "react-plotly.js";
@@ -6,6 +5,7 @@ import { AnalyticsData } from "@/types/analytics";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
+import { useProcessedMarkdown } from "@/hooks/useProcessedMarkdown";
 
 interface ExerciseAnalysisChartsProps {
   studentData: AnalyticsData['student_performance_data'];
@@ -13,6 +13,10 @@ interface ExerciseAnalysisChartsProps {
 }
 
 export function ExerciseAnalysisCharts({ studentData, exerciseData }: ExerciseAnalysisChartsProps) {
+  // Process AI analysis content
+  const processedSlalomContent = useProcessedMarkdown(exerciseData.slalom?.content || '');
+  const processedBarricadeContent = useProcessedMarkdown(exerciseData.barricade_evasion?.content || '');
+
   // Sort students by overall score for consistent ordering
   const sortedStudents = [...studentData].sort((a, b) => b.overall_score - a.overall_score);
   const studentNames = sortedStudents.map(s => s.name);
@@ -240,7 +244,7 @@ Difficulty Level: Medium`;
                   remarkPlugins={[remarkBreaks, remarkGfm]}
                   components={markdownComponents}
                 >
-                  {exerciseData.slalom.content}
+                  {processedSlalomContent}
                 </ReactMarkdown>
               </div>
             </div>
@@ -315,7 +319,7 @@ Difficulty Level: Medium`;
                   remarkPlugins={[remarkBreaks, remarkGfm]}
                   components={markdownComponents}
                 >
-                  {exerciseData.barricade_evasion.content}
+                  {processedBarricadeContent}
                 </ReactMarkdown>
               </div>
             </div>
