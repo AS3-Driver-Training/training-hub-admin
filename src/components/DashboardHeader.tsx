@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link, useNavigate } from "react-router-dom";
 import { useClientBranding } from "@/contexts/ClientBrandingContext";
-import { PoweredByAS3 } from "@/components/branding/PoweredByAS3";
 
 interface DashboardHeaderProps {
   userName: string;
@@ -28,7 +27,7 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ userName, userRole, onLogout, impersonation }: DashboardHeaderProps) {
   const navigate = useNavigate();
-  const { branding, hasClientBranding } = useClientBranding();
+  const { branding } = useClientBranding();
 
   const handleExitImpersonation = () => {
     if (impersonation?.exitImpersonation) {
@@ -60,9 +59,6 @@ export function DashboardHeader({ userName, userRole, onLogout, impersonation }:
             alt={logoAlt}
             className="h-16"
           />
-          {hasClientBranding && branding.logoUrl && (
-            <PoweredByAS3 className="ml-2" />
-          )}
         </div>
 
         <div className="ml-auto flex items-center space-x-4">

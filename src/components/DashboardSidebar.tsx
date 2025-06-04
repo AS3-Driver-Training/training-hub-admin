@@ -1,4 +1,3 @@
-
 import {
   Users,
   LayoutDashboard,
@@ -12,6 +11,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/sidebar";
 import { Link } from "react-router-dom";
 import { useProfile } from "@/hooks/useProfile";
+import { useClientBranding } from "@/contexts/ClientBrandingContext";
+import { PoweredByAS3 } from "@/components/branding/PoweredByAS3";
 
 interface MenuItem {
   title: string;
@@ -74,6 +76,7 @@ const menuItems: MenuItem[] = [
 
 export function DashboardSidebar({ userRole }: { userRole: string }) {
   const { impersonation } = useProfile();
+  const { hasClientBranding } = useClientBranding();
 
   // Determine which settings menu item to show
   const isInternalUser = ["superadmin", "admin", "staff"].includes(userRole);
@@ -149,6 +152,12 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      
+      {hasClientBranding && (
+        <SidebarFooter className="px-4 py-2">
+          <PoweredByAS3 />
+        </SidebarFooter>
+      )}
     </Sidebar>
   );
 }
