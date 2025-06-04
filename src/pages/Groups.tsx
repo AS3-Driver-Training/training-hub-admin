@@ -1,22 +1,17 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
-import { ClientUsersTab } from "@/components/client-settings/ClientUsersTab";
-import { CompanyProfileTab } from "@/components/client-settings/CompanyProfileTab";
-import { BrandingTab } from "@/components/client-settings/BrandingTab";
+import { ClientGroupsTab } from "@/components/client-settings/ClientGroupsTab";
 import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
 import { Card } from "@/components/ui/card";
 
-export default function ClientOrganizationSettings() {
-  const [activeTab, setActiveTab] = useState("users");
+export default function Groups() {
   const { impersonation } = useProfile();
 
   // Get the client ID - either from impersonation or user's actual client
   const { data: clientData, isLoading, error } = useQuery({
-    queryKey: ['user_client_data'],
+    queryKey: ['user_client_data_groups'],
     queryFn: async () => {
       try {
         // If impersonating, use the impersonated client ID
@@ -98,31 +93,13 @@ export default function ClientOrganizationSettings() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Organization Settings</h1>
+          <h1 className="text-3xl font-bold">Groups & Teams</h1>
           <p className="text-muted-foreground">
-            Manage {clientData.clientName} users, company profile, and branding
+            Manage {clientData.clientName} groups and teams
           </p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="profile">Company Profile</TabsTrigger>
-            <TabsTrigger value="branding">Branding</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="users">
-            <ClientUsersTab clientId={clientData.clientId} clientName={clientData.clientName} />
-          </TabsContent>
-
-          <TabsContent value="profile">
-            <CompanyProfileTab clientId={clientData.clientId} />
-          </TabsContent>
-
-          <TabsContent value="branding">
-            <BrandingTab clientId={clientData.clientId} />
-          </TabsContent>
-        </Tabs>
+        <ClientGroupsTab clientId={clientData.clientId} />
       </div>
     </DashboardLayout>
   );

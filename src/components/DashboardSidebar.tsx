@@ -7,6 +7,7 @@ import {
   BookOpen,
   Building,
   GraduationCap,
+  UsersRound,
 } from "lucide-react";
 import {
   Sidebar,
@@ -61,6 +62,13 @@ const menuItems: MenuItem[] = [
     title: "Venues",
     icon: Building,
     path: "/venues",
+  },
+  {
+    title: "Groups & Teams",
+    icon: UsersRound,
+    path: "/groups",
+    roles: ["client_admin", "supervisor", "driver"],
+    hideWhenImpersonating: false,
   },
 ];
 
