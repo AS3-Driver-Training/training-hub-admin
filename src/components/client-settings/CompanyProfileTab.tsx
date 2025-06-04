@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, Save } from "lucide-react";
 import { ProfileForm } from "./profile/ProfileForm";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface CompanyProfileTabProps {
   clientId: string;
@@ -18,7 +19,7 @@ export function CompanyProfileTab({ clientId }: CompanyProfileTabProps) {
   const [hasChanges, setHasChanges] = useState(false);
 
   const { data: client, isLoading } = useQuery({
-    queryKey: ['client', clientId],
+    queryKey: queryKeys.client(clientId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clients')
@@ -100,7 +101,13 @@ export function CompanyProfileTab({ clientId }: CompanyProfileTabProps) {
 
       if (error) throw error;
 
-      await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+      // Invalidate all client-related queries to ensure consistency
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.client(clientId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.userClientData() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.userClientDataGroups() }),
+      ]);
+
       toast.success('Company profile updated successfully', {
         description: 'Your company information has been saved',
         icon: <CheckCircle className="h-4 w-4 text-green-500" />,

@@ -21,17 +21,8 @@ export default function ClientOrganizationSettings() {
       try {
         // If impersonating, use the impersonated client ID
         if (impersonation.isImpersonating && impersonation.impersonatedClientId) {
-          const { data: client, error: clientError } = await supabase
-            .from('clients')
-            .select('*')
-            .eq('id', impersonation.impersonatedClientId)
-            .single();
-
-          if (clientError) throw clientError;
-          
           return {
             clientId: impersonation.impersonatedClientId,
-            clientName: client.name
           };
         }
 
@@ -41,23 +32,15 @@ export default function ClientOrganizationSettings() {
 
         const { data: clientUser, error: clientUserError } = await supabase
           .from('client_users')
-          .select(`
-            client_id,
-            clients:client_id (
-              id,
-              name
-            )
-          `)
+          .select('client_id')
           .eq('user_id', user.id)
           .eq('status', 'active')
           .single();
 
         if (clientUserError) throw clientUserError;
-        if (!clientUser.clients) throw new Error('Client not found');
 
         return {
           clientId: clientUser.client_id,
-          clientName: clientUser.clients.name
         };
       } catch (error: any) {
         console.error('Error fetching client data:', error);
@@ -67,7 +50,25 @@ export default function ClientOrganizationSettings() {
     },
   });
 
-  if (isLoading) {
+  // Get the actual client details using the standardized key
+  const { data: client, isLoading: clientLoading } = useQuery({
+    queryKey: ['client', clientData?.clientId],
+    queryFn: async () => {
+      if (!clientData?.clientId) return null;
+      
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', clientData.clientId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!clientData?.clientId,
+  });
+
+  if (isLoading || clientLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-32">
@@ -100,7 +101,7 @@ export default function ClientOrganizationSettings() {
         <div>
           <h1 className="text-3xl font-bold">Organization Settings</h1>
           <p className="text-muted-foreground">
-            Manage {clientData.clientName} users, company profile, and branding
+            Manage {client?.name || 'your organization'} users, company profile, and branding
           </p>
         </div>
 
@@ -112,7 +113,7 @@ export default function ClientOrganizationSettings() {
           </TabsList>
 
           <TabsContent value="users">
-            <ClientUsersTab clientId={clientData.clientId} clientName={clientData.clientName} />
+            <ClientUsersTab clientId={clientData.clientId} clientName={client?.name || ''} />
           </TabsContent>
 
           <TabsContent value="profile">

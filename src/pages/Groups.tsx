@@ -16,17 +16,8 @@ export default function Groups() {
       try {
         // If impersonating, use the impersonated client ID
         if (impersonation.isImpersonating && impersonation.impersonatedClientId) {
-          const { data: client, error: clientError } = await supabase
-            .from('clients')
-            .select('*')
-            .eq('id', impersonation.impersonatedClientId)
-            .single();
-
-          if (clientError) throw clientError;
-          
           return {
             clientId: impersonation.impersonatedClientId,
-            clientName: client.name
           };
         }
 
@@ -36,23 +27,15 @@ export default function Groups() {
 
         const { data: clientUser, error: clientUserError } = await supabase
           .from('client_users')
-          .select(`
-            client_id,
-            clients:client_id (
-              id,
-              name
-            )
-          `)
+          .select('client_id')
           .eq('user_id', user.id)
           .eq('status', 'active')
           .single();
 
         if (clientUserError) throw clientUserError;
-        if (!clientUser.clients) throw new Error('Client not found');
 
         return {
           clientId: clientUser.client_id,
-          clientName: clientUser.clients.name
         };
       } catch (error: any) {
         console.error('Error fetching client data:', error);
@@ -62,7 +45,25 @@ export default function Groups() {
     },
   });
 
-  if (isLoading) {
+  // Get the actual client details using the standardized key
+  const { data: client, isLoading: clientLoading } = useQuery({
+    queryKey: ['client', clientData?.clientId],
+    queryFn: async () => {
+      if (!clientData?.clientId) return null;
+      
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', clientData.clientId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!clientData?.clientId,
+  });
+
+  if (isLoading || clientLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-32">
@@ -95,7 +96,7 @@ export default function Groups() {
         <div>
           <h1 className="text-3xl font-bold">Groups & Teams</h1>
           <p className="text-muted-foreground">
-            Manage {clientData.clientName} groups and teams
+            Manage {client?.name || 'your organization'} groups and teams
           </p>
         </div>
 

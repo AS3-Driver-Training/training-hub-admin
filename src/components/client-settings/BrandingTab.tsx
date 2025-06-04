@@ -9,6 +9,7 @@ import { Loader2, CheckCircle, Save } from "lucide-react";
 import { LogoUpload } from "./branding/LogoUpload";
 import { ColorPicker } from "./branding/ColorPicker";
 import { BrandingPreview } from "./branding/BrandingPreview";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface BrandingTabProps {
   clientId: string;
@@ -20,7 +21,7 @@ export function BrandingTab({ clientId }: BrandingTabProps) {
   const [hasChanges, setHasChanges] = useState(false);
 
   const { data: client, isLoading } = useQuery({
-    queryKey: ['client', clientId],
+    queryKey: queryKeys.client(clientId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clients')
@@ -76,7 +77,13 @@ export function BrandingTab({ clientId }: BrandingTabProps) {
 
       if (error) throw error;
 
-      await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+      // Invalidate all client-related queries to ensure consistency
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.client(clientId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.userClientData() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.userClientDataGroups() }),
+      ]);
+
       toast.success('Logo updated successfully', {
         description: 'Your logo has been saved',
         icon: <CheckCircle className="h-4 w-4 text-green-500" />,
@@ -105,7 +112,13 @@ export function BrandingTab({ clientId }: BrandingTabProps) {
 
       if (error) throw error;
 
-      await queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+      // Invalidate all client-related queries to ensure consistency
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.client(clientId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.userClientData() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.userClientDataGroups() }),
+      ]);
+
       toast.success('Branding updated successfully', {
         description: 'Your branding settings have been saved',
         icon: <CheckCircle className="h-4 w-4 text-green-500" />,

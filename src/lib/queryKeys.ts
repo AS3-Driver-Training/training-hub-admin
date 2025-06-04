@@ -11,8 +11,13 @@ export const queryKeys = {
   // Client Events
   clientEvents: (clientId: string) => ['client-events', clientId],
   
-  // Clients
+  // Clients - standardized key pattern
   clients: () => ['clients'],
+  client: (clientId: string) => ['client', clientId],
+  
+  // User Client Data - for getting client ID from user
+  userClientData: () => ['user_client_data'],
+  userClientDataGroups: () => ['user_client_data_groups'],
   
   // Venues
   venues: () => ['venues'],
@@ -34,5 +39,10 @@ export const queryKeys = {
     'courseInstance',
     'courseAllocations',
     'client-events'
+  ],
+  invalidateClientData: (clientId: string) => [
+    ['client', clientId],
+    ['user_client_data'],
+    ['user_client_data_groups']
   ]
 } as const;
