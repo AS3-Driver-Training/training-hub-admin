@@ -154,7 +154,7 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
       </SidebarContent>
       
       {hasClientBranding && (
-        <SidebarFooter className="px-4 py-2">
+        <SidebarFooter className="px-4 py-4 pb-6">
           <PoweredByAS3 />
         </SidebarFooter>
       )}
