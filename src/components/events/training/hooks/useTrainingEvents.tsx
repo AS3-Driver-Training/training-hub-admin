@@ -7,7 +7,7 @@ import { useProfile } from "@/hooks/useProfile";
 
 export function useTrainingEvents() {
   const queryClient = useQueryClient();
-  const { profile, userRole } = useProfile();
+  const { profile, userRole, isLoading: profileLoading } = useProfile();
   
   const { data: events = [], isLoading, error } = useQuery({
     queryKey: queryKeys.trainingEvents(),
@@ -149,7 +149,7 @@ export function useTrainingEvents() {
       console.log("Transformed events:", trainingEvents);
       return trainingEvents;
     },
-    enabled: !profile?.isLoading // Wait for profile to load before fetching events
+    enabled: !profileLoading // Wait for profile to load before fetching events
   });
   
   // Function to handle event deletion with proper cache invalidation
