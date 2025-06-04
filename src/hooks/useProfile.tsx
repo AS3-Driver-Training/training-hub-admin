@@ -5,11 +5,36 @@ import { toast } from "sonner";
 import { AppRole } from "@/components/settings/types";
 import { useImpersonation } from "./useImpersonation";
 
+interface ClientUser {
+  client_id: string;
+  role: string;
+  status: string;
+}
+
+interface Profile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  role: AppRole;
+  title: string | null;
+  status: string;
+  organization_name: string | null;
+  email: string | null;
+  clientUsers?: ClientUser[];
+  impersonation?: {
+    isImpersonating: boolean;
+    originalRole: AppRole | null;
+    impersonatedClientId: string | null;
+    impersonatedRole: AppRole | null;
+  };
+}
+
 export function useProfile() {
   const [userName, setUserName] = useState("User");
   const [userRole, setUserRole] = useState<AppRole>("staff");
   const [userTitle, setUserTitle] = useState("");
   const [userStatus, setUserStatus] = useState("active");
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const impersonation = useImpersonation();
 
@@ -30,9 +55,9 @@ export function useProfile() {
         }
 
         console.log('Fetching profile for user:', user.id);
-        const { data: profile, error: profileError } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('first_name, last_name, role, title, status, organization_name')
+          .select('id, first_name, last_name, role, title, status, organization_name, email')
           .eq('id', user.id)
           .single();
         
@@ -41,20 +66,45 @@ export function useProfile() {
           throw profileError;
         }
 
-        console.log('Profile data received:', profile);
+        console.log('Profile data received:', profileData);
         
-        if (profile) {
-          const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+        if (profileData) {
+          const fullName = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim();
           setUserName(fullName || 'User');
           
           // Use impersonated role if impersonating, otherwise use actual role
           const effectiveRole = impersonation.isImpersonating 
             ? impersonation.impersonatedRole 
-            : profile.role;
+            : profileData.role;
           
           setUserRole(effectiveRole as AppRole);
-          setUserTitle(profile.title || '');
-          setUserStatus(profile.status);
+          setUserTitle(profileData.title || '');
+          setUserStatus(profileData.status);
+
+          // Fetch client users data
+          const { data: clientUsers, error: clientUsersError } = await supabase
+            .from('client_users')
+            .select('client_id, role, status')
+            .eq('user_id', user.id)
+            .eq('status', 'active');
+
+          if (clientUsersError) {
+            console.error('Client users fetch error:', clientUsersError);
+          }
+
+          // Create the profile object
+          const completeProfile: Profile = {
+            ...profileData,
+            clientUsers: clientUsers || [],
+            impersonation: {
+              isImpersonating: impersonation.isImpersonating,
+              originalRole: impersonation.originalRole,
+              impersonatedClientId: impersonation.impersonatedClientId,
+              impersonatedRole: impersonation.impersonatedRole,
+            }
+          };
+
+          setProfile(completeProfile);
         }
       } catch (error) {
         console.error('Error in getProfile:', error);
@@ -82,6 +132,7 @@ export function useProfile() {
     userRole, 
     userTitle, 
     userStatus, 
+    profile,
     isLoading,
     impersonation
   };

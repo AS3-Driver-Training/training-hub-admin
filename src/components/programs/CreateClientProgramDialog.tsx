@@ -93,10 +93,23 @@ export function CreateClientProgramDialog() {
         throw new Error("No client found");
       }
 
+      if (!profile.id) {
+        throw new Error("No user ID found");
+      }
+
       const programData = {
-        ...data,
         client_id: profile.clientUsers[0].client_id,
         created_by: profile.id,
+        name: data.name,
+        description: data.description,
+        duration_days: data.duration_days,
+        start_time: data.start_time,
+        end_time: data.end_time,
+        location_type: data.location_type,
+        location_name: data.location_name,
+        location_address: data.location_address,
+        enrollment_type: data.enrollment_type,
+        max_participants: data.max_participants,
         google_place_id: selectedLocation?.placeId,
         google_location: selectedLocation?.googleLocation,
       };

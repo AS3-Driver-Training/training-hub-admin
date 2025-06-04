@@ -5,10 +5,10 @@ import { ClientProgramsList } from "@/components/programs/ClientProgramsList";
 import { useProfile } from "@/hooks/useProfile";
 
 export default function Programs() {
-  const { profile } = useProfile();
+  const { profile, userRole } = useProfile();
 
   // Show AS3 programs for internal users (superadmin, admin, staff)
-  const isInternalUser = ["superadmin", "admin", "staff"].includes(profile?.role || "");
+  const isInternalUser = ["superadmin", "admin", "staff"].includes(userRole);
   
   // Show client programs for client users or when impersonating
   const isClientUser = profile?.clientUsers && profile.clientUsers.length > 0;
