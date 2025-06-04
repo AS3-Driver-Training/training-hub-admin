@@ -17,6 +17,7 @@ export function useImpersonation() {
     impersonatedClientId: null,
     impersonatedRole: null,
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check for stored impersonation state on mount
@@ -24,12 +25,14 @@ export function useImpersonation() {
     if (storedState) {
       try {
         const parsed = JSON.parse(storedState);
+        console.log('Loaded impersonation state from localStorage:', parsed);
         setImpersonationState(parsed);
       } catch (error) {
         console.error('Error parsing impersonation state:', error);
         localStorage.removeItem('impersonationState');
       }
     }
+    setIsLoading(false);
   }, []);
 
   const startImpersonation = (clientId: string, originalRole: AppRole) => {
@@ -40,6 +43,7 @@ export function useImpersonation() {
       impersonatedRole: 'client_admin' as AppRole,
     };
     
+    console.log('Starting impersonation:', newState);
     setImpersonationState(newState);
     localStorage.setItem('impersonationState', JSON.stringify(newState));
   };
@@ -52,12 +56,14 @@ export function useImpersonation() {
       impersonatedRole: null,
     };
     
+    console.log('Exiting impersonation');
     setImpersonationState(resetState);
     localStorage.removeItem('impersonationState');
   };
 
   return {
     ...impersonationState,
+    isLoading,
     startImpersonation,
     exitImpersonation,
   };

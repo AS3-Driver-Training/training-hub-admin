@@ -39,6 +39,11 @@ export function useProfile() {
   const impersonation = useImpersonation();
 
   useEffect(() => {
+    // Don't fetch profile until impersonation state is loaded
+    if (impersonation.isLoading) {
+      return;
+    }
+
     const getProfile = async () => {
       try {
         console.log('Fetching user session...');
@@ -77,6 +82,7 @@ export function useProfile() {
             ? impersonation.impersonatedRole 
             : profileData.role;
           
+          console.log('Effective role:', effectiveRole, 'Impersonating:', impersonation.isImpersonating);
           setUserRole(effectiveRole as AppRole);
           setUserTitle(profileData.title || '');
           setUserStatus(profileData.status);
@@ -125,7 +131,7 @@ export function useProfile() {
     });
 
     return () => subscription.unsubscribe();
-  }, [impersonation.isImpersonating, impersonation.impersonatedRole]);
+  }, [impersonation.isLoading, impersonation.isImpersonating, impersonation.impersonatedRole]);
 
   return { 
     userName, 
@@ -133,7 +139,7 @@ export function useProfile() {
     userTitle, 
     userStatus, 
     profile,
-    isLoading,
+    isLoading: isLoading || impersonation.isLoading,
     impersonation
   };
 }

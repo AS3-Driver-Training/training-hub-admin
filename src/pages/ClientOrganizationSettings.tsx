@@ -1,3 +1,4 @@
+
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,8 +20,15 @@ export default function ClientOrganizationSettings() {
     queryKey: ['user_client_data'],
     queryFn: async () => {
       try {
+        console.log('Fetching client data. Impersonation state:', {
+          isImpersonating: impersonation.isImpersonating,
+          impersonatedClientId: impersonation.impersonatedClientId,
+          isLoading: impersonation.isLoading
+        });
+
         // If impersonating, use the impersonated client ID
         if (impersonation.isImpersonating && impersonation.impersonatedClientId) {
+          console.log('Using impersonated client ID:', impersonation.impersonatedClientId);
           return {
             clientId: impersonation.impersonatedClientId,
           };
@@ -39,6 +47,7 @@ export default function ClientOrganizationSettings() {
 
         if (clientUserError) throw clientUserError;
 
+        console.log('Using actual client ID:', clientUser.client_id);
         return {
           clientId: clientUser.client_id,
         };
@@ -48,6 +57,8 @@ export default function ClientOrganizationSettings() {
         throw error;
       }
     },
+    // Don't run the query until impersonation state is loaded
+    enabled: !impersonation.isLoading,
   });
 
   // Get the actual client details using the standardized key
@@ -56,6 +67,7 @@ export default function ClientOrganizationSettings() {
     queryFn: async () => {
       if (!clientData?.clientId) return null;
       
+      console.log('Fetching client details for ID:', clientData.clientId);
       const { data, error } = await supabase
         .from('clients')
         .select('*')
@@ -63,16 +75,18 @@ export default function ClientOrganizationSettings() {
         .single();
 
       if (error) throw error;
+      console.log('Client details loaded:', data);
       return data;
     },
     enabled: !!clientData?.clientId,
   });
 
-  if (isLoading || clientLoading) {
+  // Show loading while impersonation state or data is loading
+  if (impersonation.isLoading || isLoading || clientLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-32">
-          <div className="text-muted-foreground">Loading...</div>
+          <div className="text-muted-foreground">Loading organization settings...</div>
         </div>
       </DashboardLayout>
     );
@@ -89,6 +103,11 @@ export default function ClientOrganizationSettings() {
             <p className="text-muted-foreground text-sm">
               You may not have access to an organization or there may be a configuration issue.
             </p>
+            {impersonation.isImpersonating && (
+              <p className="text-muted-foreground text-sm">
+                Impersonating client ID: {impersonation.impersonatedClientId}
+              </p>
+            )}
           </div>
         </Card>
       </DashboardLayout>
@@ -102,6 +121,11 @@ export default function ClientOrganizationSettings() {
           <h1 className="text-3xl font-bold">Organization Settings</h1>
           <p className="text-muted-foreground">
             Manage {client?.name || 'your organization'} users, company profile, and branding
+            {impersonation.isImpersonating && (
+              <span className="ml-2 text-orange-600 font-medium">
+                (Viewing as client)
+              </span>
+            )}
           </p>
         </div>
 
