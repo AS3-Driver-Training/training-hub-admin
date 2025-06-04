@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +21,7 @@ import { CreateProgramDialog } from "@/components/programs/CreateProgramDialog";
 import { CreateVenueDialog } from "@/components/venues/CreateVenueDialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { useProfile } from "@/hooks/useProfile";
 
 // Define the form schema with Zod
 const formSchema = z.object({
@@ -45,18 +45,39 @@ export function CourseInstanceForm() {
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
   const [selectedVenue, setSelectedVenue] = useState<any>(null);
   
+  // Get user profile and role
+  const { profile, userRole } = useProfile();
+  
   // State for dialogs
   const [isProgramDialogOpen, setProgramDialogOpen] = useState(false);
   const [isVenueDialogOpen, setVenueDialogOpen] = useState(false);
 
-  // Fetch programs
+  // Determine if user is internal (can access AS3 programs) or client (can only access client programs)
+  const isInternalUser = ["superadmin", "admin", "staff"].includes(userRole);
+  const isClientUser = profile?.clientUsers && profile.clientUsers.length > 0;
+
+  // Fetch programs based on user role
   const { data: programs, isLoading: programsLoading } = useQuery({
-    queryKey: ["programs"],
+    queryKey: isInternalUser ? ["programs"] : ["client-programs", profile?.clientUsers?.[0]?.client_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("programs").select("*");
-      if (error) throw error;
-      return data;
+      if (isInternalUser) {
+        // Internal users get AS3 programs
+        const { data, error } = await supabase.from("programs").select("*");
+        if (error) throw error;
+        return data;
+      } else if (isClientUser && profile?.clientUsers?.[0]?.client_id) {
+        // Client users get their own client programs
+        const { data, error } = await supabase
+          .from("client_programs")
+          .select("*")
+          .eq("client_id", profile.clientUsers[0].client_id)
+          .eq("is_active", true);
+        if (error) throw error;
+        return data;
+      }
+      return [];
     },
+    enabled: !!(isInternalUser || (isClientUser && profile?.clientUsers?.[0]?.client_id)),
   });
 
   // Fetch venues
@@ -224,14 +245,16 @@ export function CourseInstanceForm() {
     }
   }, [isEditMode, courseInstance, courseInstanceLoading, programs, venues, form]);
 
-  // Handle program selection
+  // Handle program selection - updated to work with both program types
   const handleProgramChange = (value: string) => {
     const program = programs?.find(p => p.id.toString() === value);
     setSelectedProgram(program);
     
     // Update private seats if in non-open enrollment mode
     if (!form.getValues("isOpenEnrollment") && program) {
-      form.setValue("privateSeatsAllocated", program.min_students || 0);
+      // Handle both AS3 programs and client programs
+      const minStudents = program.min_students || program.max_participants || 0;
+      form.setValue("privateSeatsAllocated", minStudents);
     }
   };
   
@@ -241,7 +264,7 @@ export function CourseInstanceForm() {
     setSelectedVenue(venue);
   };
 
-  // Get level badge color for display
+  // Get level badge color for display - updated to handle client programs
   const getLevelBadgeColor = (level: string): string => {
     switch(level) {
       case "Basic": return "bg-blue-100 text-blue-800";
@@ -359,11 +382,13 @@ export function CourseInstanceForm() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 gap-8">
-                {/* Program Section */}
+                {/* Program Section - Updated for different program types */}
                 <div className="space-y-4">
                   <div className="flex items-baseline justify-between">
-                    <h3 className="text-lg font-medium">Program Details</h3>
-                    {!isEditMode && (
+                    <h3 className="text-lg font-medium">
+                      {isInternalUser ? "AS3 Program Details" : "Custom Program Details"}
+                    </h3>
+                    {!isEditMode && isInternalUser && (
                       <Button 
                         type="button" 
                         variant="outline" 
@@ -404,7 +429,10 @@ export function CourseInstanceForm() {
                                     <div className="flex flex-col">
                                       <span>{program.name}</span>
                                       <span className="text-xs text-muted-foreground">
-                                        {program.min_students}-{program.max_students} students | {program.duration_days} day(s)
+                                        {isInternalUser 
+                                          ? `${program.min_students}-${program.max_students} students | ${program.duration_days} day(s)`
+                                          : `Max ${program.max_participants || 'unlimited'} participants | ${program.duration_days} day(s)`
+                                        }
                                       </span>
                                     </div>
                                   </SelectItem>
@@ -417,12 +445,14 @@ export function CourseInstanceForm() {
                           <div className="mt-4 p-4 border rounded-lg bg-slate-50/80">
                             <div className="flex items-center space-x-2 mb-2">
                               <h4 className="font-semibold">{selectedProgram.name}</h4>
-                              <Badge 
-                                variant="secondary" 
-                                className={getLevelBadgeColor(selectedProgram.lvl)}
-                              >
-                                {selectedProgram.lvl}
-                              </Badge>
+                              {isInternalUser && selectedProgram.lvl && (
+                                <Badge 
+                                  variant="secondary" 
+                                  className={getLevelBadgeColor(selectedProgram.lvl)}
+                                >
+                                  {selectedProgram.lvl}
+                                </Badge>
+                              )}
                             </div>
                             
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
@@ -437,15 +467,20 @@ export function CourseInstanceForm() {
                                 <div className="text-xs text-muted-foreground">Capacity</div>
                                 <div className="font-medium flex items-center">
                                   <Users className="h-3.5 w-3.5 mr-1.5 text-primary" />
-                                  {selectedProgram.min_students}-{selectedProgram.max_students} students
+                                  {isInternalUser 
+                                    ? `${selectedProgram.min_students}-${selectedProgram.max_students} students`
+                                    : `Max ${selectedProgram.max_participants || 'unlimited'} participants`
+                                  }
                                 </div>
                               </div>
-                              <div className="bg-white p-3 rounded-md border shadow-sm">
-                                <div className="text-xs text-muted-foreground">Program Price</div>
-                                <div className="font-medium">
-                                  ${selectedProgram.price}
+                              {isInternalUser && selectedProgram.price && (
+                                <div className="bg-white p-3 rounded-md border shadow-sm">
+                                  <div className="text-xs text-muted-foreground">Program Price</div>
+                                  <div className="font-medium">
+                                    ${selectedProgram.price}
+                                  </div>
                                 </div>
-                              </div>
+                              )}
                             </div>
                             
                             {selectedProgram.description && (
@@ -711,20 +746,22 @@ export function CourseInstanceForm() {
         </CardContent>
       </Card>
 
-      {/* Program Dialog */}
-      <CreateProgramDialog 
-        open={isProgramDialogOpen} 
-        onClose={handleProgramDialogClose}
-        program={null}
-        getLevelNumber={(level) => {
-          switch(level) {
-            case "Basic": return 1;
-            case "Intermediate": return 2;
-            case "Advanced": return 3;
-            default: return 1;
-          }
-        }}
-      />
+      {/* Program Dialog - Only show for internal users */}
+      {isInternalUser && (
+        <CreateProgramDialog 
+          open={isProgramDialogOpen} 
+          onClose={handleProgramDialogClose}
+          program={null}
+          getLevelNumber={(level) => {
+            switch(level) {
+              case "Basic": return 1;
+              case "Intermediate": return 2;
+              case "Advanced": return 3;
+              default: return 1;
+            }
+          }}
+        />
+      )}
 
       {/* Venue Dialog */}
       <CreateVenueDialog 
