@@ -31,18 +31,7 @@ export function AS3ProgramRow({ program, onInquiry, onEnrollment }: AS3ProgramRo
       <TableRow className="border-t">
         <TableCell>
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="font-semibold text-base">{program.name}</div>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                  <ChevronDown 
-                    className={`h-4 w-4 transition-transform duration-200 ${
-                      isExpanded ? 'rotate-180' : ''
-                    }`} 
-                  />
-                </Button>
-              </CollapsibleTrigger>
-            </div>
+            <div className="font-semibold text-base">{program.name}</div>
             <div className="text-sm text-muted-foreground">
               {program.description}
             </div>
@@ -76,14 +65,25 @@ export function AS3ProgramRow({ program, onInquiry, onEnrollment }: AS3ProgramRo
           </div>
         </TableCell>
         <TableCell className="text-right">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onInquiry(program)}
-          >
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Inquire
-          </Button>
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onInquiry(program)}
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Inquire
+            </Button>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <ChevronDown 
+                  className={`h-4 w-4 transition-transform duration-200 ${
+                    isExpanded ? 'rotate-180' : ''
+                  }`} 
+                />
+              </Button>
+            </CollapsibleTrigger>
+          </div>
         </TableCell>
       </TableRow>
       <CollapsibleContent>
