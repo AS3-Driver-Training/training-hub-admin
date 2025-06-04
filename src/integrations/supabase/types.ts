@@ -9,6 +9,166 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      client_program_enrollments: {
+        Row: {
+          client_program_instance_id: string
+          completed_at: string | null
+          enrolled_at: string
+          enrollment_status: string
+          id: string
+          notes: string | null
+          student_id: string
+        }
+        Insert: {
+          client_program_instance_id: string
+          completed_at?: string | null
+          enrolled_at?: string
+          enrollment_status?: string
+          id?: string
+          notes?: string | null
+          student_id: string
+        }
+        Update: {
+          client_program_instance_id?: string
+          completed_at?: string | null
+          enrolled_at?: string
+          enrollment_status?: string
+          id?: string
+          notes?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_program_enrollments_client_program_instance_id_fkey"
+            columns: ["client_program_instance_id"]
+            isOneToOne: false
+            referencedRelation: "client_program_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_program_enrollments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_program_instances: {
+        Row: {
+          actual_participants: number | null
+          client_program_id: string
+          created_at: string
+          end_date: string | null
+          id: string
+          notes: string | null
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          actual_participants?: number | null
+          client_program_id: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          actual_participants?: number | null
+          client_program_id?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_program_instances_client_program_id_fkey"
+            columns: ["client_program_id"]
+            isOneToOne: false
+            referencedRelation: "client_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_programs: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          duration_days: number
+          end_time: string | null
+          enrollment_type: string
+          google_location: string | null
+          google_place_id: string | null
+          id: string
+          is_active: boolean
+          location_address: string | null
+          location_name: string | null
+          location_type: string
+          max_participants: number | null
+          name: string
+          start_time: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          duration_days?: number
+          end_time?: string | null
+          enrollment_type?: string
+          google_location?: string | null
+          google_place_id?: string | null
+          id?: string
+          is_active?: boolean
+          location_address?: string | null
+          location_name?: string | null
+          location_type?: string
+          max_participants?: number | null
+          name: string
+          start_time?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          duration_days?: number
+          end_time?: string | null
+          enrollment_type?: string
+          google_location?: string | null
+          google_place_id?: string | null
+          id?: string
+          is_active?: boolean
+          location_address?: string | null
+          location_name?: string | null
+          location_type?: string
+          max_participants?: number | null
+          name?: string
+          start_time?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_programs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_users: {
         Row: {
           client_id: string

@@ -95,6 +95,11 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
         return false;
       }
       
+      // Special handling for Programs - show for internal users or client users
+      if (item.path === "/programs") {
+        return isInternalUser || userRole === "client_admin" || userRole === "supervisor" || userRole === "manager";
+      }
+      
       return true;
     }
   );
