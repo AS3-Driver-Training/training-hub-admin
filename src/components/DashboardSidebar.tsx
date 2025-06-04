@@ -1,3 +1,4 @@
+
 import {
   Users,
   LayoutDashboard,
@@ -117,7 +118,7 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
                     <Link to={item.path}>
                       <item.icon 
                         className="h-4 w-4" 
-                        style={{ color: 'var(--client-primary-override, #9b87f5)' }}
+                        style={{ color: 'var(--client-primary-override, #C10230)' }}
                       />
                       <span>{item.title}</span>
                     </Link>
@@ -132,7 +133,7 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
                     <Link to="/settings">
                       <Settings 
                         className="h-4 w-4" 
-                        style={{ color: 'var(--client-primary-override, #9b87f5)' }}
+                        style={{ color: 'var(--client-primary-override, #C10230)' }}
                       />
                       <span>Settings</span>
                     </Link>
@@ -146,7 +147,7 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
                     <Link to="/organization-settings">
                       <Settings 
                         className="h-4 w-4" 
-                        style={{ color: 'var(--client-primary-override, #9b87f5)' }}
+                        style={{ color: 'var(--client-primary-override, #C10230)' }}
                       />
                       <span>Organization Settings</span>
                     </Link>
