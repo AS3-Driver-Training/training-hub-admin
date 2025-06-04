@@ -31,6 +31,7 @@ interface MenuItem {
   path: string;
   roles?: string[];
   hideWhenImpersonating?: boolean;
+  internalOnly?: boolean;
 }
 
 const menuItems: MenuItem[] = [
@@ -65,6 +66,7 @@ const menuItems: MenuItem[] = [
     title: "Venues",
     icon: Building,
     path: "/venues",
+    internalOnly: true, // Only show for internal users
   },
   {
     title: "Groups & Teams",
@@ -96,9 +98,14 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
         return false;
       }
       
-      // Special handling for Programs - show for internal users or client users
-      if (item.path === "/programs") {
-        return isInternalUser || userRole === "client_admin" || userRole === "supervisor" || userRole === "manager";
+      // Hide internal-only items for non-internal users
+      if (item.internalOnly && !isInternalUser) {
+        return false;
+      }
+      
+      // Also hide venues when impersonating (since impersonating means acting as client)
+      if (item.path === "/venues" && impersonation.isImpersonating) {
+        return false;
       }
       
       return true;

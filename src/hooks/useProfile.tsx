@@ -11,6 +11,14 @@ interface ClientUser {
   status: string;
 }
 
+interface UserTeam {
+  team_id: string;
+  team_name: string;
+  group_id: string;
+  group_name: string;
+  client_id: string;
+}
+
 interface Profile {
   id: string;
   first_name: string | null;
@@ -21,6 +29,7 @@ interface Profile {
   organization_name: string | null;
   email: string | null;
   clientUsers?: ClientUser[];
+  userTeams?: UserTeam[];
   impersonation?: {
     isImpersonating: boolean;
     originalRole: AppRole | null;
@@ -98,10 +107,40 @@ export function useProfile() {
             console.error('Client users fetch error:', clientUsersError);
           }
 
+          // Fetch user teams and groups data for better access control
+          const { data: userTeams, error: userTeamsError } = await supabase
+            .from('user_teams')
+            .select(`
+              team_id,
+              teams:team_id (
+                name,
+                group_id,
+                groups:group_id (
+                  name,
+                  client_id
+                )
+              )
+            `)
+            .eq('user_id', user.id);
+
+          if (userTeamsError) {
+            console.error('User teams fetch error:', userTeamsError);
+          }
+
+          // Transform teams data for easier access
+          const transformedTeams: UserTeam[] = (userTeams || []).map(ut => ({
+            team_id: ut.team_id,
+            team_name: ut.teams?.name || '',
+            group_id: ut.teams?.group_id || '',
+            group_name: ut.teams?.groups?.name || '',
+            client_id: ut.teams?.groups?.client_id || ''
+          }));
+
           // Create the profile object
           const completeProfile: Profile = {
             ...profileData,
             clientUsers: clientUsers || [],
+            userTeams: transformedTeams,
             impersonation: {
               isImpersonating: impersonation.isImpersonating,
               originalRole: impersonation.originalRole,
