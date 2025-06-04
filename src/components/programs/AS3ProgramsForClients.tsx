@@ -1,6 +1,5 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { BookOpen } from "lucide-react";
 import { useAS3Programs } from "./hooks/useAS3Programs";
 import { useAS3ProgramDialogs } from "./hooks/useAS3ProgramDialogs";
@@ -39,7 +38,6 @@ export function AS3ProgramsForClients() {
         <div className="flex items-center gap-2">
           <BookOpen className="h-5 w-5" />
           <CardTitle>AS3 Training Programs</CardTitle>
-          <Badge variant="outline" className="ml-2">Available for Enrollment</Badge>
         </div>
       </CardHeader>
       <CardContent>

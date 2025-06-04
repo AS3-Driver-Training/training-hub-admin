@@ -25,8 +25,22 @@ export function AS3ProgramCard({ program, onInquiry, onEnrollment }: AS3ProgramC
     }
   };
 
+  const handleCardClick = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  const handleInquiryClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onInquiry(program);
+  };
+
+  const handleEnrollmentClick = (e: React.MouseEvent, instance: CourseInstance) => {
+    e.stopPropagation();
+    onEnrollment(program, instance);
+  };
+
   return (
-    <Card className="w-full">
+    <Card className="w-full cursor-pointer hover:shadow-md transition-shadow" onClick={handleCardClick}>
       <CardContent className="p-6">
         {/* Main Program Info */}
         <div className="flex items-start justify-between mb-4">
@@ -72,23 +86,16 @@ export function AS3ProgramCard({ program, onInquiry, onEnrollment }: AS3ProgramC
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onInquiry(program)}
+              onClick={handleInquiryClick}
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               Inquire
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="h-8 w-8 p-0"
-            >
-              <ChevronDown 
-                className={`h-4 w-4 transition-transform duration-200 ${
-                  isExpanded ? 'rotate-180' : ''
-                }`} 
-              />
-            </Button>
+            <ChevronDown 
+              className={`h-4 w-4 transition-transform duration-200 text-muted-foreground ${
+                isExpanded ? 'rotate-180' : ''
+              }`} 
+            />
           </div>
         </div>
 
@@ -126,7 +133,7 @@ export function AS3ProgramCard({ program, onInquiry, onEnrollment }: AS3ProgramC
                         {instance.available_seats > 0 && (
                           <Button
                             size="sm"
-                            onClick={() => onEnrollment(program, instance)}
+                            onClick={(e) => handleEnrollmentClick(e, instance)}
                           >
                             Request Seats
                           </Button>

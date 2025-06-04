@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { ProgramsList } from "@/components/programs/ProgramsList";
 import { ClientProgramsList } from "@/components/programs/ClientProgramsList";
 import { AS3ProgramsForClients } from "@/components/programs/AS3ProgramsForClients";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProfile } from "@/hooks/useProfile";
 
 export default function Programs() {
@@ -43,18 +44,22 @@ export default function Programs() {
     return (
       <DashboardLayout>
         <div className="p-6 max-w-7xl mx-auto space-y-8">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">Programs</h1>
-            <span className="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full">
-              Client View
-            </span>
-          </div>
+          <h1 className="text-2xl font-bold">Programs</h1>
           
-          {/* AS3 Training Programs Section */}
-          <AS3ProgramsForClients />
-          
-          {/* Client Programs Section */}
-          <ClientProgramsList />
+          <Tabs defaultValue="as3-programs" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="as3-programs">AS3 Programs</TabsTrigger>
+              <TabsTrigger value="client-programs">Client Programs</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="as3-programs" className="space-y-6">
+              <AS3ProgramsForClients />
+            </TabsContent>
+            
+            <TabsContent value="client-programs" className="space-y-6">
+              <ClientProgramsList />
+            </TabsContent>
+          </Tabs>
         </div>
       </DashboardLayout>
     );
@@ -76,11 +81,20 @@ export default function Programs() {
         <div className="p-6 max-w-7xl mx-auto space-y-8">
           <h1 className="text-2xl font-bold">Programs</h1>
           
-          {/* AS3 Training Programs Section */}
-          <AS3ProgramsForClients />
-          
-          {/* Client Programs Section */}
-          <ClientProgramsList />
+          <Tabs defaultValue="as3-programs" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="as3-programs">AS3 Programs</TabsTrigger>
+              <TabsTrigger value="client-programs">Client Programs</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="as3-programs" className="space-y-6">
+              <AS3ProgramsForClients />
+            </TabsContent>
+            
+            <TabsContent value="client-programs" className="space-y-6">
+              <ClientProgramsList />
+            </TabsContent>
+          </Tabs>
         </div>
       </DashboardLayout>
     );
