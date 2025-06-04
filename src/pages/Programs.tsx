@@ -4,12 +4,14 @@ import { ClientProgramsList } from "@/components/programs/ClientProgramsList";
 import { AS3ProgramsForClients } from "@/components/programs/AS3ProgramsForClients";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProfile } from "@/hooks/useProfile";
+
 export default function Programs() {
   const {
     profile,
     userRole,
     isLoading
   } = useProfile();
+  
   console.log('Programs page state:', {
     isLoading,
     userRole,
@@ -17,6 +19,7 @@ export default function Programs() {
     impersonatedClientId: profile?.impersonation?.impersonatedClientId,
     originalRole: profile?.impersonation?.originalRole
   });
+
   if (isLoading) {
     return <DashboardLayout>
         <div className="flex items-center justify-center h-64">
@@ -40,7 +43,7 @@ export default function Programs() {
   if (isImpersonating) {
     return <DashboardLayout>
         <div className="p-6 max-w-7xl mx-auto space-y-8">
-          <h1 className="text-2xl font-bold">Programs</h1>
+          <h1 className="text-2xl font-bold mb-6">Programs</h1>
           
           <Tabs defaultValue="as3-programs" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -48,11 +51,11 @@ export default function Programs() {
               <TabsTrigger value="client-programs">Custom Programs</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="as3-programs" className="space-y-6">
+            <TabsContent value="as3-programs" className="space-y-6 mt-6">
               <AS3ProgramsForClients />
             </TabsContent>
             
-            <TabsContent value="client-programs" className="space-y-6">
+            <TabsContent value="client-programs" className="space-y-6 mt-6">
               <ClientProgramsList />
             </TabsContent>
           </Tabs>
@@ -71,7 +74,7 @@ export default function Programs() {
   if (isClientUser) {
     return <DashboardLayout>
         <div className="p-6 max-w-7xl mx-auto space-y-8">
-          <h1 className="text-2xl font-bold">Programs</h1>
+          <h1 className="text-2xl font-bold mb-6">Programs</h1>
           
           <Tabs defaultValue="as3-programs" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -79,11 +82,11 @@ export default function Programs() {
               <TabsTrigger value="client-programs">Client Programs</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="as3-programs" className="space-y-6">
+            <TabsContent value="as3-programs" className="space-y-6 mt-6">
               <AS3ProgramsForClients />
             </TabsContent>
             
-            <TabsContent value="client-programs" className="space-y-6">
+            <TabsContent value="client-programs" className="space-y-6 mt-6">
               <ClientProgramsList />
             </TabsContent>
           </Tabs>

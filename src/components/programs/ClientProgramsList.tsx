@@ -115,7 +115,7 @@ export function ClientProgramsList() {
                   Create your first custom program to get started
                 </p>
               </div>
-              <CreateClientProgramDialog />
+              {/* Removed the redundant CreateClientProgramDialog button */}
             </div>
           </CardContent>
         </Card>
