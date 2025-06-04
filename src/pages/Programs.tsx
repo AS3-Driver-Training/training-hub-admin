@@ -38,7 +38,7 @@ export default function Programs() {
     finalDecision: isImpersonating ? 'client-view' : (isInternalUser ? 'internal-view' : 'client-view')
   });
 
-  // If impersonating, always show client view regardless of original role
+  // PRIORITY 1: If impersonating, always show client view regardless of original role
   if (isImpersonating) {
     return (
       <DashboardLayout>
@@ -60,7 +60,7 @@ export default function Programs() {
     );
   }
 
-  // For internal users when not impersonating - show full internal view
+  // PRIORITY 2: For internal users when not impersonating - show full internal view
   if (isInternalUser) {
     return (
       <DashboardLayout>
@@ -69,7 +69,7 @@ export default function Programs() {
     );
   }
 
-  // For client users when not impersonating - show client view
+  // PRIORITY 3: For client users when not impersonating - show client view
   if (isClientUser) {
     return (
       <DashboardLayout>

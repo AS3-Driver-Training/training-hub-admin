@@ -54,7 +54,7 @@ export function useProfile() {
       return;
     }
 
-    console.log('Impersonation state loaded:', impersonation);
+    console.log('Profile hook - impersonation state loaded:', impersonation);
 
     const getProfile = async () => {
       try {
@@ -91,10 +91,10 @@ export function useProfile() {
           
           // Use impersonated role if impersonating, otherwise use actual role
           const effectiveRole = impersonation.isImpersonating 
-            ? impersonation.impersonatedRole 
+            ? (impersonation.impersonatedRole || 'client_admin')
             : profileData.role;
           
-          console.log('Setting effective role:', {
+          console.log('Profile hook - setting effective role:', {
             actualRole: profileData.role,
             impersonatedRole: impersonation.impersonatedRole,
             isImpersonating: impersonation.isImpersonating,
@@ -158,7 +158,7 @@ export function useProfile() {
             }
           };
 
-          console.log('Complete profile created:', completeProfile);
+          console.log('Profile hook - complete profile created:', completeProfile);
           setProfile(completeProfile);
         }
       } catch (error) {
