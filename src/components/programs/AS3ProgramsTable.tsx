@@ -15,15 +15,14 @@ export function AS3ProgramsTable({ programs, onInquiry, onEnrollment }: AS3Progr
       <Table>
         <TableHeader className="bg-muted/50">
           <TableRow>
-            <TableHead className="w-[50%]">Program</TableHead>
-            <TableHead className="w-[25%]">Upcoming Sessions</TableHead>
-            <TableHead className="w-[25%] text-right">Actions</TableHead>
+            <TableHead className="w-[70%]">Program</TableHead>
+            <TableHead className="w-[30%] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {programs?.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={3} className="text-center py-6">
+              <TableCell colSpan={2} className="text-center py-6">
                 No AS3 programs available at this time.
               </TableCell>
             </TableRow>
