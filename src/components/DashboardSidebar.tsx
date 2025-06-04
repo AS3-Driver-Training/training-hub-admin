@@ -107,7 +107,10 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <Link to={item.path}>
-                      <item.icon className="h-4 w-4 text-primary" />
+                      <item.icon 
+                        className="h-4 w-4" 
+                        style={{ color: 'var(--client-primary-override, #9b87f5)' }}
+                      />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -119,7 +122,10 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link to="/settings">
-                      <Settings className="h-4 w-4 text-primary" />
+                      <Settings 
+                        className="h-4 w-4" 
+                        style={{ color: 'var(--client-primary-override, #9b87f5)' }}
+                      />
                       <span>Settings</span>
                     </Link>
                   </SidebarMenuButton>
@@ -130,7 +136,10 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link to="/organization-settings">
-                      <Settings className="h-4 w-4 text-primary" />
+                      <Settings 
+                        className="h-4 w-4" 
+                        style={{ color: 'var(--client-primary-override, #9b87f5)' }}
+                      />
                       <span>Organization Settings</span>
                     </Link>
                   </SidebarMenuButton>

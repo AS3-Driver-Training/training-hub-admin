@@ -11,6 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useNavigate } from "react-router-dom";
+import { useClientBranding } from "@/contexts/ClientBrandingContext";
+import { PoweredByAS3 } from "@/components/branding/PoweredByAS3";
 
 interface DashboardHeaderProps {
   userName: string;
@@ -26,6 +28,7 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ userName, userRole, onLogout, impersonation }: DashboardHeaderProps) {
   const navigate = useNavigate();
+  const { branding, hasClientBranding } = useClientBranding();
 
   const handleExitImpersonation = () => {
     if (impersonation?.exitImpersonation) {
@@ -38,19 +41,30 @@ export function DashboardHeader({ userName, userRole, onLogout, impersonation }:
   const isInternalUser = ["superadmin", "admin", "staff"].includes(userRole);
   const showInternalSettings = isInternalUser && !impersonation?.isImpersonating;
 
+  // Logo selection logic
+  const displayLogo = branding.logoUrl || "https://as3driving.com/wp-content/uploads/2020/07/AS3-Driver-Training-Logo-HiRes.png";
+  const logoAlt = branding.logoUrl ? (branding.clientName || "Client Logo") : "AS3 Driver Training";
+
   return (
     <div className="border-b w-full fixed top-0 left-0 right-0 bg-background z-50">
       <div className="flex h-20 items-center px-8 gap-4 max-w-[1400px] mx-auto">
         <SidebarTrigger>
           <Button variant="ghost" size="icon">
-            <Menu className="h-6 w-6 text-[#C10230]" />
+            <Menu className="h-6 w-6" style={{ color: 'var(--client-primary-override, #C10230)' }} />
           </Button>
         </SidebarTrigger>
-        <img
-          src="https://as3driving.com/wp-content/uploads/2020/07/AS3-Driver-Training-Logo-HiRes.png"
-          alt="AS3 Driver Training"
-          className="h-16"
-        />
+        
+        <div className="flex items-center gap-2">
+          <img
+            src={displayLogo}
+            alt={logoAlt}
+            className="h-16"
+          />
+          {hasClientBranding && branding.logoUrl && (
+            <PoweredByAS3 className="ml-2" />
+          )}
+        </div>
+
         <div className="ml-auto flex items-center space-x-4">
           {impersonation?.isImpersonating && (
             <div className="flex items-center gap-2 px-3 py-1 bg-yellow-100 border border-yellow-300 rounded-md">
@@ -68,13 +82,19 @@ export function DashboardHeader({ userName, userRole, onLogout, impersonation }:
               </Button>
             </div>
           )}
-          <span className="text-sm font-medium text-[#C10230]">
+          <span 
+            className="text-sm font-medium"
+            style={{ color: 'var(--client-primary-override, #C10230)' }}
+          >
             {userRole}
           </span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
-                <User className="h-5 w-5 text-[#C10230]" />
+                <User 
+                  className="h-5 w-5" 
+                  style={{ color: 'var(--client-primary-override, #C10230)' }}
+                />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

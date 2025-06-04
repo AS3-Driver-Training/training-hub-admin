@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
 import { useEffect, useState } from "react";
+import { ClientBrandingProvider } from "@/contexts/ClientBrandingContext";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
@@ -80,21 +81,23 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen bg-background">
-        <DashboardHeader 
-          userName={userName} 
-          userRole={userRole} 
-          onLogout={handleLogout}
-          impersonation={impersonation}
-        />
-        <div className="flex pt-20 fixed inset-0">
-          <DashboardSidebar userRole={userRole} />
-          <main className="flex-1 overflow-y-auto">
-            <div className="container max-w-[1400px] px-8 py-6">{children}</div>
-          </main>
+    <ClientBrandingProvider>
+      <SidebarProvider>
+        <div className="min-h-screen bg-background">
+          <DashboardHeader 
+            userName={userName} 
+            userRole={userRole} 
+            onLogout={handleLogout}
+            impersonation={impersonation}
+          />
+          <div className="flex pt-20 fixed inset-0">
+            <DashboardSidebar userRole={userRole} />
+            <main className="flex-1 overflow-y-auto">
+              <div className="container max-w-[1400px] px-8 py-6">{children}</div>
+            </main>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </ClientBrandingProvider>
   );
 }
