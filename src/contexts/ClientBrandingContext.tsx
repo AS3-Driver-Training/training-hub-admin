@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,7 +35,7 @@ export function ClientBrandingProvider({ children }: ClientBrandingProviderProps
   console.log('ClientBrandingProvider impersonation state:', impersonation);
 
   // Get the client ID - either from impersonation or user's actual client
-  const { data: clientData } = useQuery({
+  const { data: clientData, isLoading: clientDataLoading } = useQuery({
     queryKey: queryKeys.userClientData(),
     queryFn: async () => {
       try {
@@ -75,7 +74,7 @@ export function ClientBrandingProvider({ children }: ClientBrandingProviderProps
   });
 
   // Get client branding data
-  const { data: client, isLoading } = useQuery({
+  const { data: client, isLoading: clientLoading } = useQuery({
     queryKey: queryKeys.client(clientData?.clientId || ''),
     queryFn: async () => {
       if (!clientData?.clientId) return null;
@@ -105,6 +104,8 @@ export function ClientBrandingProvider({ children }: ClientBrandingProviderProps
     (client?.primary_color && client.primary_color !== '#C10230') ||
     (client?.secondary_color && client.secondary_color !== '#FF6B35'));
 
+  const isLoading = impersonation.isLoading || clientDataLoading || clientLoading;
+
   // Apply CSS variables to document root
   useEffect(() => {
     if (client) {
@@ -119,7 +120,7 @@ export function ClientBrandingProvider({ children }: ClientBrandingProviderProps
   }, [client, branding.primaryColor, branding.secondaryColor]);
 
   return (
-    <ClientBrandingContext.Provider value={{ branding, isLoading: isLoading || impersonation.isLoading, hasClientBranding }}>
+    <ClientBrandingContext.Provider value={{ branding, isLoading, hasClientBranding }}>
       {children}
     </ClientBrandingContext.Provider>
   );

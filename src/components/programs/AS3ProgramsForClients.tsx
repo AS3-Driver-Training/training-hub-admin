@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen } from "lucide-react";
 import { useAS3Programs } from "./hooks/useAS3Programs";
 import { useAS3ProgramDialogs } from "./hooks/useAS3ProgramDialogs";
-import { AS3ProgramsTable } from "./AS3ProgramsTable";
+import { AS3ProgramsGrid } from "./AS3ProgramsGrid";
 import { InquiryDialog } from "./InquiryDialog";
 import { EnrollmentDialog } from "./EnrollmentDialog";
 
@@ -43,7 +43,7 @@ export function AS3ProgramsForClients() {
         </div>
       </CardHeader>
       <CardContent>
-        <AS3ProgramsTable
+        <AS3ProgramsGrid
           programs={programs}
           onInquiry={handleInquiry}
           onEnrollment={handleEnrollment}

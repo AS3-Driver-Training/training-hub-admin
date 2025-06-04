@@ -66,7 +66,7 @@ const menuItems: MenuItem[] = [
     title: "Venues",
     icon: Building,
     path: "/venues",
-    internalOnly: true, // Only show for internal users
+    internalOnly: true,
   },
   {
     title: "Groups & Teams",
@@ -79,12 +79,17 @@ const menuItems: MenuItem[] = [
 
 export function DashboardSidebar({ userRole }: { userRole: string }) {
   const { impersonation } = useProfile();
-  const { hasClientBranding } = useClientBranding();
+  const { branding, hasClientBranding } = useClientBranding();
 
   // Determine which settings menu item to show
   const isInternalUser = ["superadmin", "admin", "staff"].includes(userRole);
   const showInternalSettings = isInternalUser && !impersonation.isImpersonating;
   const showOrganizationSettings = !isInternalUser || impersonation.isImpersonating;
+
+  // Use client colors if available and impersonating
+  const iconColor = impersonation.isImpersonating && branding.primaryColor 
+    ? branding.primaryColor 
+    : '#C10230';
 
   const filteredMenuItems = menuItems.filter(
     item => {
@@ -125,7 +130,7 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
                     <Link to={item.path}>
                       <item.icon 
                         className="h-4 w-4" 
-                        style={{ color: 'var(--client-primary-override, #C10230)' }}
+                        style={{ color: iconColor }}
                       />
                       <span>{item.title}</span>
                     </Link>
@@ -140,7 +145,7 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
                     <Link to="/settings">
                       <Settings 
                         className="h-4 w-4" 
-                        style={{ color: 'var(--client-primary-override, #C10230)' }}
+                        style={{ color: iconColor }}
                       />
                       <span>Settings</span>
                     </Link>
@@ -154,7 +159,7 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
                     <Link to="/organization-settings">
                       <Settings 
                         className="h-4 w-4" 
-                        style={{ color: 'var(--client-primary-override, #C10230)' }}
+                        style={{ color: iconColor }}
                       />
                       <span>Organization Settings</span>
                     </Link>

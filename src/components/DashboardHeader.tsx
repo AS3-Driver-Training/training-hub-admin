@@ -27,7 +27,7 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ userName, userRole, onLogout, impersonation }: DashboardHeaderProps) {
   const navigate = useNavigate();
-  const { branding } = useClientBranding();
+  const { branding, isLoading } = useClientBranding();
 
   const handleExitImpersonation = () => {
     if (impersonation?.exitImpersonation) {
@@ -40,16 +40,24 @@ export function DashboardHeader({ userName, userRole, onLogout, impersonation }:
   const isInternalUser = ["superadmin", "admin", "staff"].includes(userRole);
   const showInternalSettings = isInternalUser && !impersonation?.isImpersonating;
 
-  // Logo selection logic
-  const displayLogo = branding.logoUrl || "https://as3driving.com/wp-content/uploads/2020/07/AS3-Driver-Training-Logo-HiRes.png";
-  const logoAlt = branding.logoUrl ? (branding.clientName || "Client Logo") : "AS3 Driver Training";
+  // Logo logic: Use client logo if available and impersonating, otherwise use AS3 logo
+  const shouldUseClientLogo = impersonation?.isImpersonating && branding.logoUrl;
+  const displayLogo = shouldUseClientLogo 
+    ? branding.logoUrl 
+    : "https://as3driving.com/wp-content/uploads/2020/07/AS3-Driver-Training-Logo-HiRes.png";
+  const logoAlt = shouldUseClientLogo ? (branding.clientName || "Client Logo") : "AS3 Driver Training";
+
+  // Colors: Use client colors if available and impersonating
+  const primaryColor = impersonation?.isImpersonating && branding.primaryColor 
+    ? branding.primaryColor 
+    : '#C10230';
 
   return (
     <div className="border-b w-full fixed top-0 left-0 right-0 bg-background z-50">
       <div className="flex h-20 items-center px-8 gap-4 max-w-[1400px] mx-auto">
         <SidebarTrigger>
           <Button variant="ghost" size="icon">
-            <Menu className="h-6 w-6" style={{ color: 'var(--client-primary-override, #C10230)' }} />
+            <Menu className="h-6 w-6" style={{ color: primaryColor }} />
           </Button>
         </SidebarTrigger>
         
@@ -80,7 +88,7 @@ export function DashboardHeader({ userName, userRole, onLogout, impersonation }:
           )}
           <span 
             className="text-sm font-medium"
-            style={{ color: 'var(--client-primary-override, #C10230)' }}
+            style={{ color: primaryColor }}
           >
             {userRole}
           </span>
@@ -89,7 +97,7 @@ export function DashboardHeader({ userName, userRole, onLogout, impersonation }:
               <Button variant="ghost" size="icon">
                 <User 
                   className="h-5 w-5" 
-                  style={{ color: 'var(--client-primary-override, #C10230)' }}
+                  style={{ color: primaryColor }}
                 />
               </Button>
             </DropdownMenuTrigger>
