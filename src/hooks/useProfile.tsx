@@ -50,8 +50,11 @@ export function useProfile() {
   useEffect(() => {
     // Don't fetch profile until impersonation state is loaded
     if (impersonation.isLoading) {
+      console.log('Waiting for impersonation state to load...');
       return;
     }
+
+    console.log('Impersonation state loaded:', impersonation);
 
     const getProfile = async () => {
       try {
@@ -91,7 +94,13 @@ export function useProfile() {
             ? impersonation.impersonatedRole 
             : profileData.role;
           
-          console.log('Effective role:', effectiveRole, 'Impersonating:', impersonation.isImpersonating);
+          console.log('Setting effective role:', {
+            actualRole: profileData.role,
+            impersonatedRole: impersonation.impersonatedRole,
+            isImpersonating: impersonation.isImpersonating,
+            effectiveRole
+          });
+          
           setUserRole(effectiveRole as AppRole);
           setUserTitle(profileData.title || '');
           setUserStatus(profileData.status);
@@ -136,7 +145,7 @@ export function useProfile() {
             client_id: ut.teams?.groups?.client_id || ''
           }));
 
-          // Create the profile object
+          // Create the profile object with current impersonation state
           const completeProfile: Profile = {
             ...profileData,
             clientUsers: clientUsers || [],
@@ -149,6 +158,7 @@ export function useProfile() {
             }
           };
 
+          console.log('Complete profile created:', completeProfile);
           setProfile(completeProfile);
         }
       } catch (error) {
@@ -170,7 +180,7 @@ export function useProfile() {
     });
 
     return () => subscription.unsubscribe();
-  }, [impersonation.isLoading, impersonation.isImpersonating, impersonation.impersonatedRole]);
+  }, [impersonation.isLoading, impersonation.isImpersonating, impersonation.impersonatedRole, impersonation.impersonatedClientId, impersonation.originalRole]);
 
   return { 
     userName, 

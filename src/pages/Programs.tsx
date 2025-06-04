@@ -8,6 +8,14 @@ import { useProfile } from "@/hooks/useProfile";
 export default function Programs() {
   const { profile, userRole, isLoading } = useProfile();
 
+  console.log('Programs page state:', { 
+    isLoading, 
+    userRole, 
+    isImpersonating: profile?.impersonation?.isImpersonating,
+    impersonatedClientId: profile?.impersonation?.impersonatedClientId,
+    originalRole: profile?.impersonation?.originalRole
+  });
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -18,27 +26,42 @@ export default function Programs() {
     );
   }
 
-  // Show AS3 programs for internal users when not impersonating
+  // Check if we're in impersonation mode
+  const isImpersonating = profile?.impersonation?.isImpersonating || false;
   const isInternalUser = ["superadmin", "admin", "staff"].includes(userRole);
-  const showInternalAS3Programs = isInternalUser && !profile?.impersonation?.isImpersonating;
-  
-  // Show client programs for client users or when impersonating
   const isClientUser = profile?.clientUsers && profile.clientUsers.length > 0;
-  const showClientPrograms = isClientUser || profile?.impersonation?.isImpersonating;
 
-  // If neither internal nor client user, show no access
-  if (!showInternalAS3Programs && !showClientPrograms) {
+  console.log('Programs access logic:', {
+    isImpersonating,
+    isInternalUser, 
+    isClientUser,
+    finalDecision: isImpersonating ? 'client-view' : (isInternalUser ? 'internal-view' : 'client-view')
+  });
+
+  // If impersonating, always show client view regardless of original role
+  if (isImpersonating) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">No access to programs</p>
+        <div className="p-6 max-w-7xl mx-auto space-y-8">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">Programs</h1>
+            <span className="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full">
+              Client View
+            </span>
+          </div>
+          
+          {/* AS3 Training Programs Section */}
+          <AS3ProgramsForClients />
+          
+          {/* Client Programs Section */}
+          <ClientProgramsList />
         </div>
       </DashboardLayout>
     );
   }
 
-  // For internal users (full access)
-  if (showInternalAS3Programs) {
+  // For internal users when not impersonating - show full internal view
+  if (isInternalUser) {
     return (
       <DashboardLayout>
         <ProgramsList />
@@ -46,17 +69,28 @@ export default function Programs() {
     );
   }
 
-  // For client users - show unified layout without tabs
+  // For client users when not impersonating - show client view
+  if (isClientUser) {
+    return (
+      <DashboardLayout>
+        <div className="p-6 max-w-7xl mx-auto space-y-8">
+          <h1 className="text-2xl font-bold">Programs</h1>
+          
+          {/* AS3 Training Programs Section */}
+          <AS3ProgramsForClients />
+          
+          {/* Client Programs Section */}
+          <ClientProgramsList />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Fallback for users with no access
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-7xl mx-auto space-y-8">
-        <h1 className="text-2xl font-bold">Programs</h1>
-        
-        {/* AS3 Training Programs Section */}
-        <AS3ProgramsForClients />
-        
-        {/* Client Programs Section */}
-        <ClientProgramsList />
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">No access to programs</p>
       </div>
     </DashboardLayout>
   );
