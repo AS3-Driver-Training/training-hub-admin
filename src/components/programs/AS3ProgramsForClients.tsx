@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar, MapPin, Users, MessageCircle, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Program } from "@/types/programs";
@@ -136,117 +137,144 @@ export function AS3ProgramsForClients() {
     setEnrollmentDialogOpen(true);
   };
 
+  const getLevelBadgeColor = (level: string): string => {
+    switch(level) {
+      case "Basic": return "bg-blue-100 text-blue-800";
+      case "Intermediate": return "bg-purple-100 text-purple-800";
+      case "Advanced": return "bg-orange-100 text-orange-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-32">
-        <p className="text-muted-foreground">Loading AS3 programs...</p>
-      </div>
+      <Card>
+        <CardContent>
+          <div className="flex items-center justify-center h-32">
+            <p className="text-muted-foreground">Loading AS3 programs...</p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-4">
-        <BookOpen className="h-5 w-5" />
-        <h2 className="text-xl font-semibold">AS3 Training Programs</h2>
-        <Badge variant="outline" className="ml-2">Available for Enrollment</Badge>
-      </div>
-      
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {programs?.map((program) => (
-          <Card key={program.id} className="h-full flex flex-col">
-            <CardHeader>
-              <div className="flex justify-between items-start mb-2">
-                <CardTitle className="text-lg">{program.name}</CardTitle>
-                <Badge variant="secondary">{program.lvl}</Badge>
-              </div>
-              <p className="text-sm text-muted-foreground">{program.description}</p>
-            </CardHeader>
-            
-            <CardContent className="flex-1 flex flex-col">
-              <div className="space-y-3 mb-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4" />
-                  <span>{program.durationDays} day{program.durationDays !== 1 ? 's' : ''}</span>
-                </div>
-                
-                <div className="flex items-center gap-2 text-sm">
-                  <Users className="h-4 w-4" />
-                  <span>Max {program.maxStudents} students</span>
-                </div>
-                
-                {program.price > 0 && (
-                  <div className="text-sm font-medium">
-                    ${program.price.toLocaleString()}
-                  </div>
-                )}
-              </div>
-
-              {/* Upcoming Instances */}
-              {program.upcomingInstances.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium mb-2">Upcoming Sessions:</h4>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {program.upcomingInstances.slice(0, 3).map((instance) => (
-                      <div key={instance.id} className="p-2 bg-muted rounded-sm">
-                        <div className="flex justify-between items-start text-xs">
-                          <div>
-                            <div className="font-medium">
-                              {format(new Date(instance.start_date), 'MMM d, yyyy')}
-                            </div>
-                            <div className="flex items-center gap-1 text-muted-foreground">
-                              <MapPin className="h-3 w-3" />
-                              {instance.venue_name}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className={`font-medium ${instance.available_seats > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {instance.available_seats} seats
-                            </div>
-                            {instance.available_seats > 0 && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="mt-1 text-xs h-6"
-                                onClick={() => handleEnrollment(program, instance)}
-                              >
-                                Request Seats
-                              </Button>
-                            )}
-                          </div>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <BookOpen className="h-5 w-5" />
+          <CardTitle>AS3 Training Programs</CardTitle>
+          <Badge variant="outline" className="ml-2">Available for Enrollment</Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="border rounded-md overflow-hidden">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead className="w-[50%]">Program</TableHead>
+                <TableHead className="w-[25%]">Upcoming Sessions</TableHead>
+                <TableHead className="w-[25%] text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {programs?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center py-6">
+                    No AS3 programs available at this time.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                programs?.map((program) => (
+                  <TableRow key={program.id} className="border-t">
+                    <TableCell>
+                      <div className="space-y-2">
+                        <div className="font-semibold text-base">{program.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {program.description}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                          <Badge 
+                            variant="secondary" 
+                            className={getLevelBadgeColor(program.lvl)}
+                          >
+                            Level {program.lvl === "Basic" ? "1" : 
+                                   program.lvl === "Intermediate" ? "2" : "3"}
+                          </Badge>
+                          <span className="text-muted-foreground flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {program.durationDays} day{program.durationDays !== 1 ? 's' : ''}
+                          </span>
+                          <span className="text-muted-foreground flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            Max {program.maxStudents} students
+                          </span>
+                          {program.price > 0 && (
+                            <span className="text-muted-foreground font-medium">
+                              ${program.price.toLocaleString()}
+                            </span>
+                          )}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                  {program.upcomingInstances.length > 3 && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      +{program.upcomingInstances.length - 3} more sessions
-                    </p>
-                  )}
-                </div>
+                    </TableCell>
+                    <TableCell>
+                      {program.upcomingInstances.length > 0 ? (
+                        <div className="space-y-1">
+                          {program.upcomingInstances.slice(0, 2).map((instance) => (
+                            <div key={instance.id} className="text-sm">
+                              <div className="font-medium">
+                                {format(new Date(instance.start_date), 'MMM d, yyyy')}
+                              </div>
+                              <div className="flex items-center gap-1 text-muted-foreground text-xs">
+                                <MapPin className="h-3 w-3" />
+                                {instance.venue_name}
+                              </div>
+                              <div className="flex items-center justify-between text-xs">
+                                <span className={instance.available_seats > 0 ? 'text-green-600' : 'text-red-600'}>
+                                  {instance.available_seats} seats available
+                                </span>
+                                {instance.available_seats > 0 && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-6 text-xs"
+                                    onClick={() => handleEnrollment(program, instance)}
+                                  >
+                                    Request Seats
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          {program.upcomingInstances.length > 2 && (
+                            <p className="text-xs text-muted-foreground">
+                              +{program.upcomingInstances.length - 2} more sessions
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">
+                          No upcoming sessions
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleInquiry(program)}
+                      >
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Inquire
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
-
-              {/* Action Buttons */}
-              <div className="mt-auto pt-4 space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => handleInquiry(program)}
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Inquire About This Program
-                </Button>
-                
-                {program.upcomingInstances.length === 0 && (
-                  <p className="text-xs text-center text-muted-foreground">
-                    No upcoming sessions scheduled
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
 
       {/* Dialogs */}
       <InquiryDialog
@@ -268,6 +296,6 @@ export function AS3ProgramsForClients() {
         program={selectedProgram}
         instance={selectedInstance}
       />
-    </div>
+    </Card>
   );
 }
